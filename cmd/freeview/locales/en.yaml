@@ -1,0 +1,95 @@
+appName: FreeView
+emptyTitle: Drop an image, folder or archive here
+emptyHint: "Or press Ctrl+O to open one. Press P for preferences."
+openButton: Open…
+loadFailed: "Cannot show {name}: {error}"
+folderEmpty: No images in {name}
+openFailed: "Cannot open {name}: {error}"
+deleteTitle: Move to Recycle Bin?
+deleteMessage: "{name} will be moved to the Recycle Bin."
+deleteConfirm: Delete
+cancel: Cancel
+deleteFailed: "Cannot delete {name}: {error}"
+archiveReadOnly: Images inside an archive cannot be deleted
+copiedPath: Path copied
+copiedImage: Image copied
+slideshowOn: Slideshow started
+slideshowOff: Slideshow stopped
+pickImages: Images and archives
+infoPosition: "{index} / {count}"
+infoZoom: "{percent}%"
+title: "{name} - {position} - FreeView"
+actionNone: Do nothing
+actionNext: Next image
+actionPrevious: Previous image
+actionFirst: First image
+actionLast: Last image
+actionZoomIn: Zoom in
+actionZoomOut: Zoom out
+actionZoomFit: Fit to window
+actionZoomOriginal: Original size
+actionRotateLeft: Rotate left
+actionRotateRight: Rotate right
+actionFlipH: Flip horizontally
+actionFlipV: Flip vertically
+actionFullScreen: Full screen
+actionEscape: Leave full screen or close
+actionClose: Close FreeView
+actionMinimize: Minimize
+actionOpen: Open…
+actionReveal: Show in Explorer
+actionDelete: Delete
+actionCopyPath: Copy path
+actionCopyImage: Copy image
+actionSlideshow: Slideshow
+actionInfo: Show information
+actionMenu: Show menu
+actionPreferences: Preferences…
+gestureWheelUp: Wheel up
+gestureWheelDown: Wheel down
+gestureCtrlWheelUp: Ctrl + wheel up
+gestureCtrlWheelDown: Ctrl + wheel down
+gestureShiftWheelUp: Shift + wheel up
+gestureShiftWheelDown: Shift + wheel down
+gestureAltWheelUp: Alt + wheel up
+gestureAltWheelDown: Alt + wheel down
+gestureMiddleClick: Middle button
+gestureBackButton: Back side button
+gestureForwardButton: Forward side button
+gestureLeftDoubleClick: Left double-click
+gestureRightClick: Right click
+prefsTitle: Preferences
+prefsSearch: Search preferences
+prefsResults: Results
+prefsEmpty: Nothing matches
+prefsMouse: Mouse
+prefsMouseGroup: Mouse buttons and wheel
+prefsKeyboard: Keyboard
+prefsKeyboardGroup: Shortcuts
+prefsKeysHint: "Separate shortcuts with commas, such as right, ctrl+shift+n. Record adds the next key you press."
+prefsRecord: Record
+prefsRecording: Press a key…
+prefsView: Viewing
+prefsViewGroup: Display
+prefsBrowseGroup: Browsing
+prefsFit: Fit
+prefsFitShrink: Shrink large images to the window
+prefsFitWindow: Fit every image to the window
+prefsFitOriginal: Always original size
+prefsBackground: Background color
+prefsZoomStep: Zoom step
+prefsShowInfo: Show image information
+prefsSort: Sort by
+prefsSortName: Name
+prefsSortModified: Date modified
+prefsSortSize: Size
+prefsSortDescending: Descending order
+prefsLoop: Loop at the first and last image
+prefsSlideshow: Slideshow interval (seconds)
+prefsConfirmDelete: Ask before deleting
+prefsReset: Restore defaults
+prefsSaveFailed: "Cannot save preferences: {error}"
+prefsLoadFailed: "Preferences file is invalid, defaults are used: {error}"
+menuFile: File
+menuView: View
+menuGo: Go

@@ -28,3 +28,20 @@ jobs:
         run: python tools/generate_icons.py
       - name: Check index, tests and icons
         run: python tools/check.py --icons
+
+  app:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Test internal packages
+        run: go test ./internal/...
+      - name: Check and test the app
+        working-directory: cmd/freeview
+        run: |
+          go tool nsgo check
+          go tool nsgo test

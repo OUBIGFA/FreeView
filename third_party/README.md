@@ -1,22 +1,49 @@
 # 第三方来源与许可
 
-当前没有移植 qView 应用代码，也未引入 nsgo 运行时。参考来源、开发工具与实际分发依赖分别登记，不能把候选名单当作许可审查已经完成。
+FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。应用中的依赖按 Go 模块引入，版本固定在 `go.mod` 和 `go.sum` 中。
 
-| 来源 | 当前用途 | 固定依据 | 许可与署名 |
+## 参考来源与开发工具
+
+| 来源 | 用途 | 固定依据 | 许可 |
 | --- | --- | --- | --- |
-| [qView](https://github.com/jurplel/qView) | 功能与实现参考；不导入 Qt 工程 | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | GPL-3.0，通用许可正文见根 [LICENSE](../LICENSE) |
-| [nsgo](https://github.com/nsgo-dev/nsgo) | 后续原生界面引擎；当前仅保留来源记录 | 稳定版 v0.2.0；调查提交 `fa11ccdcc082c70e58fd30a5889e623bca252b08` | [Apache-2.0](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt) |
-| [Pillow](https://github.com/python-pillow/Pillow) | 开发时生成图标；不随应用分发 | [PyPI 12.2.0](https://pypi.org/project/pillow/12.2.0/)、[固定依赖文件](../tools/requirements-icons.txt) | MIT-CMU，许可随安装包提供 |
-| FreeView logo | 仓库所有者提供的品牌源图 | [精确二进制登记](../references/repository-exceptions.json) | GPL-3.0-only；不另行授予商标权 |
+| [qView](https://github.com/jurplel/qView) | 功能与交互参考；没有导入代码 | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | GPL-3.0 |
+| [Pillow](https://github.com/python-pillow/Pillow) | 开发时生成图标；不随应用分发 | [固定依赖文件](../tools/requirements-icons.txt) | MIT-CMU |
+| [NSIS](https://nsis.sourceforge.io) 3.13 | 构建安装器；本地放在 `.local/tools/`，不入库 | SourceForge `nsis-3.13.zip`，SHA-1 `db14f8af2ea346b786c6ae19343f61aaf5e09b8e`（与官方文件列表一致） | zlib/libpng 等，见其 COPYING |
+| FreeView logo | 品牌源图 | [精确二进制登记](../references/repository-exceptions.json) | GPL-3.0-only；不另行授予商标权 |
 
-nsgo NOTICE 的保留只记录来源，不表示其中所有组件都被 FreeView 使用或分发。实际引入时按发布范围保留适用署名，核对 Go 锁文件中的直接和传递依赖。
+## 编译进应用的 Go 模块
 
-## 后续实际引入
+清单来自 `go version -m FreeView.exe`（0.1.0，2026-11-22）。许可按各模块自带的许可文件判断。
 
-实际引入库、移植代码或外部素材后，再建立对应 manifest。每项记录名称、用途、消费者、来源/下载 URL、准确版本或提交、字节数、SHA-256、SPDX 许可、许可正文、署名、依赖关系、修改和验证命令。
+| 模块 | 版本 | 许可 | 引入原因 |
+| --- | --- | --- | --- |
+| github.com/nsgo-dev/nsgo | v0.2.0 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
+| github.com/mholt/archives | v0.1.5 | MIT | 读取压缩包 |
+| github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向 |
+| golang.org/x/image | v0.48.0 | BSD-3-Clause | BMP/TIFF 解码；nsgo 也使用 |
+| go.yaml.in/yaml/v3 | v3.0.6 | MIT 与 Apache-2.0 | 设置文件；nsgo 也使用 |
+| github.com/nwaples/rardecode/v2 | v2.2.0 | BSD-2-Clause | archives：RAR |
+| github.com/bodgit/sevenzip | v1.6.1 | BSD-3-Clause | archives：7z |
+| github.com/bodgit/plumbing、github.com/bodgit/windows | v1.3.0、v1.0.1 | BSD-3-Clause | sevenzip 依赖 |
+| github.com/STARRY-S/zip | v0.2.3 | BSD-3-Clause | archives：ZIP |
+| github.com/klauspost/compress、github.com/klauspost/pgzip | v1.18.0、v1.2.6 | BSD-3-Clause、MIT | 压缩算法 |
+| github.com/ulikunitz/xz | v0.5.15 | BSD-3-Clause | 压缩算法 |
+| github.com/mikelolasagasti/xz | v1.0.1 | 0BSD | 压缩算法 |
+| github.com/dsnet/compress | v0.0.2-0.20230904184137-39efe44ab707 | BSD-3-Clause | 压缩算法 |
+| github.com/pierrec/lz4/v4 | v4.1.22 | BSD-3-Clause | 压缩算法 |
+| github.com/andybalholm/brotli | v1.3.0 | MIT | 压缩算法；nsgo 也使用 |
+| github.com/minio/minlz | v1.0.1 | Apache-2.0 | 压缩算法 |
+| github.com/sorairolake/lzip-go | v0.3.8 | MIT 或 Apache-2.0 | 压缩算法 |
+| github.com/hashicorp/golang-lru/v2 | v2.0.7 | MPL-2.0 | archives 依赖 |
+| github.com/spf13/afero | v1.15.0 | Apache-2.0 | archives 依赖 |
+| go4.org | v0.0.0-20230225012048-214862532bf5 | Apache-2.0 | sevenzip 依赖 |
+| github.com/yuin/goldmark | v1.8.7 | MIT | nsgo 依赖 |
+| golang.org/x/net、golang.org/x/text | v0.62.0、v0.44.0 | BSD-3-Clause | nsgo 依赖 |
 
-- 移植 qView 源码或翻译实现时保留来源、许可与修改说明，不能更名后宣称原创。
-- nsgo 跟进最新正式稳定版，同时固定已验证版本、更新锁文件与登记。
-- 未核对来源和许可的组件标为未完成，不以空 manifest 或只改版本号代替审查。
-- 安装包、模型、字体、工具链与下载缓存不入库。公开夹具只使用有许可的最小输入。
-- 发布前检查全部适用依赖与署名。本阶段不创建虚构运行时清单或空 manifest 目录。
+以上许可都可以与 GPL-3.0 组合使用。
+
+## 发布前必须完成
+
+- 测试安装器还没有附带上表各模块的许可正文和署名。正式发布前，要把它们随安装包分发，并重新生成上表。
+- 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试。
+- 引入新的库、移植代码或外部素材时，登记名称、用途、版本、许可、署名和修改。

@@ -1,0 +1,25 @@
+# Desktop smoke test for tools/deskrun. Run from an empty work folder:
+#   go run ./tools/deskrun tests/desktop/smoke.txt <FreeView.exe> <folder>\img1.png
+# with a folder holding img1.png, img2.png and img10.png. Expected:
+# 1.png shows img1; 2.png img2 (wheel down = next); 3.png img10 (forward
+# side button = next); 4.png img2 (back side button = previous) with the
+# information overlay; the last "alive" prints false (middle button closes).
+sleep 2500
+shot 1.png
+mouse 0x20A 0xFF880000 500 400
+sleep 600
+shot 2.png
+mouse 0x20B 0x20000 500 400
+mouse 0x20C 0x20000 500 400
+sleep 600
+shot 3.png
+mouse 0x20B 0x10000 500 400
+mouse 0x20C 0x10000 500 400
+post 0x100 0x49 0x00170001
+post 0x101 0x49 0xC0170001
+sleep 600
+shot 4.png
+mouse 0x207 0x10 500 400
+mouse 0x208 0 500 400
+sleep 1500
+alive

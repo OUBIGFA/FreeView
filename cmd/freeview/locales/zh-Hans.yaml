@@ -1,0 +1,95 @@
+appName: FreeView
+emptyTitle: 将图片、文件夹或压缩包拖到这里
+emptyHint: 也可以按 Ctrl+O 打开。按 P 打开设置。
+openButton: 打开…
+loadFailed: "无法显示 {name}：{error}"
+folderEmpty: "{name} 中没有图片"
+openFailed: "无法打开 {name}：{error}"
+deleteTitle: 移到回收站？
+deleteMessage: "{name} 将被移到回收站。"
+deleteConfirm: 删除
+cancel: 取消
+deleteFailed: "无法删除 {name}：{error}"
+archiveReadOnly: 压缩包内的图片不能删除
+copiedPath: 已复制路径
+copiedImage: 已复制图片
+slideshowOn: 已开始幻灯片
+slideshowOff: 已停止幻灯片
+pickImages: 图片和压缩包
+infoPosition: "{index} / {count}"
+infoZoom: "{percent}%"
+title: "{name} - {position} - FreeView"
+actionNone: 无操作
+actionNext: 下一张
+actionPrevious: 上一张
+actionFirst: 第一张
+actionLast: 最后一张
+actionZoomIn: 放大
+actionZoomOut: 缩小
+actionZoomFit: 适应窗口
+actionZoomOriginal: 原始大小
+actionRotateLeft: 向左旋转
+actionRotateRight: 向右旋转
+actionFlipH: 水平翻转
+actionFlipV: 垂直翻转
+actionFullScreen: 全屏
+actionEscape: 退出全屏或关闭
+actionClose: 关闭 FreeView
+actionMinimize: 最小化
+actionOpen: 打开…
+actionReveal: 在资源管理器中显示
+actionDelete: 删除
+actionCopyPath: 复制路径
+actionCopyImage: 复制图片
+actionSlideshow: 幻灯片
+actionInfo: 显示图片信息
+actionMenu: 显示菜单
+actionPreferences: 设置…
+gestureWheelUp: 滚轮向上
+gestureWheelDown: 滚轮向下
+gestureCtrlWheelUp: Ctrl + 滚轮向上
+gestureCtrlWheelDown: Ctrl + 滚轮向下
+gestureShiftWheelUp: Shift + 滚轮向上
+gestureShiftWheelDown: Shift + 滚轮向下
+gestureAltWheelUp: Alt + 滚轮向上
+gestureAltWheelDown: Alt + 滚轮向下
+gestureMiddleClick: 中键单击
+gestureBackButton: 侧键（后退）
+gestureForwardButton: 侧键（前进）
+gestureLeftDoubleClick: 左键双击
+gestureRightClick: 右键单击
+prefsTitle: 设置
+prefsSearch: 搜索设置
+prefsResults: 搜索结果
+prefsEmpty: 没有匹配项
+prefsMouse: 鼠标
+prefsMouseGroup: 鼠标按键与滚轮
+prefsKeyboard: 键盘
+prefsKeyboardGroup: 快捷键
+prefsKeysHint: 多个快捷键用英文逗号分隔，例如 right, ctrl+shift+n。点“录制”后按下的键会被添加。
+prefsRecord: 录制
+prefsRecording: 请按键…
+prefsView: 查看
+prefsViewGroup: 显示
+prefsBrowseGroup: 浏览
+prefsFit: 缩放方式
+prefsFitShrink: 大图缩小到窗口，小图保持原始大小
+prefsFitWindow: 所有图片适应窗口
+prefsFitOriginal: 始终原始大小
+prefsBackground: 背景颜色
+prefsZoomStep: 缩放步长
+prefsShowInfo: 显示图片信息
+prefsSort: 排序方式
+prefsSortName: 名称
+prefsSortModified: 修改日期
+prefsSortSize: 大小
+prefsSortDescending: 降序
+prefsLoop: 在首张和末张之间循环
+prefsSlideshow: 幻灯片间隔（秒）
+prefsConfirmDelete: 删除前确认
+prefsReset: 恢复默认
+prefsSaveFailed: "无法保存设置：{error}"
+prefsLoadFailed: "设置文件无效，已使用默认值：{error}"
+menuFile: 文件
+menuView: 查看
+menuGo: 浏览

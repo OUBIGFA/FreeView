@@ -1,78 +1,53 @@
 # FreeView 仓库规划
 
-核对日期：2026-11-22。本文记录本阶段边界，不表示看图功能已经实现。
+本文记录仓库的方案、上游来源和 Git 跟踪边界。已实现的功能见[开发路线](roadmap.md)。
 
-## 目标与范围
-
-FreeView 将成为轻量、简洁、快速响应的开源看图软件。全面参考 qView，以 Honeyview 为功能和体验标杆，应用使用 Go 和 nsgo 原生界面。
-
-本阶段交付仓库规划、品牌源文件、多尺寸图标、仓库卫生检查和公开 GitHub 仓库。按补充要求升级本机 Go，并将持续跟进 Go/nsgo 稳定版写入项目约定。不开发应用功能，不发布软件版本、安装包或性能结论。
-
-## 已选方案
+## 方案
 
 | 方案 | 取舍 | 决定 |
 | --- | --- | --- |
-| 独立 Go/nsgo 仓库，GPL-3.0 | 不继承 Qt 工程；后续可以按来源登记合规移植 qView 实现 | 已选择 |
-| 独立 Go/nsgo 实现，Apache-2.0 | 只参考 qView 行为，不复制或翻译其 GPL 源码 | 未选择 |
-| 直接 fork qView | 可沿用历史，但继续依赖 C++/Qt，不符合全面采用 nsgo 的方向 | 不采用 |
+| 独立 Go/nsgo 仓库，GPL-3.0 | 不继承 Qt 工程；以后可以按来源登记合规移植 qView 实现 | 已选择 |
+| 独立 Go/nsgo 实现，Apache-2.0 | 只能参考 qView 行为，不能复制或翻译它的 GPL 源码 | 未选择 |
+| 直接 fork qView | 可以沿用历史，但仍依赖 C++/Qt，不符合全面采用 nsgo 的方向 | 不采用 |
 
-- 仓库：<https://github.com/OUBIGFA/FreeView>，公开，默认分支为 `main`。
-- 历史：从空仓库建立独立历史。上游仅为已登记来源，不设容易误推的上游 remote。
-- 许可：FreeView 使用 GPL-3.0-only；nsgo 的 Apache-2.0 许可和署名义务单独保留。
-- 授权：创建公开仓库、提交和推送本阶段文件。此授权不包含发布软件版本或向上游提交变更。
-- 不导入 qView 整树、上游 tags、子模块、LFS 对象、构建缓存或品牌素材。
+- 仓库：<https://github.com/OUBIGFA/FreeView>，公开，默认分支 `main`。
+- 历史：独立历史。不添加上游 remote，避免误推。
+- 许可：FreeView 使用 GPL-3.0-only；依赖的许可见[第三方记录](../third_party/README.md)。
+- 授权：每次完成代码任务后提交并推送到 `main`，再重新构建测试安装器（见[项目约定](../AGENTS.md)）。这不包括创建 tag、Release 或向上游提交变更。
 
-## 上游核对
+## 上游
 
-| 来源 | 固定参考提交 | 用途 | 许可 |
+| 来源 | 固定依据 | 用途 | 许可 |
 | --- | --- | --- | --- |
-| [qView](https://github.com/jurplel/qView) | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | 功能、交互和实现参考 | GPL-3.0 |
-| [nsgo](https://github.com/nsgo-dev/nsgo) | `fa11ccdcc082c70e58fd30a5889e623bca252b08` | 调查原生界面能力，不是浮动依赖锁 | Apache-2.0 |
+| [qView](https://github.com/jurplel/qView) | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | 功能和交互参考 | GPL-3.0 |
+| [nsgo](https://github.com/nsgo-dev/nsgo) | 正式版 v0.2.0（`go.mod`） | 原生界面引擎 | Apache-2.0 |
 
-两个默认分支均为 `main`。核对的树均没有子模块；qView 没有 .gitattributes，nsgo 的根 .gitattributes 仅定义文本处理，没有声明 LFS。可见标签包括 qView 7.1 和 nsgo v0.2.0。实际最新 nsgo 稳定发布为 v0.2.0，非 draft、非 prerelease。
-
-qView 的 CMake 入口依赖 C++14 和 Qt Core、Gui、Network、Widgets、Svg。nsgo 的调查提交要求 Go 1.27.3。二者不能只通过更名直接合并成 Go 原生应用。
-
-2026-11-22 官方最新 Go 稳定版为 1.27.4。本机已升级并通过最小编译运行验证；旧版保留用于回退。持续更新规则见 [项目约定](../AGENTS.md)，本文版本不是永久固定目标。
-
-本阶段没有引入应用依赖，因此不建立空 go.mod 或虚构 go.sum。首次实现 nsgo 应用时选择当时最新稳定版，建立模块与锁文件，并核对直接与传递依赖的许可。
+Go 和 nsgo 跟随官方最新稳定版。2026-11-22 核对：Go 1.27.4，nsgo v0.2.0（最新的非 draft、非 prerelease 版本）。
 
 ## 跟踪边界
 
 | 路径 | Git 跟踪 | 职责 |
 | --- | --- | --- |
-| 根 README、LICENSE、AGENTS 和 Git 规则 | 是 | 公开说明、许可与项目约定；不含机器路径或私有配置 |
-| `docs/` | 是 | 长期规划；上游整份资料不混入此目录 |
-| `assets/branding/` | 是 | 用户提供的品牌源图和使用说明 |
-| `tools/`、`tests/` | 是 | 可复现的图标生成、索引检查和行为测试 |
-| `.github/workflows/` | 是 | 最小权限、只读检查，不接收发布密钥 |
-| `references/` | 是 | 精确公开二进制登记，不是下载缓存 |
-| `third_party/` | 是 | 来源、许可与署名登记 |
-| `dist/` | 否 | 原有 logo 本地副本、派生图标及后续发布产物 |
-| `.local/`、`.nsgo/` | 否 | 确有需要时使用的本地参考、工具链和缓存 |
-| 任意层级的 `_temp/`、`output/` | 否 | 临时仓库、日志、截图、报告 |
-| 依赖目录、私有配置、签名材料、代理状态 | 否 | 不属于可公开的产品输入 |
+| 根目录 README、LICENSE、AGENTS、Git 规则、`go.mod`、`go.sum` | 是 | 公开说明、许可、项目约定、依赖锁定 |
+| `cmd/freeview/` | 是 | 应用源码、`nsgo.yaml`、语言文件和 nsgo 生成的 `locales/catalog_gen.go` |
+| `internal/` | 是 | 不依赖界面的逻辑和 Windows 适配 |
+| `docs/` | 是 | 长期文档 |
+| `assets/branding/` | 是 | 品牌源图 |
+| `tools/`、`tests/` | 是 | 图标生成、仓库检查、私有桌面测试工具和测试脚本 |
+| `.github/workflows/` | 是 | 只读检查；不接收发布密钥 |
+| `references/`、`third_party/` | 是 | 二进制登记、来源与许可记录 |
+| `dist/` | 否 | 构建产物、安装器、派生图标、原有 logo 副本 |
+| `.local/`、`.nsgo/` | 否 | 本地工具链（如 NSIS）、上游参考检出、nsgo 缓存 |
+| 任意层级的 `_temp/`、`output/` | 否 | 临时文件、截图、日志 |
 
-只创建有内容的目录。当前不建立空的源码、打包、下载或平台目录。后续需要时，应用入口建议使用 `cmd/freeview/`，内部模块使用 `internal/`；这不是本阶段的空目录任务。
+`**/_temp/` 必须是 `.gitignore` 最后一条有效规则，放在所有反忽略规则之后。
 
-用户原有 `dist/FreeView_logo.png` 保留原位。公开源文件为 `assets/branding/FreeView_logo.png`，二者字节一致。图标写入 `dist/icons/`，由源文件和脚本重新生成，不提交派生产物。
+品牌源图是 `assets/branding/FreeView_logo.png`，与用户原有的 `dist/FreeView_logo.png` 字节一致。`nsgo build` 从源图生成应用和安装器图标；`tools/generate_icons.py` 另外生成多尺寸 PNG/ICO/ICNS 到 `dist/icons/`。
 
-`**/_temp/` 必须是 .gitignore 最后一条有效规则，置于所有反忽略规则之后。已跟踪的本地内容只移出索引，不以仓库卫生为理由删除用户文件。
+## 检查
 
-## 本阶段实现与验收
+- `python tools/check.py`：读取 Git 暂存区检查文件边界、编码、大小、凭据、机器路径、二进制登记和链接。
+- `go test ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。
+- 界面测试：`go run ./tools/deskrun <脚本> <exe> <参数>` 在私有桌面中运行，示例脚本见 `tests/desktop/smoke.txt`。
 
-1. **固定公开输入。** 保存方案、品牌源图和许可记录；核对源图哈希，保留原文件。
-2. **生成真实图标。** 从原图生成 16–1024 像素 PNG、Windows 多帧 ICO、macOS ICNS 与 iconset；核对尺寸、透明度、容器和源图哈希。
-3. **检查暂存索引。** 读取实际 Git index/blob，检查本地边界、忽略规则、UTF-8/JSON、路径兼容、大小、凭据模式、机器路径、精确二进制登记和 Markdown 相对链接。失败时退出非零，不打印凭据内容。
-4. **保存可复现检查。** 测试使用真实临时 Git 仓库，覆盖暂存与工作区不一致；统一入口为 `python tools/check.py`。CI 运行同一入口和图标校验，使用只读权限。
-5. **公开并回读。** 创建空公开远端，核对所有 heads/tags 与默认分支后推送；再比对远端 tree、提交、可见性、分支和 CI。不 force push，不设置未经要求的发布或保护策略。
-
-## 未覆盖范围
-
-- 仓库卫生通过只证明公开输入和已测工具行为通过，不证明看图功能、应用体积、启动速度或系统集成已经达到目标。
-- 本阶段工具使用 Python 3.11 和 Pillow 12.2.0；应用计划使用 Go/nsgo，Python 不是应用运行时依赖。
-- 图标可在本地校验；未在 Finder、任务栏或安装器中验证显示。本阶段不安装或运行 FreeView 应用。
-- 原始 logo 由仓库所有者提供。本阶段不另行核实商标权属，不使用 qView/Honeyview 的 logo、截图、私有代码或程序。
-- nsgo 最小应用构建、真实图片解码和 Honeyview 对照测试留到下一阶段。
-
-后续功能与性能核查见 [开发路线](roadmap.md)。
+仓库检查通过只说明公开文件符合边界，不说明应用功能或性能达标。

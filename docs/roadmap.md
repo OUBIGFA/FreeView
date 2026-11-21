@@ -1,64 +1,43 @@
 # FreeView 开发路线
 
-以下均为计划，不是当前已支持的功能。以真实功能和测试数据媲美甚至超越 Honeyview，不先承诺没有依据的速度、内存或体积。
+本文区分已实现、已知限制和后续计划。功能目标是用实际测试数据达到甚至超过 Honeyview；没有测量依据时，不承诺速度、内存或体积指标。
 
 ## 产品边界
 
-- 品牌：FreeView，使用仓库中的品牌源图。
-- 应用：Go + nsgo。使用原生窗口、菜单和输入，不保留 Qt 界面，也不增加 Electron/WebView 界面。
-- 功能：全面对照 qView 的交互与实现，合规移植时记录 GPL-3.0 来源。Honeyview 仅作为标杆，不复制私有代码或资产。
-- 平台建议：先做可靠的 Windows 桌面体验，再扩展 macOS/Linux。使用跨平台引擎不等于 FreeView 已支持所有平台。
-- 原则：先显示首帧、操作不阻塞、缓存有上限、错误可见、界面少干扰。按当前需求添加模块，不先建框架。
+- 应用使用 Go + nsgo 原生窗口、菜单和输入，不使用 Qt、Electron 或 WebView 界面。
+- 功能对照 qView 的交互。Honeyview 只作为体验标杆，不复制它的私有代码或素材。
+- 平台：第一版只支持 Windows。macOS 和 Linux 需要另行授权后再做。
+- 原则：先显示图片；操作不阻塞界面；缓存有上限；错误显示给用户；界面元素尽量少。
 
-## 对照与差距清单
+## 0.1.0 已实现（Windows 测试版）
 
-| 主题 | qView 对照入口 | FreeView 后续核查 |
+功能清单见 [README](../README.md#已实现功能)。实现方式：
+
+| 主题 | 实现 | 验证 |
 | --- | --- | --- |
-| 文件、目录、排序、上一张/下一张 | [qvimagecore.h](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/qvimagecore.h) | 自然排序、Unicode/长路径、坏图、目录变动 |
-| 缩放、平移、适应窗口 | [qvgraphicsview.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/qvgraphicsview.cpp) | 缩放锚点、高 DPI、超大图、拖动响应 |
-| 加载、动画、预读、缓存 | [qvimagecore.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/qvimagecore.cpp) | 取消过期请求、连续切图、帧计时与内存上限 |
-| 菜单、快捷键、设置 | [actionmanager.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/actionmanager.cpp)、[settingsmanager.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/settingsmanager.cpp) | 原生菜单、键鼠一致性、可恢复设置 |
-| 信息、旋转、系统打开方式 | [qvinfodialog.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/qvinfodialog.cpp)、[openwith.cpp](https://github.com/jurplel/qView/blob/b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c/src/openwith.cpp) | EXIF 方向、ICC 色彩、只读浏览与写文件分离 |
-| Honeyview 标杆 | 后续在同一机器、同一公开测试集实测 | 压缩包、格式覆盖、整理与持续切图体验；逐项查证，不假设 qView 已有同等功能 |
+| 列出、排序、导航 | `internal/catalog`：文件夹用 `os.ReadDir`，名称排序用 Windows 的 `StrCmpLogicalW`（与资源管理器一致） | 单元测试；在私有桌面中实测 |
+| 压缩包 | 用 `github.com/mholt/archives` 把压缩包当作 `io/fs` 文件系统读取 | ZIP：单元测试和界面测试；7z：私有桌面实测；RAR/TAR：未用实际文件验证 |
+| 解码 | JPEG/PNG/GIF/WebP（含动图）由 nsgo 解码。BMP/TIFF 由 `golang.org/x/image` 解码成像素。EXIF 方向用 `rwcarlsen/goexif` 读取 | 单元测试；GIF 动画在私有桌面实测 |
+| 缩放、平移、旋转 | 按图片像素和屏幕像素比计算位置；用 nsgo Transform 处理旋转和镜像 | 无界面测试检查缩放百分比；私有桌面检查平移 |
+| 输入绑定 | `internal/settings` 定义动作、鼠标操作和快捷键，存为 YAML。键盘用 `Scope.OnKey`；滚轮、拖动、双击、右键用 nsgo 事件；中键和侧键由 `internal/winmouse` 子类化窗口接收 | 单元测试；私有桌面实测改过的中键和滚轮绑定 |
+| 设置窗口 | nsgo `ui.Settings`，分查看、鼠标、键盘三页 | 私有桌面中查看过界面；尚无自动交互测试 |
+| 预读 | 当前图片前后各一张提前读出字节。缓存最多 6 张、512 MB | 代码审查；还没有性能测量 |
 
-这些文件是调查入口，不表示已逐行审计或完成移植。每项实现前核对行为；复制或翻译源码时登记文件、提交、许可、署名、改动及测试。
+## 已知限制
 
-## 建议实现顺序
+- **nsgo v0.2.0 在 Windows 上不把中键和侧键交给应用。** `internal/winmouse` 子类化主窗口作为临时方案。nsgo 支持后删除这个包。
+- **在 App 模式下 `CloseWindow` 只隐藏主窗口，进程不退出。** 因此“关闭”动作直接调用 `Scope.Quit`。点击窗口的关闭按钮可以正常退出。
+- **缩小显示的质量**：nsgo 用 Direct2D 线性插值绘制图片，缩到 50% 以下时细线可能出现锯齿。改进方案是自己用 `golang.org/x/image/draw` 预先缩小后再显示，先做对比测量再决定。
+- **预读只读取文件字节。** 解码仍在显示时由 nsgo 完成，所以大 JPEG 首次显示仍需要等待解码。
+- 动图不能暂停、逐帧查看或调速，nsgo 的 Image 没有提供这些控制。
+- 不支持的格式：APNG 动画（只显示第一帧）、HEIC、AVIF、JPEG XL、RAW、ICO、SVG 查看。
+- 只有一个实例：再次启动时，文件交给已经运行的窗口打开。
 
-### 1. 验证 nsgo 看图路径
+## 后续计划
 
-按[项目约定](../AGENTS.md)核对最新稳定 Go/nsgo，建立真实模块和锁文件。先验证一个窗口显示本地图片，检查图像上传、缩放平移、窗口缩放、高 DPI 与错误呈现。
+1. **测量性能。** 在同一台机器、同一组有公开许可的测试文件上，对比 qView、Honeyview 和 FreeView。记录启动到首帧、切图延迟、缩放和平移的延迟、内存和体积。报告中位数和尾部数据，区分冷缓存和热缓存。
+2. **提升显示质量和速度。** 根据测量结果决定是否预先缩小、是否预先解码。
+3. **补齐 Honeyview 对标功能。** 包括更多格式（先核对解码库的许可和体积）、动图控制、双页阅读、压缩包之间跳转、EXIF 详情、ICC 色彩。
+4. **准备发布。** 包括第三方许可声明随安装包分发、代码签名、更新渠道。首次正式发布需要单独授权。
 
-验收：Windows 可构建并打开 JPEG/PNG；记录首帧时间和内存。不用空窗口或编译成功替代看图验收。nsgo 缺少关键能力时，先确定最小补充方案，不另起第二套界面。
-
-### 2. 完成日常看图闭环
-
-实现文件打开、目录导航、自然排序、缩放平移、适应窗口、全屏、快捷键和图片信息。后台加载与绘制分开，先做有上限的缓存与过期请求取消，再增加必要预读。
-
-验收：固定公开夹具连续切图，不显示旧请求结果；坏图不崩溃；重复看图不无限增加缓存；输入与首帧有可重复记录。
-
-### 3. 补齐 Honeyview 对标项
-
-按实测差距加入动画、压缩包、更多格式、EXIF/ICC、旋转和整理。先核对解码库许可、体积与目标格式；压缩包限制条目大小和展开量。写文件、删除、覆盖与只读浏览分离。
-
-验收：每种正式支持的格式都有公开许可样本；修改图片的动作可观察、可确认，不静默覆盖文件。
-
-### 4. 用数据决定性能工作
-
-在相同硬件、显示设置和文件集上对照 qView、Honeyview 与 FreeView。记录版本、冷/热缓存、样本数量和重复次数，报告中位数与尾部数据。
-
-| 指标 | 测量边界 |
-| --- | --- |
-| 启动到首帧 | 进程启动至实际图片可见，不用窗口出现代替 |
-| 切图延迟 | 输入至下一张图片可见，区分已预读/未预读 |
-| 缩放和平移 | 输入到呈现延迟与丢帧，统一刷新率 |
-| 内存 | 空闲、常用目录、超大图、动画和压缩包分别记录 |
-| 体积 | 分开记录可执行文件、安装/压缩包和完整依赖 |
-
-先建基线，再定数字目标。素材必须有公开许可，不把用户照片、软件安装包或实测日志加入 Git。
-
-### 5. 准备跨平台与发布
-
-核心闭环和基准稳定后，再处理 macOS/Linux、文件关联、安装卸载、签名、无障碍和多语言。发布前重新核对直接/传递依赖、源码可获取性、许可与署名。
-
-验收：正式支持平台有构建和桌面功能证据。首次发布需单独授权；本阶段不建 tag、不上传安装包。
+每项实现前先对照 qView 的行为。复制或翻译 qView 源码时，登记文件、提交、许可、署名和修改。
