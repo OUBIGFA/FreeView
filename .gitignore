@@ -1,0 +1,32 @@
+# Local caches, dependencies and tool state
+.local/
+.nsgo/
+.venv/
+__pycache__/
+node_modules/
+.idea/
+.vscode/
+.agent/
+.agents/
+.claude/
+.codex/
+.DS_Store
+Thumbs.db
+
+# Generated output, downloads and private configuration
+/dist/
+output/
+bin/
+build/
+.env
+.env.*
+*.log
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Keep this as the final active rule, after every ! exception.
+**/_temp/

@@ -1,0 +1,12 @@
+{
+  "binaries": [
+    {
+      "path": "assets/branding/FreeView_logo.png",
+      "source": "Provided by the FreeView repository owner",
+      "license": "GPL-3.0-only",
+      "reason": "Original public brand asset; generated icons remain untracked",
+      "bytes": 31341,
+      "sha256": "c939bd0ec7fc9d772955daa13aa2ad2881b27b1e6663ab45acf070e4c6319369"
+    }
+  ]
+}
