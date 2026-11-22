@@ -7,6 +7,22 @@
       "reason": "Original public brand asset; generated icons remain untracked",
       "bytes": 31341,
       "sha256": "c939bd0ec7fc9d772955daa13aa2ad2881b27b1e6663ab45acf070e4c6319369"
+    },
+    {
+      "path": "assets/screenshots/FreeView-main.png",
+      "source": "FreeView 0.1.0 default window screenshot",
+      "license": "GPL-3.0-only",
+      "reason": "README preview of the default window",
+      "bytes": 21322,
+      "sha256": "ff796d280b90ef62cc85e6bac8e28cc03700cc111f3fd310f0bac7c2efa66d6b"
+    },
+    {
+      "path": "assets/screenshots/FreeView-preferences.png",
+      "source": "FreeView 0.1.0 Preferences screenshot",
+      "license": "GPL-3.0-only",
+      "reason": "README preview of the Preferences window",
+      "bytes": 39914,
+      "sha256": "50500331bde0ee676c1e246e14b5777bd3aa742e59f7842942fd0941ff44f649"
     }
   ]
 }

@@ -1,62 +1,102 @@
+<div align="center">
+
+<img src="assets/branding/FreeView_logo.png" width="160" alt="FreeView 标志">
+
 # FreeView
 
-FreeView 是一个开源看图软件：轻量、简洁、快速响应。它使用 **Go + [nsgo](https://github.com/nsgo-dev/nsgo) 原生界面**，交互参考 [qView](https://github.com/jurplel/qView)，以 Honeyview 为功能和体验标杆。
+**用于 Windows 的图片查看应用**
 
-**当前版本 0.1.0 是 Windows 测试版。** 尚未正式发布，没有提供下载页面。
+简体中文 · [English](README.en.md)
 
-## 已实现功能
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.0-2E7D32" alt="版本 0.1.0"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 和 11"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only 许可证"></a>
 
-- **打开**：命令行、资源管理器“打开方式”、拖放或 Ctrl+O 打开图片、文件夹或压缩包。再次启动时，文件交给已经运行的窗口打开。
-- **格式**：JPEG、PNG、GIF、WebP、BMP、TIFF。GIF 和 WebP 动图会自动播放。JPEG 按 EXIF 方向摆正。
-- **压缩包**：ZIP/CBZ、7z/CB7、RAR/CBR、TAR/CBT 按文件夹方式浏览，不需要先解压。ZIP 和 7z 已用实际文件验证；RAR 和 TAR 的读取由依赖库提供，还没有用实际文件验证。
-- **浏览**：上一张、下一张、第一张、最后一张、幻灯片。排序方式可选资源管理器的自然排序（`2.jpg` 排在 `10.jpg` 前面）、修改日期或大小，也可以选择是否循环。相邻图片会提前读入。
-- **查看**：适应窗口、原始大小、以鼠标位置为中心缩放、拖动平移（图片超出窗口时指针显示为张开的手，拖动时握拳）、旋转、水平/垂直翻转、全屏、图片信息叠加层。
-- **窗口**：默认不显示标题栏（类似 Honeyview 的无边框窗口），拖动窗口顶部或图片旁边的背景可移动窗口。可在设置或右键菜单中开启“显示标题栏”和“窗口置顶”（默认都关闭）；置顶时设置窗口也在最前面。看图窗口和设置窗口记住上次的大小和位置，看图窗口可在设置中关闭“打开时恢复上次的窗口大小和位置”。
-- **整理**：移到回收站（带确认）、复制图片、复制路径、在资源管理器中显示。
-- **自定义**：下面 13 种鼠标操作都可以绑定任意动作：滚轮（可配合 Ctrl/Shift/Alt）、中键、两个侧键、左键双击、右键。每个动作都可以设置多个快捷键，也可以录制快捷键。设置保存在 `%APPDATA%\FreeView\config.yaml`，这个文件也可以手动编辑。
+</div>
 
-默认鼠标操作参照 Honeyview：
+---
 
-| 操作 | 动作 |
+## 界面预览
+
+[![FreeView 的默认窗口](assets/screenshots/FreeView-main.png)](assets/screenshots/FreeView-main.png)
+
+<p align="center">
+  <a href="assets/screenshots/FreeView-preferences.png"><img src="assets/screenshots/FreeView-preferences.png" width="80%" alt="FreeView 的设置窗口"></a>
+</p>
+
+[主窗口原图](assets/screenshots/FreeView-main.png) · [设置窗口原图](assets/screenshots/FreeView-preferences.png)
+
+## 项目说明
+
+FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、文件夹和压缩包。你可以直接查看压缩包中的图片，不必先解压。
+
+## 可以用来做什么
+
+- **查看图片。** 打开 JPEG、PNG、GIF、WebP、BMP 和 TIFF 图片。GIF 和 WebP 动画图片会自动播放。
+- **浏览文件夹。** 看上一张、下一张、第一张或最后一张图片。也可以开始幻灯片。
+- **打开压缩包。** 直接查看 ZIP、7z、RAR 和 TAR 压缩包中的图片。
+- **缩放和移动图片。** 放大、缩小、适应窗口或显示原始大小。图片比窗口大时，你可以拖动图片。
+- **全屏查看图片。** 旋转或翻转图片。显示图片信息。
+- **整理图片。** 把图片移到回收站。复制图片或路径。在文件资源管理器中显示图片。
+- **自定义操作。** 更改 13 种鼠标操作和每个动作的快捷键。
+
+## 下载与上手
+
+### 安装 FreeView
+
+1. 打开 [FreeView 下载页](https://github.com/OUBIGFA/FreeView/releases)。
+2. 下载 Windows 安装文件。
+3. 打开下载的文件。
+4. 按屏幕上的提示安装 FreeView。
+
+当前版本是 0.1.0。它支持 64 位 Windows 10 和 Windows 11。
+
+安装程序为当前用户安装 FreeView。你不需要管理员权限。安装后，从开始菜单打开 FreeView。你也可以在安装时创建桌面快捷方式。
+
+安装程序不改变默认打开方式。图片和压缩包会出现在“打开方式”列表中。
+
+要卸载 FreeView，请打开“设置”，选择“应用”，选择“已安装的应用”，然后选择 FreeView。
+
+### 打开图片
+
+1. 打开 FreeView。
+2. 把图片、文件夹或压缩包拖到窗口。你也可以按 Ctrl+O，选择文件。
+3. 用滚轮或方向键切换图片。
+4. 右键单击可打开菜单。
+
+窗口默认没有标题栏。要移动窗口，请拖动窗口顶部或图片旁的背景。
+
+### 常用操作
+
+| 操作 | 结果 |
 | --- | --- |
-| 滚轮向上 / 向下 | 上一张 / 下一张 |
-| Ctrl + 滚轮 | 放大 / 缩小 |
-| 中键 | 关闭 |
-| 侧键（后退 / 前进） | 上一张 / 下一张 |
+| 滚轮向上或向下 | 上一张或下一张 |
+| Ctrl + 滚轮向上或向下 | 放大或缩小 |
+| 按住左键拖动 | 移动图片 |
 | 左键双击 | 全屏 |
-| 右键 | 菜单 |
+| 右键单击 | 打开菜单 |
+| P | 打开设置 |
+| Alt | 显示菜单栏 |
 
-按 P 打开设置，按 Alt 显示菜单栏。
+## 按需使用
 
-## 构建
+- **更改鼠标操作。** 打开设置。在“鼠标”页为每个操作选择动作。
+- **更改键盘快捷键。** 在“键盘”页添加或删除快捷键。点“录制”。然后按一个键。
+- **更改查看方式。** 在“查看”页选择缩放方式、背景颜色、排序方式、循环和幻灯片间隔。
+- **更改窗口显示。** 在“查看”页打开或关闭“窗口置顶”和“显示标题栏”。
+- **恢复默认设置。** 在“查看”页点“恢复默认”。
+- **停止记住窗口。** 在“查看”页关闭“打开时恢复上次的窗口大小和位置”。
 
-需要 Windows、Go（版本见 `go.mod`）。要生成安装器，还需要 [NSIS](https://nsis.sourceforge.io) 3.06 或更新版本，并把 `makensis` 加入 `PATH`。
+## 注意
 
-```powershell
-cd cmd/freeview
-go tool nsgo dev      # 开发运行
-go tool nsgo check    # 检查
-go tool nsgo test     # 无界面测试
-go tool nsgo build    # 构建到 dist/
-```
+- 这个版本的安装程序没有数字签名。Windows 可能显示“未知发布者”提示。
+- FreeView 只使用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。
+- 压缩包中的图片不能删除。
+- 动画图片会一直播放。现在不能暂停或逐帧查看。
+- FreeView 不能打开 HEIC、AVIF、JPEG XL、RAW、ICO 和 SVG 图片。
 
-在仓库根目录运行 `python tools/build_installer.py` 生成测试安装器 `dist/releases/FreeView-<版本>.exe`。脚本会把 `.local/tools/nsis-3.13/Bin` 加入 `PATH`，版本号取自 `cmd/freeview/nsgo.yaml`。
+## 来源与许可
 
-在仓库根目录运行内部包测试：`go test ./internal/...`。运行仓库检查：`python tools/check.py`。
+FreeView 是开源软件，使用 [GPL-3.0-only](LICENSE) 许可证。源代码在 [GitHub 仓库](https://github.com/OUBIGFA/FreeView)。
 
-## 目录
-
-| 路径 | 内容 |
-| --- | --- |
-| `cmd/freeview/` | 应用：界面、动作、设置窗口、语言文件和 `nsgo.yaml` |
-| `internal/catalog/` | 列出文件夹和压缩包中的图片，排序，读取图片 |
-| `internal/picture/` | 读取尺寸和 EXIF 方向，解码 BMP/TIFF |
-| `internal/settings/` | 动作、鼠标操作、快捷键与 YAML 设置文件 |
-| `internal/winmouse/` | 接收 nsgo 暂未提供给应用的中键和侧键；拖动背景时启动 Windows 的窗口移动；显示自绘的张开/握拳手形指针 |
-| `tools/deskrun/` | 在独立的私有桌面中运行界面测试 |
-
-更多说明：[开发路线](docs/roadmap.md)、[仓库规划](docs/repository-plan.md)、[第三方组件](third_party/README.md)、[品牌素材](assets/branding/README.md)。
-
-## 许可
-
-FreeView 采用 [GPL-3.0-only](LICENSE) 许可。所用依赖的许可见[第三方记录](third_party/README.md)。
+[GPL-3.0-only 许可证](LICENSE) · [第三方组件](third_party/README.md)
