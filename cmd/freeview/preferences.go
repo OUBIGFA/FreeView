@@ -62,6 +62,12 @@ type preferences struct{ v *viewer }
 
 func (p preferences) Render(cx *core.Scope) core.Node {
 	v := p.v
+	// The preferences stay in front of a topmost viewer: they float with
+	// it, and leave the top with it.
+	onTop := core.NewMemo(cx, func() bool { return v.cfg.Get().AlwaysOnTop })
+	cx.Effect(func() {
+		desktop.SetWindowLevel(cx, pick(onTop.Get(), desktop.WindowLevelFloating, desktop.WindowLevelNormal))
+	})
 	// resets rebuilds the pages after Restore defaults, so the shortcut
 	// fields show the defaults rather than what was typed.
 	resets := core.NewSignal(cx, 0)

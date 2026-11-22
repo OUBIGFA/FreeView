@@ -69,6 +69,7 @@ type viewer struct {
 	downAt     core.Point // where the left button last went down
 	panStart   core.Point
 	movingWin  bool // the current drag moves the window, not the image
+	panning    bool // the current drag moves the image
 	touchpad   core.Points
 	loadSeq    uint64
 	messageSeq uint64
@@ -112,6 +113,7 @@ func newViewer(cx *core.Scope) *viewer {
 	cx.Effect(v.updateTitle)
 	cx.Effect(v.updateMenu)
 	cx.Effect(v.scheduleSlide)
+	cx.Effect(v.updateHand)
 	v.applyWindow()
 	return v
 }
@@ -697,7 +699,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 			return core.Style{FlexGrow: 1, FlexShrink: 1, Overflow: core.Hidden, Background: v.background()}
 		},
 		OnLayout:      func(b core.Bounds) { v.viewport.Set(b.Size) },
-		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position },
+		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position; v.updateHand() },
 		OnWheel:       v.wheel,
 		OnPan:         v.pan,
 		OnPressDown:   func(e core.PressEvent) { v.downAt = e.Position },
@@ -786,6 +788,7 @@ func (v *viewer) renderEmpty(cx *core.Scope) core.Node {
 // gestures bound to them.
 func (v *viewer) wheel(e core.WheelEvent) {
 	v.pointer = e.Position
+	v.updateHand()
 	dy := e.Delta.Y
 	if e.Touchpad {
 		v.touchpad += dy
@@ -833,6 +836,8 @@ func (v *viewer) pan(e core.PanEvent) {
 			winmouse.DragWindow()
 			return
 		}
+		v.panning = v.pannable()
+		v.updateHand()
 		v.panStart = v.clampOffset(v.offset.Get(), v.currentScale())
 		fallthrough
 	case core.GestureChanged:
@@ -841,7 +846,36 @@ func (v *viewer) pan(e core.PanEvent) {
 		}
 		next := core.Point{X: v.panStart.X + e.Translation.X, Y: v.panStart.Y + e.Translation.Y}
 		v.offset.Set(v.clampOffset(next, v.currentScale()))
+	case core.GestureEnded, core.GestureCancelled:
+		v.panning = false
+		v.updateHand()
 	}
+}
+
+// pannable reports whether the image overflows the viewport, so a drag
+// moves it.
+func (v *viewer) pannable() bool {
+	if v.img.Get().src.Empty() {
+		return false
+	}
+	w, h := v.displaySize()
+	k := v.currentScale() / v.ratio()
+	vp := v.viewport.Get()
+	return w*k > float64(vp.Width)+0.5 || h*k > float64(vp.Height)+0.5
+}
+
+// updateHand shows the open hand over an image that can be dragged and
+// the closed one while it is dragged, as qView does. As an effect it
+// follows zooms, turns and new images under a still pointer too.
+func (v *viewer) updateHand() {
+	h := winmouse.NoHand
+	switch {
+	case v.panning:
+		h = winmouse.ClosedHand
+	case v.pannable() && v.onImage(v.pointer):
+		h = winmouse.OpenHand
+	}
+	winmouse.SetHand(h)
 }
 
 // onImage reports whether p, in the viewport, is on the shown image.

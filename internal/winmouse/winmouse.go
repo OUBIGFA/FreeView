@@ -5,7 +5,8 @@
 // drops WM_MBUTTON* and turns XBUTTON1 into a back press. The package
 // subclasses the window (SetWindowLongPtrW with GWLP_WNDPROC), reports
 // clicks of those buttons and lets every other message through unchanged.
-// The same subclass starts Windows' own window move for DragWindow.
+// The same subclass starts Windows' own window move for DragWindow and
+// shows the hand cursors of SetHand.
 //
 // The buttons are a stopgap until nsgo reports them itself; see
 // docs/roadmap.md.
@@ -58,6 +59,11 @@ var (
 	// thread holding the mouse capture can release it.
 	msgDrag = func() uint32 {
 		name, _ := syscall.UTF16PtrFromString("FreeViewDragWindow")
+		r, _, _ := procRegisterMessage.Call(uintptr(unsafe.Pointer(name)))
+		return uint32(r)
+	}()
+	msgCursor = func() uint32 {
+		name, _ := syscall.UTF16PtrFromString("FreeViewCursor")
 		r, _, _ := procRegisterMessage.Call(uintptr(unsafe.Pointer(name)))
 		return uint32(r)
 	}()
@@ -136,6 +142,16 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		procReleaseCapture.Call()
 		procDefWindowProc.Call(hwnd, wmSysCommand, scDragMove, 0)
 		return 0
+	case msgCursor:
+		showHand(hwnd)
+		return 0
+	case wmSetCursor:
+		if lParam&0xffff == htClient {
+			if c := handCursor(); c != 0 {
+				procSetCursor.Call(c)
+				return 1
+			}
+		}
 	case wmMButtonDown:
 		middleDown = true
 	case wmMButtonUp:

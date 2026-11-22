@@ -14,7 +14,7 @@
 //	mouse <msg> <wparam> <x> <y>     a mouse message at client x, y (wheel messages get screen coordinates)
 //	shot <file.png>                  capture the main window's client area
 //	shotall <prefix>                 capture every visible nsgo window of the process
-//	list                             print the process's top-level windows
+//	list                             print the process's top-level windows, visible or not and topmost or not
 //	alive                            print whether the process still runs
 //	state                            print whether the window is topmost, its frame's height beyond the client area (0: no title bar) and its position
 //	hit <x> <y>                      print WM_NCHITTEST at client x, y (2: HTCAPTION, drags the window)
@@ -156,7 +156,8 @@ func main() {
 				pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
 				v, _, _ := pIsVisible.Call(h)
 				if p == pi.Pid {
-					fmt.Println("win", h, syscall.UTF16ToString(cn[:]), v)
+					ex, _, _ := pGetWindowLong.Call(h, ^uintptr(19)) // GWL_EXSTYLE
+					fmt.Println("win", h, syscall.UTF16ToString(cn[:]), v, "topmost", ex&0x8 != 0)
 				}
 				return 1
 			})
