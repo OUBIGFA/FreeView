@@ -5,6 +5,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/nsgo-dev/nsgo"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/desktop"
@@ -15,7 +17,24 @@ import (
 
 func main() {
 	frames = loadFrames()
-	opts := []nsgo.Option{nsgo.WindowSize(1100, 760), nsgo.WindowConstraints(core.WindowConstraints{MinWidth: 320, MinHeight: 240})}
+	// nsgo hands the regular files named on the command line to
+	// OnOpenFiles, as the system's Open With does.
+	for _, arg := range os.Args[1:] {
+		if fi, err := os.Stat(arg); err == nil && fi.Mode().IsRegular() {
+			launching = true
+		}
+	}
+	nsgo.Run(App, nsgo.WindowSize(1100, 760))
+}
+
+// App runs FreeView as a desktop app, which may open windows besides the
+// main one (the preferences); closing the main window quits. The main
+// window opens hidden and shows once ready (viewer.reveal): shown at
+// once, it would first show its title bar and no image.
+func App(app *core.Scope) {
+	app.SetTheme(grayTheme())
+	desktop.SetShutdownMode(app, desktop.ShutdownOnMainWindowClose)
+	opts := desktop.WindowOptions{Hidden: true, Constraints: core.WindowConstraints{MinWidth: 320, MinHeight: 240}}
 	// The viewer reports a configuration it cannot read once it shows;
 	// until then the defaults decide.
 	cfg := settings.Default()
@@ -23,17 +42,9 @@ func main() {
 		cfg, _ = settings.Load(path)
 	}
 	if f, ok := frames.frame("main"); ok && cfg.RememberWindow {
-		opts = append(opts, nsgo.WindowFrame(f))
+		opts.Frame = f
 	}
-	nsgo.Run(App, opts...)
-}
-
-// App runs FreeView as a desktop app, which may open windows besides the
-// main one (the preferences); closing the main window quits.
-func App(app *core.Scope) {
-	app.SetTheme(grayTheme())
-	desktop.SetShutdownMode(app, desktop.ShutdownOnMainWindowClose)
-	nsgo.SetMainView(app, Root)
+	desktop.SetMainWindow(app, desktop.OpenWindow(app, opts, Root))
 }
 
 // Root is the main window: the viewer, which owns all state.

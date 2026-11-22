@@ -28,7 +28,14 @@ const (
 	cacheBytes   = 512 << 20
 	// touchpadStep is how far a touchpad scrolls for one wheel gesture.
 	touchpadStep = 120
+	// revealWait is the longest the main window stays hidden waiting for
+	// the image the app launched with.
+	revealWait = time.Second
 )
+
+// launching is whether the command line names a file to open, as nsgo
+// hands to OnOpenFiles: the main window then waits for it to show.
+var launching bool
 
 // shown is the image on screen, or the error loading it.
 type shown struct {
@@ -49,6 +56,13 @@ type viewer struct {
 	index *core.Signal[int]
 	count *core.Signal[int]
 	img   *core.Signal[shown]
+	// The two image views take turns: the one at front shows img and the
+	// other decodes next, which replaces img once it loaded. nsgo blanks
+	// an image view while it decodes a new source, so one view alone would
+	// flash the background between images.
+	slots [2]*core.Signal[core.ImageSource]
+	front *core.Signal[int]
+	next  shown // what the other view decodes; next.src is empty when none
 	// openErr is what failed opening a folder or archive, "" otherwise.
 	openErr *core.Signal[string]
 
@@ -74,6 +88,7 @@ type viewer struct {
 	loadSeq    uint64
 	messageSeq uint64
 	slideSeq   uint64
+	revealed   bool
 	cache      map[string]picture.Picture
 	cacheOrder []string
 }
@@ -91,6 +106,10 @@ func newViewer(cx *core.Scope) *viewer {
 	v.index = core.NewSignal(cx, -1)
 	v.count = core.NewSignal(cx, 0)
 	v.img = core.NewSignalFunc(cx, shown{}, never[shown])
+	for k := range v.slots {
+		v.slots[k] = core.NewSignalFunc(cx, core.ImageSource{}, never[core.ImageSource])
+	}
+	v.front = core.NewSignal(cx, 0)
 	v.openErr = core.NewSignal(cx, "")
 	v.fit = core.NewSignal(cx, cfg.Fit)
 	v.scale = core.NewSignal(cx, 1.0)
@@ -119,7 +138,23 @@ func newViewer(cx *core.Scope) *viewer {
 	cx.Effect(v.scheduleSlide)
 	cx.Effect(v.updateHand)
 	v.applyWindow()
+	if launching {
+		time.AfterFunc(revealWait, func() { cx.Post(v.reveal) })
+	} else {
+		v.reveal()
+	}
 	return v
+}
+
+// reveal shows the main window, which opens hidden so it first shows
+// with its title bar settled and the image the app launched with, if
+// any. It posts the show so the batch showing the image goes first.
+func (v *viewer) reveal() {
+	if v.revealed {
+		return
+	}
+	v.revealed = true
+	v.cx.Post(desktop.CurrentWindow(v.cx).Focus)
 }
 
 // applyWindow keeps the window topmost and its title bar as the
@@ -153,6 +188,7 @@ func (v *viewer) open(target string) {
 		v.cx.Post(func() {
 			if err != nil {
 				v.openErr.Set(locales.OpenFailed(v.cx, filepath.Base(target), err.Error()))
+				v.reveal()
 				return
 			}
 			v.setCatalog(cat, i)
@@ -169,7 +205,7 @@ func (v *viewer) setCatalog(cat *catalog.Catalog, i int) {
 		if len(cat.Items) == 0 {
 			v.openErr.Set(locales.FolderEmpty(v.cx, cat.Title()))
 			v.index.Set(-1)
-			v.img.Set(shown{})
+			v.commit(shown{}, v.front.Get())
 			return
 		}
 		if cat.Archive != "" {
@@ -276,18 +312,60 @@ func pictureBytes(p picture.Picture) int {
 	return len(p.Data)
 }
 
-// present puts a loaded image on screen with a fresh view: upright as its
-// EXIF says and fitted as the preferences say.
+// present puts a read image on screen: at once when there is nothing to
+// decode or a view holds it decoded, else once the back view decoded it
+// (loaded), the current image staying until then.
 func (v *viewer) present(item catalog.Item, pic picture.Picture, err error) {
-	rot, mir := picture.OrientationTransform(pic.Orientation)
+	s := shown{item: item, pic: pic, err: err, src: core.ImageSource{Data: pic.Data, Pixels: pic.Pixels}}
+	front := v.front.Get()
+	back := 1 - front
+	switch {
+	case err == nil && pic.Pixels == nil && sameData(s.src, v.slots[front].Get()):
+		v.commit(s, front)
+	case err != nil || pic.Pixels != nil || sameData(s.src, v.slots[back].Get()):
+		// nsgo shows pixels without a blank, as an error shows nothing.
+		v.commit(s, back)
+	default:
+		v.next = s
+		v.slots[back].Set(s.src)
+	}
+}
+
+// sameData reports whether a and b hold the same encoded bytes, which an
+// image view then keeps decoded.
+func sameData(a, b core.ImageSource) bool {
+	return len(a.Data) > 0 && len(a.Data) == len(b.Data) && &a.Data[0] == &b.Data[0]
+}
+
+// loaded follows image view k decoding its source, or failing to: when
+// it is the back view's next image, that image replaces the shown one.
+func (v *viewer) loaded(k int, err error) {
+	if k == v.front.Get() || v.next.src.Empty() {
+		return
+	}
+	s := v.next
+	if s.err == nil {
+		s.err = err
+	}
+	v.commit(s, k)
+}
+
+// commit shows s in image view k with a fresh view: upright as its EXIF
+// says and fitted as the preferences say.
+func (v *viewer) commit(s shown, k int) {
+	v.next = shown{}
+	rot, mir := picture.OrientationTransform(s.pic.Orientation)
 	v.cx.Batch(func() {
-		v.img.Set(shown{item: item, pic: pic, err: err, src: core.ImageSource{Data: pic.Data, Pixels: pic.Pixels}})
+		v.slots[k].Set(s.src)
+		v.front.Set(k)
+		v.img.Set(s)
 		v.rotate.Set(rot)
 		v.mirror.Set(mir)
 		v.offset.Set(core.Point{})
 		v.fit.Set(v.cfg.Get().Fit)
 		v.scale.Set(1)
 	})
+	v.reveal()
 }
 
 // displaySize is the image's size in device pixels as shown, after its
@@ -439,11 +517,13 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 		if desktop.FullScreen(cx) {
 			desktop.ToggleFullScreen(cx)
 		} else {
+			winmouse.CloseQuietly()
 			cx.Quit()
 		}
 	case settings.Close:
 		// Quit rather than close the main window: nsgo v0.2.0 on Windows
 		// hides the main window of an App without ending the process.
+		winmouse.CloseQuietly()
 		cx.Quit()
 	case settings.Minimize:
 		desktop.MinimizeWindow(cx)
@@ -547,7 +627,7 @@ func (v *viewer) delete() {
 			v.count.Set(len(v.cat.Items))
 			if next < 0 {
 				v.index.Set(-1)
-				v.img.Set(shown{})
+				v.commit(shown{}, v.front.Get())
 				v.openErr.Set(locales.FolderEmpty(cx, v.cat.Title()))
 				return
 			}
@@ -719,13 +799,8 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 		},
 		Children: []core.Node{
 			v.keyBindings(),
-			core.Show{
-				When: func() bool { return !v.img.Get().src.Empty() },
-				Then: func(cx *core.Scope) core.Node {
-					return core.Image{TestID: "image", SourceFunc: func() core.ImageSource { return v.img.Get().src },
-						ResizeMode: core.Stretch, FadeDuration: time.Nanosecond, StyleFunc: v.imageStyle}
-				},
-			},
+			v.imageView(0),
+			v.imageView(1),
 			// Without a title bar, a strip as tall as the hidden one moves the
 			// window: Windows drags it, maximizes it on a double click and
 			// opens the system menu on a right click. Its height is 0 in full
@@ -774,6 +849,22 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 			},
 		},
 	}
+}
+
+// imageView is image view k: the shown image at front, else invisible
+// while it decodes the next one.
+func (v *viewer) imageView(k int) core.Node {
+	return core.Image{TestID: "image-" + strconv.Itoa(k), SourceFunc: v.slots[k].Get,
+		ResizeMode: core.Stretch, FadeDuration: time.Nanosecond,
+		OnLoad:  func(core.Size) { v.loaded(k, nil) },
+		OnError: func(err error) { v.loaded(k, err) },
+		StyleFunc: func() core.Style {
+			if v.front.Get() == k {
+				return v.imageStyle()
+			}
+			return core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Width: core.Pt(1), Height: core.Pt(1),
+				Opacity: core.Alpha(0), PointerEvents: core.PointerEventsNone}
+		}}
 }
 
 func (v *viewer) renderEmpty(cx *core.Scope) core.Node {

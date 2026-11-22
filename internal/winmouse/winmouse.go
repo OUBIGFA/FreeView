@@ -5,8 +5,9 @@
 // drops WM_MBUTTON* and turns XBUTTON1 into a back press. The package
 // subclasses the window (SetWindowLongPtrW with GWLP_WNDPROC), reports
 // clicks of those buttons and lets every other message through unchanged.
-// The same subclass starts Windows' own window move for DragWindow and
-// shows the hand cursors of SetHand.
+// The same subclass starts Windows' own window move for DragWindow,
+// shows the hand cursors of SetHand and closes without the system's
+// animation (CloseQuietly).
 //
 // The buttons are a stopgap until nsgo reports them itself; see
 // docs/roadmap.md.
@@ -145,6 +146,11 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	case msgCursor:
 		showHand(hwnd)
 		return 0
+	case msgQuiet:
+		disableTransitions(hwnd)
+		return 0
+	case wmClose:
+		disableTransitions(hwnd)
 	case wmSetCursor:
 		if lParam&0xffff == htClient {
 			if c := handCursor(); c != 0 {

@@ -38,10 +38,22 @@ func start(t *testing.T) *nsgotest.App {
 	return nsgotest.Start(t, Root, nsgotest.Size(800, 600))
 }
 
+// loadImages reports that both image views decoded their sources, as
+// the platform does once it has: the one decoding the next image then
+// shows it.
+func loadImages(app *nsgotest.App) {
+	for _, id := range []string{"id:image-0", "id:image-1"} {
+		app.Load(id, core.Size{Width: 1, Height: 1})
+	}
+}
+
+// waitInfo waits for the information overlay to hold want, as the
+// images to show decode.
 func waitInfo(t *testing.T, app *nsgotest.App, want string) string {
 	t.Helper()
 	var got string
 	app.WaitUntil(5*time.Second, func() bool {
+		loadImages(app)
 		if !app.Exists("id:info") {
 			return false
 		}
@@ -63,7 +75,6 @@ func TestBrowsesAFolderWithKeysAndTheWheel(t *testing.T) {
 	}
 	app := start(t)
 	app.DropFiles("id:viewport", fileURI(filepath.Join(dir, "a2.png")))
-	app.WaitFor("id:image", 5*time.Second)
 	app.Key("i")
 	// Large images shrink to the 800 by 600 window by default.
 	waitInfo(t, app, "a2.png\n2 / 3   1600 × 1200   50%")
@@ -88,6 +99,33 @@ func TestBrowsesAFolderWithKeysAndTheWheel(t *testing.T) {
 	waitInfo(t, app, "1 / 3")
 }
 
+// The shown image stays until the next one decoded, so moving between
+// images never shows the background alone.
+func TestKeepsTheImageUntilTheNextDecodes(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"b1.png", "b2.png"} {
+		if err := os.WriteFile(filepath.Join(dir, name), pngOf(t, 40, 30), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	app := start(t)
+	app.DropFiles("id:viewport", fileURI(filepath.Join(dir, "b1.png")))
+	app.Key("i")
+	waitInfo(t, app, "b1.png\n1 / 2")
+
+	app.Key("right")
+	// Long enough for b2.png to be read, never decoded.
+	time.Sleep(200 * time.Millisecond)
+	app.Settle()
+	if got := app.Find("id:info").Text; !strings.Contains(got, "b1.png") {
+		t.Fatalf("info = %q before b2.png decoded, want b1.png still shown", got)
+	}
+	waitInfo(t, app, "b2.png\n2 / 2")
+	// Back to b1.png, which the other view holds decoded: at once.
+	app.Key("left")
+	app.WaitUntil(5*time.Second, func() bool { return strings.Contains(app.Find("id:info").Text, "b1.png") })
+}
+
 func TestOpensAnArchiveLikeAFolder(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "book.cbz")
 	f, err := os.Create(file)
@@ -104,7 +142,6 @@ func TestOpensAnArchiveLikeAFolder(t *testing.T) {
 
 	app := start(t)
 	app.DropFiles("id:viewport", fileURI(file))
-	app.WaitFor("id:image", 5*time.Second)
 	app.Key("i")
 	waitInfo(t, app, "p9.png\n1 / 2   30 × 40")
 	app.Key("pagedown")
