@@ -66,7 +66,7 @@ To uninstall FreeView, open Settings. Select Apps. Select Installed apps. Select
 3. Use the wheel or the arrow keys to change images.
 4. Right-click to open the menu.
 
-The window has no title bar by default. To move the window, drag the top edge of the window or the background beside the image.
+The window has no title bar by default. To move the window, drag anywhere in it. When a zoomed image is larger than the window, dragging the image moves the image; then drag the background beside the image or the top edge of the window to move the window.
 
 ### Common controls
 
@@ -74,7 +74,7 @@ The window has no title bar by default. To move the window, drag the top edge of
 | --- | --- |
 | Wheel up or down | Previous or next image |
 | Ctrl + wheel up or down | Zoom in or out |
-| Hold the left button and drag | Move the image |
+| Hold the left button and drag | Move the window; on an image larger than the window, move the image |
 | Double-click the left button | Full screen |
 | Right-click | Open the menu |
 | P | Open Preferences |

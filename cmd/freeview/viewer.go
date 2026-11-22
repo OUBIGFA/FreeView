@@ -947,14 +947,14 @@ func pick[T any](cond bool, a, b T) T {
 	return b
 }
 
-// pan drags the image while it overflows the viewport. A drag that starts
-// on the background beside the image moves the window instead, as
-// Honeyview's does; clicks there keep their bindings, since only a drag
-// past the pan's threshold starts the move.
+// pan moves the window, as Honeyview's drag does, unless the image
+// overflows the viewport and the drag starts on it: that drag moves the
+// image, and only the background beside it moves the window. Clicks keep
+// their bindings, since only a drag past the pan's threshold starts either.
 func (v *viewer) pan(e core.PanEvent) {
 	switch e.Phase {
 	case core.GestureBegan:
-		v.movingWin = !v.onImage(v.downAt) && !desktop.FullScreen(v.cx)
+		v.movingWin = !(v.pannable() && v.onImage(v.downAt)) && !desktop.FullScreen(v.cx)
 		if v.movingWin {
 			winmouse.DragWindow()
 			return
