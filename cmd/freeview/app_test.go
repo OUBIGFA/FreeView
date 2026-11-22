@@ -144,3 +144,27 @@ func TestNoDragStripWithTitleBar(t *testing.T) {
 		t.Error("drag strip shown with the title bar")
 	}
 }
+
+// The preferences show one category at a time beside their own sidebar,
+// and every matching row while searching.
+func TestPreferencesNavigateAndSearch(t *testing.T) {
+	t.Setenv("AppData", t.TempDir())
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
+		nsgotest.Size(1040, 700))
+	app.WaitFor("id:settings-view-fit", 5*time.Second)
+	if app.Exists("id:settings-mouse-middle_click") {
+		t.Error("mouse rows shown on the view page")
+	}
+	app.Press("id:settings-nav-mouse")
+	app.WaitFor("id:settings-mouse-middle_click", 5*time.Second)
+	if app.Exists("id:settings-view-fit") {
+		t.Error("view rows shown on the mouse page")
+	}
+	// "top" matches the view page's switch and the keyboard page's action (the tests run in English).
+	app.Type("id:settings-search", "top")
+	app.WaitFor("id:settings-view-always-on-top", 5*time.Second)
+	app.WaitFor("id:settings-keyboard-key-always_on_top", 5*time.Second)
+	if app.Exists("id:settings-view-fit") || app.Exists("id:settings-mouse-middle_click") {
+		t.Error("rows that do not match shown while searching")
+	}
+}

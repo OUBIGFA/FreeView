@@ -4,8 +4,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nsgo-dev/nsgo/base"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 
 	"github.com/OUBIGFA/FreeView/cmd/freeview/locales"
@@ -53,15 +55,25 @@ func (v *viewer) update(fn func(c *settings.Config)) {
 // as soon as a preference changes, closing the window.
 func openPreferences(v *viewer) {
 	v.cx.Post(func() {
-		desktop.OpenWindow(v.cx, desktop.WindowOptions{Title: locales.PrefsTitle(v.cx), Width: 820, Height: 600, Key: "preferences"},
+		desktop.OpenWindow(v.cx, desktop.WindowOptions{Title: locales.PrefsTitle(v.cx), Width: 1040, Height: 700, Key: "preferences"},
 			func(cx *core.Scope) core.Node { return preferences{v: v}.Render(cx) })
 	})
 }
 
+const (
+	prefsSidebarWidth = 216 // as ui.Settings' own sidebar
+	prefsPageMargin   = 40  // beside the page, on both sides
+	prefsPageWidth    = 760 // the page's widest, so rows stay readable
+)
+
 type preferences struct{ v *viewer }
 
+// Render draws the sidebar and the search field itself and leaves the
+// rows of the shown page to ui.Settings: ui.Settings' own page fills its
+// pane edge to edge, and has no way to keep side margins.
 func (p preferences) Render(cx *core.Scope) core.Node {
 	v := p.v
+	colors := ui.ColorsOf(cx)
 	// The preferences stay in front of a topmost viewer: they float with
 	// it, and leave the top with it.
 	onTop := core.NewMemo(cx, func() bool { return v.cfg.Get().AlwaysOnTop })
@@ -73,24 +85,97 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 	resets := core.NewSignal(cx, 0)
 	reset := ui.Button{Text: locales.PrefsReset(cx), Variant: ui.ButtonOutline, Size: ui.SizeSmall, TestID: "reset",
 		OnPress: func() { v.setConfig(settings.Default()); resets.Update(func(n int) int { return n + 1 }) }}
-	category := core.NewSignal(cx, "")
+	category := core.NewSignal(cx, "view")
+	query := core.NewSignal(cx, "")
+	categories := func(cx *core.Scope) []ui.SettingsCategory {
+		return []ui.SettingsCategory{
+			{ID: "view", Title: locales.PrefsView(cx), Groups: p.viewGroups(cx, reset)},
+			{ID: "mouse", Title: locales.PrefsMouse(cx), Groups: []ui.SettingsGroup{{ID: "mouse", Title: locales.PrefsMouseGroup(cx), Items: p.mouseItems(cx)}}},
+			{ID: "keyboard", Title: locales.PrefsKeyboard(cx), Groups: []ui.SettingsGroup{{ID: "keys", Title: locales.PrefsKeyboardGroup(cx), Items: p.keyItems(cx)}}},
+		}
+	}
+	var nav []ui.SidebarItem
+	for _, c := range categories(cx) {
+		nav = append(nav, ui.SidebarItem{ID: c.ID, Text: c.Title, TestID: "settings-nav-" + c.ID})
+	}
+	title := ui.Text(locales.PrefsTitle(cx), 13, ui.Bold, colors.Text)
+	title.Role = core.RoleHeader
+	sidebar := core.View{TestID: "settings-sidebar", Style: core.Style{Width: core.Pt(prefsSidebarWidth), FlexShrink: 0},
+		StyleFunc: func() core.Style { return core.Style{Background: ui.Alpha(colors.Text(), 0.035)} },
+		Children: []core.Node{
+			core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, MinHeight: core.Pt(56), Padding: core.Symmetric(12, 16)},
+				Children: []core.Node{title}},
+			core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 16, Left: 12}}, Children: []core.Node{searchField(cx, query)}},
+			core.View{Style: ui.FillRest, Children: []core.Node{ui.Sidebar{
+				Sections: []ui.SidebarSection{{Items: nav}}, Selected: category.Get,
+				OnSelect: func(id string) { category.Set(id); query.Set("") }}}},
+		}}
+	// The page: the chosen category, or every row matching the search.
+	page := core.Dynamic(func(cx *core.Scope) core.Node {
+		resets.Get()
+		all := categories(cx)
+		shown, heading := all[:1], all[0].Title
+		for i, c := range all {
+			if c.ID == category.Get() {
+				shown, heading = all[i:i+1], c.Title
+			}
+		}
+		if q := strings.TrimSpace(query.Get()); q != "" {
+			shown, heading = matchingSettings(all, q), locales.PrefsResults(cx)
+		}
+		return ui.Settings{Title: heading, EmptyText: locales.PrefsEmpty(cx), Categories: shown, HideSidebar: true, HideSearch: true}
+	})
 	return core.View{
 		StyleFunc: func() core.Style {
-			return core.Style{FlexGrow: 1, FlexShrink: 1, Background: cx.Palette().Background, Color: ui.ColorsOf(cx).Text()}
+			return core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, Background: cx.Palette().Background, Color: colors.Text()}
 		},
-		Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
-			resets.Get()
-			return ui.Settings{
-				Title: locales.PrefsTitle(cx), SearchLabel: locales.PrefsSearch(cx), SearchPlaceholder: locales.PrefsSearch(cx),
-				ResultsTitle: locales.PrefsResults(cx), EmptyText: locales.PrefsEmpty(cx), Category: category,
-				Categories: []ui.SettingsCategory{
-					{ID: "view", Title: locales.PrefsView(cx), Groups: p.viewGroups(cx, reset)},
-					{ID: "mouse", Title: locales.PrefsMouse(cx), Groups: []ui.SettingsGroup{{ID: "mouse", Title: locales.PrefsMouseGroup(cx), Items: p.mouseItems(cx)}}},
-					{ID: "keyboard", Title: locales.PrefsKeyboard(cx), Groups: []ui.SettingsGroup{{ID: "keys", Title: locales.PrefsKeyboardGroup(cx), Items: p.keyItems(cx)}}},
-				},
-			}
-		})},
+		Children: []core.Node{
+			sidebar,
+			core.View{Style: core.Style{Width: core.Pt(1), FlexShrink: 0}, StyleFunc: ui.Filled(colors.Border)},
+			core.View{Style: ui.FillRest.Merge(core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(0, prefsPageMargin)}),
+				Children: []core.Node{core.View{Style: ui.FillRest.Merge(core.Style{Width: core.Pct(100), MaxWidth: core.Pt(prefsPageWidth)}),
+					Children: []core.Node{page}}}},
+		},
 	}
+}
+
+// searchField is the search through every row, drawn as ui.Settings
+// draws its own.
+func searchField(cx *core.Scope, query *core.Signal[string]) core.Node {
+	colors := ui.ColorsOf(cx)
+	return core.View{StyleFunc: func() core.Style {
+		return ui.FinOf(cx).Field().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 6, Height: core.Pt(32),
+			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderCurve: core.BorderCurveContinuous,
+			BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
+	}, Children: []core.Node{
+		ui.Icon(lucide.Search, 14, colors.Faint),
+		base.Input{Value: query.Get, OnChange: query.Set, Placeholder: locales.PrefsSearch(cx), Label: locales.PrefsSearch(cx), TestID: "settings-search",
+			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13},
+			StyleFunc: func() core.Style {
+				return core.Style{Color: colors.Text(), PlaceholderColor: colors.Faint(), SelectionColor: colors.Accent()}
+			}},
+	}}
+}
+
+// matchingSettings keeps the rows of categories that match query, in
+// their categories and groups.
+func matchingSettings(categories []ui.SettingsCategory, query string) []ui.SettingsCategory {
+	var out []ui.SettingsCategory
+	for _, r := range ui.SearchSettings(categories, query) {
+		c, g := categories[r.Category], categories[r.Category].Groups[r.Group]
+		if n := len(out); n == 0 || out[n-1].ID != c.ID {
+			c.Groups = nil
+			out = append(out, c)
+		}
+		last := &out[len(out)-1]
+		if n := len(last.Groups); n == 0 || last.Groups[n-1].ID != g.ID {
+			g.Items = nil
+			last.Groups = append(last.Groups, g)
+		}
+		group := &last.Groups[len(last.Groups)-1]
+		group.Items = append(group.Items, categories[r.Category].Groups[r.Group].Items[r.Item])
+	}
+	return out
 }
 
 // choice is a select bound to one preference.
