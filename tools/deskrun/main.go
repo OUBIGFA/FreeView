@@ -17,6 +17,7 @@
 //	list                             print the process's top-level windows, visible or not and topmost or not
 //	alive                            print whether the process still runs
 //	state                            print whether the window is topmost, its frame's height beyond the client area (0: no title bar) and its position
+//	frame main|other <x> <y> <w> <h>  move and size the main window, or another visible nsgo window, in screen pixels (SetWindowPos)
 //	hit <x> <y>                      print WM_NCHITTEST at client x, y (2: HTCAPTION, drags the window)
 //
 // Posted messages bypass the system's input state: keys arrive without
@@ -61,6 +62,7 @@ var (
 	pGetWindowRect      = user32.NewProc("GetWindowRect")
 	pGetWindowLong      = user32.NewProc("GetWindowLongPtrW")
 	pSend               = user32.NewProc("SendMessageW")
+	pSetWindowPos       = user32.NewProc("SetWindowPos")
 )
 
 type startupInfo struct {
@@ -168,7 +170,28 @@ func main() {
 			var wr, cr [4]int32
 			pGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&wr)))
 			pGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&cr)))
-			fmt.Println("state topmost", ex&wsExTopmost != 0, "frame", (wr[3]-wr[1])-cr[3], "at", wr[0], wr[1])
+			fmt.Println("state topmost", ex&wsExTopmost != 0, "frame", (wr[3]-wr[1])-cr[3], "at", wr[0], wr[1], "size", wr[2]-wr[0], wr[3]-wr[1])
+		case "frame":
+			target := hwnd
+			if f[1] == "other" {
+				target = 0
+				cb := syscall.NewCallback(func(h, _ uintptr) uintptr {
+					var p uint32
+					pGetTid.Call(h, uintptr(unsafe.Pointer(&p)))
+					var cn [64]uint16
+					pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
+					v, _, _ := pIsVisible.Call(h)
+					if p == pi.Pid && v != 0 && h != hwnd && syscall.UTF16ToString(cn[:]) == "NsgoWindow" {
+						target = h
+						return 0
+					}
+					return 1
+				})
+				pEnumDesktopWindows.Call(hdesk, cb, 0)
+			}
+			const swpNoZOrder, swpNoActivate = 0x4, 0x10
+			r, _, _ := pSetWindowPos.Call(target, 0, n(2), n(3), n(4), n(5), swpNoZOrder|swpNoActivate)
+			fmt.Println("frame", f[1], target, r)
 		case "hit":
 			pt := [2]int32{int32(n(1)), int32(n(2))}
 			pClientToScreen.Call(hwnd, uintptr(unsafe.Pointer(&pt)))

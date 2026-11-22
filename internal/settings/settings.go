@@ -108,6 +108,7 @@ type Config struct {
 	ConfirmDelete    bool                `yaml:"confirm_delete"`
 	AlwaysOnTop      bool                `yaml:"always_on_top"`
 	ShowTitleBar     bool                `yaml:"show_title_bar"` // false: Honeyview's borderless window
+	RememberWindow   bool                `yaml:"remember_window"` // open the viewer at its last size and place
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }
@@ -118,7 +119,7 @@ type Config struct {
 func Default() Config {
 	return Config{
 		Fit: FitShrink, Sort: SortName, Loop: true, SlideshowSeconds: 3, ZoomStep: 1.25,
-		Background: "#1e1e1e", ShowInfo: false, ConfirmDelete: true,
+		Background: "#1e1e1e", ShowInfo: false, ConfirmDelete: true, RememberWindow: true,
 		Mouse: map[Gesture]Action{
 			WheelUp: Previous, WheelDown: Next, CtrlWheelUp: ZoomIn, CtrlWheelDown: ZoomOut,
 			ShiftWheelUp: RotateLeft, ShiftWheelDown: RotateRight, AltWheelUp: First, AltWheelDown: Last,
@@ -230,10 +231,13 @@ func (c Config) normalized() Config {
 	return c
 }
 
-// Save writes c to path, through a temporary file so a crash never leaves
-// a half-written configuration.
-func Save(path string, c Config) error {
-	data, err := yaml.Marshal(c)
+// Save writes c to path.
+func Save(path string, c Config) error { return writeYAML(path, c) }
+
+// writeYAML writes v to path, through a temporary file so a crash never
+// leaves a half-written file.
+func writeYAML(path string, v any) error {
+	data, err := yaml.Marshal(v)
 	if err != nil {
 		return err
 	}

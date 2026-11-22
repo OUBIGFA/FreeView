@@ -55,8 +55,14 @@ func (v *viewer) update(fn func(c *settings.Config)) {
 // as soon as a preference changes, closing the window.
 func openPreferences(v *viewer) {
 	v.cx.Post(func() {
-		desktop.OpenWindow(v.cx, desktop.WindowOptions{Title: locales.PrefsTitle(v.cx), Width: 1040, Height: 700, Key: "preferences"},
-			func(cx *core.Scope) core.Node { return preferences{v: v}.Render(cx) })
+		opts := desktop.WindowOptions{Title: locales.PrefsTitle(v.cx), Width: 1040, Height: 700, Key: "preferences"}
+		if f, ok := frames.frame("preferences"); ok {
+			opts.Frame = f
+		}
+		desktop.OpenWindow(v.cx, opts, func(cx *core.Scope) core.Node {
+			frames.remember(cx, "preferences", func(err error) { v.flash(locales.PrefsSaveFailed(v.cx, err.Error())) })
+			return preferences{v: v}.Render(cx)
+		})
 	})
 }
 
@@ -221,6 +227,8 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, on bool) { c.AlwaysOnTop = on }, v, "always-on-top")},
 			{ID: "title-bar", Title: locales.PrefsShowTitleBar(cx), Control: toggle(func(c settings.Config) bool { return c.ShowTitleBar },
 				func(c *settings.Config, on bool) { c.ShowTitleBar = on }, v, "title-bar")},
+			{ID: "remember-window", Title: locales.PrefsRememberWindow(cx), Control: toggle(func(c settings.Config) bool { return c.RememberWindow },
+				func(c *settings.Config, on bool) { c.RememberWindow = on }, v, "remember-window")},
 		}},
 		{ID: "browse", Title: locales.PrefsBrowseGroup(cx), Items: []ui.SettingsItem{
 			{ID: "sort", Title: locales.PrefsSort(cx), Control: choice(sorts, func(c settings.Config) settings.Sort { return c.Sort },

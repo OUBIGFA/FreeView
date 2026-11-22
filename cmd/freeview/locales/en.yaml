@@ -83,6 +83,7 @@ prefsZoomStep: Zoom step
 prefsShowInfo: Show image information
 prefsAlwaysOnTop: Keep the window on top
 prefsShowTitleBar: Show the title bar
+prefsRememberWindow: Open at the last window size and position
 prefsSort: Sort by
 prefsSortName: Name
 prefsSortModified: Date modified

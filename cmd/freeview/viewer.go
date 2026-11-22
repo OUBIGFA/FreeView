@@ -104,6 +104,10 @@ func newViewer(cx *core.Scope) *viewer {
 	if loadErr != nil {
 		v.flash(locales.PrefsLoadFailed(cx, loadErr.Error()))
 	}
+	if frames != nil && frames.loadErr != nil {
+		v.flash(locales.PrefsLoadFailed(cx, frames.loadErr.Error()))
+	}
+	frames.remember(cx, "main", func(err error) { v.flash(locales.PrefsSaveFailed(cx, err.Error())) })
 	desktop.OnOpenFiles(cx, func(paths []string) {
 		if len(paths) > 0 {
 			v.open(paths[0])

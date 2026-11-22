@@ -83,6 +83,7 @@ prefsZoomStep: 缩放步长
 prefsShowInfo: 显示图片信息
 prefsAlwaysOnTop: 窗口置顶
 prefsShowTitleBar: 显示标题栏
+prefsRememberWindow: 打开时恢复上次的窗口大小和位置
 prefsSort: 排序方式
 prefsSortName: 名称
 prefsSortModified: 修改日期

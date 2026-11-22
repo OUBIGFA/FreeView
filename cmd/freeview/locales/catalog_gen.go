@@ -154,6 +154,7 @@ const (
 	textPrefsShowInfo
 	textPrefsAlwaysOnTop
 	textPrefsShowTitleBar
+	textPrefsRememberWindow
 	textPrefsSort
 	textPrefsSortName
 	textPrefsSortModified
@@ -249,6 +250,7 @@ var keyOfText = [numTexts]string{
 	"prefsShowInfo",
 	"prefsAlwaysOnTop",
 	"prefsShowTitleBar",
+	"prefsRememberWindow",
 	"prefsSort",
 	"prefsSortName",
 	"prefsSortModified",
@@ -342,6 +344,7 @@ var textsEn = i18n.NewTexts(""+
 	"Show image information"+
 	"Keep the window on top"+
 	"Show the title bar"+
+	"Open at the last window size and position"+
 	"Sort by"+
 	"Name"+
 	"Date modified"+
@@ -432,6 +435,7 @@ var textsEn = i18n.NewTexts(""+
 		22,
 		22,
 		18,
+		41,
 		7,
 		4,
 		13,
@@ -525,6 +529,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"显示图片信息"+
 	"窗口置顶"+
 	"显示标题栏"+
+	"打开时恢复上次的窗口大小和位置"+
 	"排序方式"+
 	"名称"+
 	"修改日期"+
@@ -615,6 +620,7 @@ var textsZhHans = i18n.NewTexts(""+
 		18,
 		12,
 		15,
+		45,
 		12,
 		6,
 		12,
@@ -1448,6 +1454,13 @@ func PrefsShowTitleBar(cx *core.Scope) string { return For(cx).PrefsShowTitleBar
 
 // PrefsShowTitleBar is the package's PrefsShowTitleBar in the language of msgs.
 func (msgs Messages) PrefsShowTitleBar() string { return msgs.text(textPrefsShowTitleBar) }
+
+// PrefsRememberWindow says "Open at the last window size and position"
+// in the language the app shows under cx.
+func PrefsRememberWindow(cx *core.Scope) string { return For(cx).PrefsRememberWindow() }
+
+// PrefsRememberWindow is the package's PrefsRememberWindow in the language of msgs.
+func (msgs Messages) PrefsRememberWindow() string { return msgs.text(textPrefsRememberWindow) }
 
 // PrefsSort says "Sort by"
 // in the language the app shows under cx.

@@ -18,6 +18,10 @@ func TestMissingFileGivesDefaults(t *testing.T) {
 	if c.AlwaysOnTop || c.ShowTitleBar {
 		t.Errorf("always on top %v, title bar %v", c.AlwaysOnTop, c.ShowTitleBar)
 	}
+	// The viewer opens where the user left it.
+	if !c.RememberWindow {
+		t.Error("the window's size is not remembered by default")
+	}
 }
 
 func TestFileOverridesOnlyWhatItNames(t *testing.T) {
@@ -84,5 +88,26 @@ func TestCloneIsIndependent(t *testing.T) {
 	b.Keys[Next][0] = "x"
 	if a.Mouse[MiddleClick] != Close || a.Keys[Next][0] != "right" {
 		t.Error("Clone shares maps or slices")
+	}
+}
+
+func TestWindowsRoundTripAndDropSizelessFrames(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "FreeView", "windows.yaml")
+	if w, err := LoadWindows(p); err != nil || len(w) != 0 {
+		t.Fatalf("missing file = %v, %v", w, err)
+	}
+	in := Windows{"main": {X: 10, Y: 20, Width: 1200, Height: 800}, "preferences": {X: 5, Y: 5, Width: 0, Height: 600}}
+	if err := SaveWindows(p, in); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadWindows(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["main"] != in["main"] {
+		t.Errorf("main = %+v", got["main"])
+	}
+	if _, ok := got["preferences"]; ok {
+		t.Error("a frame without a width was kept")
 	}
 }
