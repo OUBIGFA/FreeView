@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	"github.com/nsgo-dev/nsgo"
 	"github.com/nsgo-dev/nsgo/core"
@@ -61,6 +62,8 @@ func App(app *core.Scope) {
 		opts.Frame = f
 	}
 	desktop.SetMainWindow(app, desktop.OpenWindow(app, opts, Root))
+	// Later than the first image, which should not wait for the network.
+	time.AfterFunc(10*time.Second, func() { app.Post(func() { checkDaily(app) }) })
 }
 
 // Root is the main window: the viewer, which owns all state.

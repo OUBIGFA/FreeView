@@ -28,7 +28,7 @@
 | 设置窗口 | 默认 1040×700，分查看、鼠标、键盘、关于四页。“关于”页显示 logo（`assets/branding` 嵌入，首次显示时缩到 128 像素）、版本号（`core.App`）、GitHub、反馈、检查更新和许可链接。侧栏和搜索框由 FreeView 绘制（nsgo `ui.Sidebar`），页面行由 `ui.Settings` 排版；页面两侧各留 40 点边距，最宽 760 点（`ui.Settings` 自带的页面会铺满整个窗格） | 无界面测试检查切换分类和搜索；私有桌面截图核对布局 |
 | 预读 | 当前图片前后各一张提前读出（BMP/TIFF/WIC 格式提前解码）。缓存最多 4 张、256 MB | 代码审查 |
 | 内存 | 垃圾回收比例设为 50%（默认 100%）；切图停下 1 秒后调用 `debug.FreeOSMemory` 把解码留下的内存还给系统 | 私有桌面 `deskrun mem`，10 张 6000×4000 JPEG 逐张浏览：静止后私有内存 997 MB → 606 MB，工作集 769 MB → 378 MB，浏览中工作集峰值 776 MB → 650 MB；CPU 时间 6.6 s → 7.0 s（单次测量） |
-| 自动更新 | nsgo 的 WinSparkle：`nsgo.yaml` 的 `updates.key` 是公钥，WinSparkle 每天读取最新 Release 的 `appcast-windows_x64.xml`，下载、验签、静默安装并重启。安装器被 `tools/build_installer.py` 重新编译和改名后，由 `tools/appcast` 用 `NSGO_UPDATES_KEY` 签名最终安装器并写 appcast | 签名用临时文件验证通过；尚未用真实 Release 走完更新 |
+| 自动更新 | `internal/update` 读 `api.github.com` 的最新 Release（不含草稿和预发布），要求 tag 为 `v<版本>`，且有 `FreeView-<版本>.exe` 附件和 GitHub 给出的 SHA-256；用 `Masterminds/semver` 比较版本。每天最多检查一次（上次时间记在 `%APPDATA%\FreeView\update-check`），发现新版本时询问；确认后下载到 `%LOCALAPPDATA%\FreeView\updates`，校验后以 `/S /RELAUNCH` 运行安装器，安装器关闭 FreeView、安装并重新打开。“关于”页的“立即检查”随时检查。Release 里只有安装器，没有更新源 | 单元测试用本地假服务器检查版本比较、摘要不符、无摘要和检查间隔；尚未用真实 Release 走完更新 |
 
 ## 已知限制
 
@@ -40,7 +40,7 @@
 - APNG 动画、动态 AVIF/HEIC/JPEG XL 只显示第一帧。
 - AVIF、RAW 依赖用户安装的 Windows 扩展，没有扩展时只能显示安装提示。HEIC、JPEG XL 没有扩展时走 WebAssembly 兜底，较慢、占内存较多。
 - SVG 由 nsgo 按每点 4 像素、最长边 2048 像素栅格化，放得很大会变模糊；nsgo 的 SVG 不绘制 `<text>`。
-- 0.1.0 没有 WinSparkle，所以 0.1.0 的用户需要手动安装下一个版本。按现行约定，Release 只上传安装器、不带 `appcast-windows_x64.xml`，所以应用内的自动更新检查读不到更新源，用户需要手动下载新版。
+- 0.1.0 没有自动更新，0.1.2 用的是 WinSparkle（读 Release 里的 appcast）。这两个版本的用户需要手动安装下一个版本，之后才用新的更新方式。校验值来自同一个 GitHub 接口，没有独立签名：它能发现下载损坏，但防不了发布账号被入侵。
 - 默认只有一个实例：再次启动时，文件交给已经运行的窗口打开；可开启“允许同时打开多张图片”在新窗口打开。
 
 ## 后续计划

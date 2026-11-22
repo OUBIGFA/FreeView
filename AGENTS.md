@@ -33,7 +33,7 @@
 
 - 应用改动语言文件后运行 `go tool nsgo i18n .` 重新生成 `locales/catalog_gen.go`，并提交生成结果。
 - 在 bash 中给测试进程指定设置目录时，要设置 `APPDATA`（大写）；设置 `AppData` 不会生效。
-- Release 只上传安装器 `FreeView-<版本>.exe`，不上传 `.sha256`、appcast 或其他文件。正式发布构建不设置 `NSGO_UPDATES_KEY`，也就不生成 appcast。因此应用内的自动更新检查读不到更新源，会失败；用户需要从 Release 页面手动下载新版。更新签名私钥只放在被忽略的 `.local/secrets/nsgo-updates.key`，不打印、不入库。
+- Release 只上传安装器 `FreeView-<版本>.exe`，不上传 `.sha256`、appcast 或其他文件。自动更新不用更新源：`internal/update` 读 GitHub 最新 Release 的 tag 和安装器附件，用 GitHub 接口给出的 SHA-256（`digest`）校验下载，再以 `/S /RELAUNCH` 静默安装。因此 tag 必须是 `v<版本>`，附件必须叫 `FreeView-<版本>.exe`；换名或换格式会让已安装的用户检查不到更新。
 - `tools/deskrun` 的 `mem` 打印进程内存和 CPU 时间，`omouse`、`oshot` 操作和截图设置窗口等第二个窗口。
 - 从按键或菜单处理函数中打开窗口时，要通过 `Scope.Post` 在根作用域打开。否则窗口属于按键绑定的作用域，设置一变就会被关闭。
 

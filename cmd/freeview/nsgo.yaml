@@ -29,9 +29,3 @@ file_types:
 
 release:
   github: OUBIGFA/FreeView
-
-# Windows builds carry WinSparkle, which checks the latest GitHub Release's
-# appcast once a day. The secret key stays out of the repository; release
-# builds read it from NSGO_UPDATES_KEY (tools/build_installer.py).
-updates:
-  key: aiL8e2E94EkRqqAcklCjbAJO0bOIzASo2OQufOLn4jc=

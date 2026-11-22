@@ -22,6 +22,7 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/gen2brain/heic | v0.7.2 | MIT；内嵌的 HEIC 解码器（Rust crate `heic` 0.1.6）为 AGPL-3.0-only，其余 Rust 依赖为 MIT/Apache-2.0/Zlib（[清单与正文](licenses/heic-wasm-notices.txt)） | Windows 缺少 HEIF/HEVC 扩展时解码 HEIC |
 | github.com/gen2brain/jpegxl | v0.6.0 | MIT；内嵌 libjxl v0.11.2（BSD-3-Clause 及专利授权）和 Highway（Apache-2.0 或 BSD-3-Clause）（[正文](licenses/jpegxl-wasm-notices.txt)） | Windows 缺少 JPEG XL 扩展时解码 JPEG XL |
 | github.com/tetratelabs/wazero | v1.12.0 | Apache-2.0 | 运行上面两个 WebAssembly 解码器 |
+| github.com/Masterminds/semver/v3 | v3.5.0 | MIT | 比较版本号，检查更新 |
 | github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向 |
 | golang.org/x/image | v0.48.0 | BSD-3-Clause | BMP/TIFF 解码；nsgo 也使用 |
 | go.yaml.in/yaml/v3 | v3.0.6 | MIT 与 Apache-2.0 | 设置文件；nsgo 也使用 |
@@ -47,12 +48,6 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 两个 WebAssembly 解码器的许可正文整理自 crates.io 上对应版本的 crate 包、gen2brain/jpegxl 自带的 `lib/LICENSE.libjxl`、libjxl v0.11.2 的 `PATENTS` 和 google/highway 的 `LICENSE`。升级这两个模块时，按它们 `lib/` 中的 `Cargo.lock` 和 `Makefile` 重新核对。构建时启用 `nodynamic` 标签（`nsgo.yaml`），它们不加载系统中的 libheif 或 libjxl DLL。
 
-## 安装在程序旁的库
-
-| 组件 | 版本 | 许可 | 引入原因 |
-| --- | --- | --- | --- |
-| [WinSparkle](https://github.com/vslavik/winsparkle) | 0.9.4（`WinSparkle.dll`，x64） | MIT；内含 expat（MIT），并含 OpenSSL 署名 | 自动更新。`nsgo build` 从官方 Release 下载并按 nsgo 固定的 SHA-256 `6037df37fc263bd1650a1c4949681a9d40ffe991d01f35892a406cb5d103c976` 校验后放到程序旁 |
-
 ## 使用的系统组件
 
 ICO、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映像组件（WIC）及用户从 Microsoft Store 安装的扩展解码。FreeView 只调用系统接口，不随安装包分发这些解码器。
@@ -60,7 +55,7 @@ ICO、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映像组件（WIC）
 ## 随安装包分发
 
 - 安装器会在程序目录写入 `LICENSE.txt` 和 `THIRD_PARTY_NOTICES.txt`。
-- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Go 运行时与标准库、上表依赖模块的许可正文和署名，以及 WinSparkle 发布包中的 `COPYING` 和 `COPYING.expat`。
+- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Go 运行时与标准库、上表依赖模块的许可正文和署名。
 - `THIRD_PARTY_NOTICES.txt` 是可再生成的产物，不入库。`python tools/build_installer.py` 每次构建都会重新生成它，并把它加入安装包。
 - 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试，再重新构建并核对 `THIRD_PARTY_NOTICES.txt` 的模块数。
 - 引入新的库、移植代码或外部素材时，登记名称、用途、版本、许可、署名和修改。

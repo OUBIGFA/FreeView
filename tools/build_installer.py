@@ -6,11 +6,6 @@ alone, and the installer also installs the GPL text and the notices of the
 software it includes. So this runs `go tool nsgo build` with the local NSIS
 on PATH, adds the license files to the package, recompiles its NSIS script and
 renames the installer and its checksum.
-
-Recompiling changes the installer, so the appcast nsgo signed for its own
-setup no longer matches. With NSGO_UPDATES_KEY set, as a release build has,
-tools/appcast signs the final installer and writes appcast-windows_x64.xml
-beside it for WinSparkle; without it no appcast is written, as nsgo does.
 """
 
 import hashlib
@@ -19,7 +14,6 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "cmd" / "freeview"
@@ -30,11 +24,6 @@ NOTICES = ROOT / "tools" / "generate_notices.py"
 LICENSE = ROOT / "LICENSE"
 LICENSE_NAME = "LICENSE.txt"
 NOTICES_NAME = "THIRD_PARTY_NOTICES.txt"
-APPCAST_NAME = "appcast-windows_x64.xml"
-# nsgo v0.2.0 puts WinSparkle.dll from this pinned release, which it keeps
-# in the user cache (cmd/nsgo/updates.go, winSparkleRelease), beside the app.
-WINSPARKLE = "WinSparkle-0.9.4"
-WINSPARKLE_LICENSES = ("COPYING", "COPYING.expat")
 
 
 def setting(name):
@@ -44,34 +33,12 @@ def setting(name):
     return match.group(1)
 
 
-def winsparkle_licenses():
-    """Extract WinSparkle's license files from nsgo's cached release."""
-    archive = Path(os.environ["LOCALAPPDATA"]) / "nsgo" / "downloads" / f"{WINSPARKLE}.zip"
-    target = DIST / "winsparkle-licenses"
-    target.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(archive) as z:
-        for name in WINSPARKLE_LICENSES:
-            (target / name).write_bytes(z.read(f"{WINSPARKLE}/{name}"))
-    return "WinSparkle 0.9.4 (WinSparkle.dll)=" + ",".join(str(target / name) for name in WINSPARKLE_LICENSES)
-
-
-def setting_block(block, name):
-    # The first "name:" in the indented lines under "block:".
-    match = re.search(rf"^{block}:\n(?:[ \t]+.*\n)*?[ \t]+{name}:\s*(\S+)\s*$",
-                      (APP / "nsgo.yaml").read_text(encoding="utf-8"), re.M)
-    if not match:
-        sys.exit(f"nsgo.yaml has no {block}.{name}")
-    return match.group(1)
-
-
 def add_licenses(package, name, version, env):
     executable = package / f"{name}.exe"
     script = package / f"{name}.nsi"
     if not executable.is_file() or not script.is_file():
         sys.exit(f"{package} has no {name}.exe or {name}.nsi")
     command = [sys.executable, str(NOTICES), str(executable), str(package / NOTICES_NAME), "--version", version]
-    if (package / "WinSparkle.dll").is_file():
-        command += ["--extra", winsparkle_licenses()]
     subprocess.run(command, env=env, check=True)
     (package / LICENSE_NAME).write_bytes(LICENSE.read_bytes())
 
@@ -127,22 +94,6 @@ def main():
         os.replace(old_sum, new_sum)
     new_sum.write_text(f"{digest}  {target.name}\n", encoding="utf-8")
     print(f"{target.relative_to(ROOT)}  {target.stat().st_size} bytes  sha256 {digest}")
-    write_appcast(target, version)
-
-
-def write_appcast(installer, version):
-    appcast = RELEASES / APPCAST_NAME
-    # nsgo's appcast, if it wrote one, offers its own setup, which is not released.
-    appcast.unlink(missing_ok=True)
-    if not os.environ.get("NSGO_UPDATES_KEY"):
-        print(f"no {APPCAST_NAME}: set NSGO_UPDATES_KEY to sign a release installer for WinSparkle")
-        return
-    subprocess.run(
-        ["go", "run", "./tools/appcast", "-installer", str(installer), "-version", version,
-         "-repo", setting_block("release", "github"), "-key", setting_block("updates", "key"), "-out", str(appcast)],
-        cwd=ROOT, check=True,
-    )
-    print(f"{appcast.relative_to(ROOT)}  signed for {installer.name}")
 
 
 if __name__ == "__main__":

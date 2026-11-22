@@ -8,7 +8,6 @@ import (
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/ui"
-	"github.com/nsgo-dev/nsgo/updater"
 	xdraw "golang.org/x/image/draw"
 
 	"github.com/OUBIGFA/FreeView/assets/branding"
@@ -65,7 +64,7 @@ func aboutGroups(cx *core.Scope) []ui.SettingsGroup {
 		}},
 		{ID: "updates", Title: locales.AboutUpdates(cx), Items: []ui.SettingsItem{
 			{ID: "check-updates", Title: locales.AboutCheckUpdates(cx), Description: locales.AboutCheckUpdatesHint(cx),
-				Control: button("about-check-updates", locales.AboutCheckNow(cx), func() { updater.Check(cx) })},
+				Control: button("about-check-updates", locales.AboutCheckNow(cx), func() { checkUpdates(cx, true) })},
 			{ID: "releases", Title: locales.AboutReleases(cx), Description: locales.AboutReleasesHint(cx),
 				Control: button("about-releases", locales.AboutOpen(cx), open(repositoryURL+"/releases"))},
 		}},

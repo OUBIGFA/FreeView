@@ -125,3 +125,12 @@ aboutView: 查看
 codecAV1: 需要从 Microsoft Store 安装“AV1 视频扩展”
 codecRaw: 需要从 Microsoft Store 安装“Raw 图像扩展”
 aboutApp: 基本信息
+updateTitle: "发现新版本 {version}"
+updateMessage: 现在下载并安装吗？安装时 FreeView 会关闭，装好后自动重新打开
+updateInstall: 下载并安装
+updateLater: 以后再说
+updateUpToDateTitle: 已是最新版本
+updateUpToDateMessage: "FreeView {version} 是目前最新的版本"
+updateFailedTitle: 更新失败
+updateFailedMessage: "无法检查或下载更新：{error}"
+updateOk: 确定

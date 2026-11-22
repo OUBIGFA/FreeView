@@ -55,6 +55,9 @@ var Parameters = map[string][]string{
 	"PrefsLoadFailed":         {"error_"},
 	"AboutVersion":            {"version"},
 	"AboutVersionDevelopment": {"version"},
+	"UpdateTitle":             {"version"},
+	"UpdateUpToDateMessage":   {"version"},
+	"UpdateFailedMessage":     {"error_"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -75,6 +78,9 @@ type Translation struct {
 	PrefsLoadFailed         func(error_ string) string
 	AboutVersion            func(version string) string
 	AboutVersionDevelopment func(version string) string
+	UpdateTitle             func(version string) string
+	UpdateUpToDateMessage   func(version string) string
+	UpdateFailedMessage     func(error_ string) string
 }
 
 var supplied = map[string]Translation{}
@@ -196,6 +202,12 @@ const (
 	textCodecAV1
 	textCodecRaw
 	textAboutApp
+	textUpdateMessage
+	textUpdateInstall
+	textUpdateLater
+	textUpdateUpToDateTitle
+	textUpdateFailedTitle
+	textUpdateOk
 	numTexts
 )
 
@@ -317,6 +329,12 @@ var keyOfText = [numTexts]string{
 	"codecAV1",
 	"codecRaw",
 	"aboutApp",
+	"updateMessage",
+	"updateInstall",
+	"updateLater",
+	"updateUpToDateTitle",
+	"updateFailedTitle",
+	"updateOk",
 }
 
 // textsEn are the messages without arguments in en.
@@ -435,7 +453,13 @@ var textsEn = i18n.NewTexts(""+
 	"View"+
 	"Install AV1 Video Extension from the Microsoft Store"+
 	"Install Raw Image Extension from the Microsoft Store"+
-	"Information",
+	"Information"+
+	"Download and install it now? FreeView closes during the install and opens again when it is done"+
+	"Download and install"+
+	"Later"+
+	"FreeView is up to date"+
+	"Update failed"+
+	"OK",
 	[]uint16{
 		8,
 		37,
@@ -552,6 +576,12 @@ var textsEn = i18n.NewTexts(""+
 		52,
 		52,
 		11,
+		95,
+		20,
+		5,
+		22,
+		13,
+		2,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -670,7 +700,13 @@ var textsZhHans = i18n.NewTexts(""+
 	"查看"+
 	"需要从 Microsoft Store 安装“AV1 视频扩展”"+
 	"需要从 Microsoft Store 安装“Raw 图像扩展”"+
-	"基本信息",
+	"基本信息"+
+	"现在下载并安装吗？安装时 FreeView 会关闭，装好后自动重新打开"+
+	"下载并安装"+
+	"以后再说"+
+	"已是最新版本"+
+	"更新失败"+
+	"确定",
 	[]uint16{
 		8,
 		45,
@@ -787,6 +823,12 @@ var textsZhHans = i18n.NewTexts(""+
 		54,
 		54,
 		12,
+		85,
+		15,
+		12,
+		18,
+		12,
+		6,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -878,6 +920,15 @@ func Supply(lang string, t Translation) {
 	}
 	if t.AboutVersionDevelopment != nil {
 		s.AboutVersionDevelopment = t.AboutVersionDevelopment
+	}
+	if t.UpdateTitle != nil {
+		s.UpdateTitle = t.UpdateTitle
+	}
+	if t.UpdateUpToDateMessage != nil {
+		s.UpdateUpToDateMessage = t.UpdateUpToDateMessage
+	}
+	if t.UpdateFailedMessage != nil {
+		s.UpdateFailedMessage = t.UpdateFailedMessage
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -1972,3 +2023,115 @@ func AboutApp(cx *core.Scope) string { return For(cx).AboutApp() }
 
 // AboutApp is the package's AboutApp in the language of msgs.
 func (msgs Messages) AboutApp() string { return msgs.text(textAboutApp) }
+
+// UpdateTitle says "Version {version} is available"
+// in the language the app shows under cx.
+func UpdateTitle(cx *core.Scope, version string) string { return For(cx).UpdateTitle(version) }
+
+// UpdateTitle is the package's UpdateTitle in the language of msgs.
+func (msgs Messages) UpdateTitle(version string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.UpdateTitle(version))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].UpdateTitle; f != nil {
+			return f(version)
+		}
+		switch lang {
+		case "", "en":
+			return "Version " + msgs.arg(version) + " is available"
+		case "zh-Hans":
+			return "发现新版本 " + version
+		}
+	}
+}
+
+// UpdateMessage says "Download and install it now? FreeView closes during the install and opens again when it is done"
+// in the language the app shows under cx.
+func UpdateMessage(cx *core.Scope) string { return For(cx).UpdateMessage() }
+
+// UpdateMessage is the package's UpdateMessage in the language of msgs.
+func (msgs Messages) UpdateMessage() string { return msgs.text(textUpdateMessage) }
+
+// UpdateInstall says "Download and install"
+// in the language the app shows under cx.
+func UpdateInstall(cx *core.Scope) string { return For(cx).UpdateInstall() }
+
+// UpdateInstall is the package's UpdateInstall in the language of msgs.
+func (msgs Messages) UpdateInstall() string { return msgs.text(textUpdateInstall) }
+
+// UpdateLater says "Later"
+// in the language the app shows under cx.
+func UpdateLater(cx *core.Scope) string { return For(cx).UpdateLater() }
+
+// UpdateLater is the package's UpdateLater in the language of msgs.
+func (msgs Messages) UpdateLater() string { return msgs.text(textUpdateLater) }
+
+// UpdateUpToDateTitle says "FreeView is up to date"
+// in the language the app shows under cx.
+func UpdateUpToDateTitle(cx *core.Scope) string { return For(cx).UpdateUpToDateTitle() }
+
+// UpdateUpToDateTitle is the package's UpdateUpToDateTitle in the language of msgs.
+func (msgs Messages) UpdateUpToDateTitle() string { return msgs.text(textUpdateUpToDateTitle) }
+
+// UpdateUpToDateMessage says "FreeView {version} is the newest version"
+// in the language the app shows under cx.
+func UpdateUpToDateMessage(cx *core.Scope, version string) string {
+	return For(cx).UpdateUpToDateMessage(version)
+}
+
+// UpdateUpToDateMessage is the package's UpdateUpToDateMessage in the language of msgs.
+func (msgs Messages) UpdateUpToDateMessage(version string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.UpdateUpToDateMessage(version))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].UpdateUpToDateMessage; f != nil {
+			return f(version)
+		}
+		switch lang {
+		case "", "en":
+			return "FreeView " + msgs.arg(version) + " is the newest version"
+		case "zh-Hans":
+			return "FreeView " + version + " 是目前最新的版本"
+		}
+	}
+}
+
+// UpdateFailedTitle says "Update failed"
+// in the language the app shows under cx.
+func UpdateFailedTitle(cx *core.Scope) string { return For(cx).UpdateFailedTitle() }
+
+// UpdateFailedTitle is the package's UpdateFailedTitle in the language of msgs.
+func (msgs Messages) UpdateFailedTitle() string { return msgs.text(textUpdateFailedTitle) }
+
+// UpdateFailedMessage says "Cannot check for or download the update: {error}"
+// in the language the app shows under cx.
+func UpdateFailedMessage(cx *core.Scope, error_ string) string {
+	return For(cx).UpdateFailedMessage(error_)
+}
+
+// UpdateFailedMessage is the package's UpdateFailedMessage in the language of msgs.
+func (msgs Messages) UpdateFailedMessage(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.UpdateFailedMessage(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].UpdateFailedMessage; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot check for or download the update: " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法检查或下载更新：" + error_
+		}
+	}
+}
+
+// UpdateOk says "OK"
+// in the language the app shows under cx.
+func UpdateOk(cx *core.Scope) string { return For(cx).UpdateOk() }
+
+// UpdateOk is the package's UpdateOk in the language of msgs.
+func (msgs Messages) UpdateOk() string { return msgs.text(textUpdateOk) }

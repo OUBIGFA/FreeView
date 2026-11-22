@@ -125,3 +125,12 @@ aboutView: View
 codecAV1: Install AV1 Video Extension from the Microsoft Store
 codecRaw: Install Raw Image Extension from the Microsoft Store
 aboutApp: Information
+updateTitle: "Version {version} is available"
+updateMessage: Download and install it now? FreeView closes during the install and opens again when it is done
+updateInstall: Download and install
+updateLater: Later
+updateUpToDateTitle: FreeView is up to date
+updateUpToDateMessage: "FreeView {version} is the newest version"
+updateFailedTitle: Update failed
+updateFailedMessage: "Cannot check for or download the update: {error}"
+updateOk: OK
