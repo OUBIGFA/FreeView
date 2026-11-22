@@ -267,7 +267,7 @@ var keyOfText = [numTexts]string{
 var textsEn = i18n.NewTexts(""+
 	"FreeView"+
 	"Drop an image, folder or archive here"+
-	"Or press Ctrl+O to open one. Press P for preferences."+
+	"Or press Ctrl+O to open one, or P for preferences"+
 	"Open…"+
 	"Move to Recycle Bin?"+
 	"Delete"+
@@ -327,7 +327,7 @@ var textsEn = i18n.NewTexts(""+
 	"Mouse buttons and wheel"+
 	"Keyboard"+
 	"Shortcuts"+
-	"Separate shortcuts with commas, such as right, ctrl+shift+n. Record adds the next key you press."+
+	"Separate shortcuts with commas, such as right, ctrl+shift+n; Record adds the next key you press"+
 	"Record"+
 	"Press a key…"+
 	"Viewing"+
@@ -357,7 +357,7 @@ var textsEn = i18n.NewTexts(""+
 	[]uint16{
 		8,
 		37,
-		53,
+		49,
 		7,
 		20,
 		6,
@@ -417,7 +417,7 @@ var textsEn = i18n.NewTexts(""+
 		23,
 		8,
 		9,
-		96,
+		95,
 		6,
 		14,
 		7,
@@ -450,7 +450,7 @@ var textsEn = i18n.NewTexts(""+
 var textsZhHans = i18n.NewTexts(""+
 	"FreeView"+
 	"将图片、文件夹或压缩包拖到这里"+
-	"也可以按 Ctrl+O 打开。按 P 打开设置。"+
+	"也可以按 Ctrl+O 打开，按 P 打开设置"+
 	"打开…"+
 	"移到回收站？"+
 	"删除"+
@@ -510,7 +510,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"鼠标按键与滚轮"+
 	"键盘"+
 	"快捷键"+
-	"多个快捷键用英文逗号分隔，例如 right, ctrl+shift+n。点“录制”后按下的键会被添加。"+
+	"多个快捷键用英文逗号分隔，例如 right, ctrl+shift+n；点“录制”后按下的键会被添加"+
 	"录制"+
 	"请按键…"+
 	"查看"+
@@ -540,7 +540,7 @@ var textsZhHans = i18n.NewTexts(""+
 	[]uint16{
 		8,
 		45,
-		50,
+		47,
 		9,
 		18,
 		6,
@@ -600,7 +600,7 @@ var textsZhHans = i18n.NewTexts(""+
 		21,
 		6,
 		9,
-		113,
+		110,
 		6,
 		12,
 		6,
@@ -740,7 +740,7 @@ func EmptyTitle(cx *core.Scope) string { return For(cx).EmptyTitle() }
 // EmptyTitle is the package's EmptyTitle in the language of msgs.
 func (msgs Messages) EmptyTitle() string { return msgs.text(textEmptyTitle) }
 
-// EmptyHint says "Or press Ctrl+O to open one. Press P for preferences."
+// EmptyHint says "Or press Ctrl+O to open one, or P for preferences"
 // in the language the app shows under cx.
 func EmptyHint(cx *core.Scope) string { return For(cx).EmptyHint() }
 
@@ -831,7 +831,7 @@ func DeleteTitle(cx *core.Scope) string { return For(cx).DeleteTitle() }
 // DeleteTitle is the package's DeleteTitle in the language of msgs.
 func (msgs Messages) DeleteTitle() string { return msgs.text(textDeleteTitle) }
 
-// DeleteMessage says "{name} will be moved to the Recycle Bin."
+// DeleteMessage says "{name} will be moved to the Recycle Bin"
 // in the language the app shows under cx.
 func DeleteMessage(cx *core.Scope, name string) string { return For(cx).DeleteMessage(name) }
 
@@ -846,9 +846,9 @@ func (msgs Messages) DeleteMessage(name string) string {
 		}
 		switch lang {
 		case "", "en":
-			return msgs.arg(name) + " will be moved to the Recycle Bin."
+			return msgs.arg(name) + " will be moved to the Recycle Bin"
 		case "zh-Hans":
-			return name + " 将被移到回收站。"
+			return name + " 将被移到回收站"
 		}
 	}
 }
@@ -1344,7 +1344,7 @@ func PrefsKeyboardGroup(cx *core.Scope) string { return For(cx).PrefsKeyboardGro
 // PrefsKeyboardGroup is the package's PrefsKeyboardGroup in the language of msgs.
 func (msgs Messages) PrefsKeyboardGroup() string { return msgs.text(textPrefsKeyboardGroup) }
 
-// PrefsKeysHint says "Separate shortcuts with commas, such as right, ctrl+shift+n. Record adds the next key you press."
+// PrefsKeysHint says "Separate shortcuts with commas, such as right, ctrl+shift+n; Record adds the next key you press"
 // in the language the app shows under cx.
 func PrefsKeysHint(cx *core.Scope) string { return For(cx).PrefsKeysHint() }
 

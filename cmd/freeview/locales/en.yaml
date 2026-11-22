@@ -1,12 +1,12 @@
 appName: FreeView
 emptyTitle: Drop an image, folder or archive here
-emptyHint: "Or press Ctrl+O to open one. Press P for preferences."
+emptyHint: "Or press Ctrl+O to open one, or P for preferences"
 openButton: Open…
 loadFailed: "Cannot show {name}: {error}"
 folderEmpty: No images in {name}
 openFailed: "Cannot open {name}: {error}"
 deleteTitle: Move to Recycle Bin?
-deleteMessage: "{name} will be moved to the Recycle Bin."
+deleteMessage: "{name} will be moved to the Recycle Bin"
 deleteConfirm: Delete
 cancel: Cancel
 deleteFailed: "Cannot delete {name}: {error}"
@@ -68,7 +68,7 @@ prefsMouse: Mouse
 prefsMouseGroup: Mouse buttons and wheel
 prefsKeyboard: Keyboard
 prefsKeyboardGroup: Shortcuts
-prefsKeysHint: "Separate shortcuts with commas, such as right, ctrl+shift+n. Record adds the next key you press."
+prefsKeysHint: "Separate shortcuts with commas, such as right, ctrl+shift+n; Record adds the next key you press"
 prefsRecord: Record
 prefsRecording: Press a key…
 prefsView: Viewing

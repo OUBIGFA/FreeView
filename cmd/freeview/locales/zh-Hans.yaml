@@ -1,12 +1,12 @@
 appName: FreeView
 emptyTitle: 将图片、文件夹或压缩包拖到这里
-emptyHint: 也可以按 Ctrl+O 打开。按 P 打开设置。
+emptyHint: 也可以按 Ctrl+O 打开，按 P 打开设置
 openButton: 打开…
 loadFailed: "无法显示 {name}：{error}"
 folderEmpty: "{name} 中没有图片"
 openFailed: "无法打开 {name}：{error}"
 deleteTitle: 移到回收站？
-deleteMessage: "{name} 将被移到回收站。"
+deleteMessage: "{name} 将被移到回收站"
 deleteConfirm: 删除
 cancel: 取消
 deleteFailed: "无法删除 {name}：{error}"
@@ -68,7 +68,7 @@ prefsMouse: 鼠标
 prefsMouseGroup: 鼠标按键与滚轮
 prefsKeyboard: 键盘
 prefsKeyboardGroup: 快捷键
-prefsKeysHint: 多个快捷键用英文逗号分隔，例如 right, ctrl+shift+n。点“录制”后按下的键会被添加。
+prefsKeysHint: 多个快捷键用英文逗号分隔，例如 right, ctrl+shift+n；点“录制”后按下的键会被添加
 prefsRecord: 录制
 prefsRecording: 请按键…
 prefsView: 查看
