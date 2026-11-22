@@ -43,6 +43,8 @@ actionCopyPath: 复制路径
 actionCopyImage: 复制图片
 actionSlideshow: 幻灯片
 actionInfo: 显示图片信息
+actionAlwaysOnTop: 窗口置顶
+actionTitleBar: 显示标题栏
 actionMenu: 显示菜单
 actionPreferences: 设置…
 gestureWheelUp: 滚轮向上
@@ -79,6 +81,8 @@ prefsFitOriginal: 始终原始大小
 prefsBackground: 背景颜色
 prefsZoomStep: 缩放步长
 prefsShowInfo: 显示图片信息
+prefsAlwaysOnTop: 窗口置顶
+prefsShowTitleBar: 显示标题栏
 prefsSort: 排序方式
 prefsSortName: 名称
 prefsSortModified: 修改日期

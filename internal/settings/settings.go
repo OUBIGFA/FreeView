@@ -45,12 +45,14 @@ const (
 	Info         Action = "info"
 	Menu         Action = "menu"
 	Preferences  Action = "preferences"
+	AlwaysOnTop  Action = "always_on_top" // toggles the window above all others
+	TitleBar     Action = "title_bar"     // shows or hides the window's title bar
 )
 
 // Actions lists every action in the order the preferences window shows them.
 var Actions = []Action{Next, Previous, First, Last, ZoomIn, ZoomOut, ZoomFit, ZoomOriginal,
 	RotateLeft, RotateRight, FlipH, FlipV, FullScreen, Escape, Close, Minimize, Open, Reveal,
-	Delete, CopyPath, CopyImage, Slideshow, Info, Menu, Preferences}
+	Delete, CopyPath, CopyImage, Slideshow, Info, AlwaysOnTop, TitleBar, Menu, Preferences}
 
 // Gesture is a mouse input that can be bound to an action.
 type Gesture string
@@ -104,6 +106,8 @@ type Config struct {
 	Background       string              `yaml:"background"` // #rrggbb
 	ShowInfo         bool                `yaml:"show_info"`
 	ConfirmDelete    bool                `yaml:"confirm_delete"`
+	AlwaysOnTop      bool                `yaml:"always_on_top"`
+	ShowTitleBar     bool                `yaml:"show_title_bar"` // false: Honeyview's borderless window
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }
@@ -145,6 +149,8 @@ func Default() Config {
 			CopyImage:    {"ctrl+c"},
 			Slideshow:    {"s"},
 			Info:         {"i", "tab"},
+			AlwaysOnTop:  {},
+			TitleBar:     {},
 			Menu:         {},
 			Preferences:  {"p", "ctrl+p"},
 		},

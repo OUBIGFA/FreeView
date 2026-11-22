@@ -5,13 +5,15 @@
 // drops WM_MBUTTON* and turns XBUTTON1 into a back press. The package
 // subclasses the window (SetWindowLongPtrW with GWLP_WNDPROC), reports
 // clicks of those buttons and lets every other message through unchanged.
+// The same subclass starts Windows' own window move for DragWindow.
 //
-// This is a stopgap until nsgo reports these buttons itself; see
+// The buttons are a stopgap until nsgo reports them itself; see
 // docs/roadmap.md.
 package winmouse
 
 import (
 	"errors"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -33,6 +35,8 @@ const (
 	wmXButtonUp   = 0x020C
 	gwlpWndProc   = ^uintptr(3) // -4
 	xButton1      = 1
+	wmSysCommand  = 0x0112
+	scDragMove    = 0xF012 // SC_MOVE | HTCAPTION: move with the mouse, as a title bar drag does
 )
 
 var (
@@ -45,10 +49,22 @@ var (
 	procSetWindowLongPtr    = user32.NewProc("SetWindowLongPtrW")
 	procCallWindowProc      = user32.NewProc("CallWindowProcW")
 	procGetCurrentProcessID = kernel32.NewProc("GetCurrentProcessId")
-	original                uintptr
-	report                  func(Button)
-	middleDown              bool
-	wndProcCallback         = syscall.NewCallback(wndProc)
+	procPostMessage         = user32.NewProc("PostMessageW")
+	procReleaseCapture      = user32.NewProc("ReleaseCapture")
+	procDefWindowProc       = user32.NewProc("DefWindowProcW")
+	procRegisterMessage     = user32.NewProc("RegisterWindowMessageW")
+	attached                atomic.Uintptr // the subclassed window
+	// msgDrag asks the window's own thread to start the move: only the
+	// thread holding the mouse capture can release it.
+	msgDrag = func() uint32 {
+		name, _ := syscall.UTF16PtrFromString("FreeViewDragWindow")
+		r, _, _ := procRegisterMessage.Call(uintptr(unsafe.Pointer(name)))
+		return uint32(r)
+	}()
+	original        uintptr
+	report          func(Button)
+	middleDown      bool
+	wndProcCallback = syscall.NewCallback(wndProc)
 )
 
 // Attach waits for the process's first visible nsgo window and reports
@@ -68,12 +84,23 @@ func Attach(timeout time.Duration, fn func(Button)) error {
 				return err
 			}
 			original = prev
+			attached.Store(hwnd)
 			return nil
 		}
 		if time.Now().After(deadline) {
 			return errors.New("winmouse: no window to attach to")
 		}
 		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+// DragWindow moves the window with the mouse while the left button stays
+// down, through Windows' move loop: snapping to screen edges works as on a
+// title bar. It may be called from any goroutine; before Attach it does
+// nothing.
+func DragWindow() {
+	if hwnd := attached.Load(); hwnd != 0 {
+		procPostMessage.Call(hwnd, uintptr(msgDrag), 0, 0)
 	}
 }
 
@@ -103,6 +130,12 @@ func findWindow() uintptr {
 
 func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case msgDrag:
+		// DefWindowProc rather than nsgo's procedure runs the move loop,
+		// which returns once the button is released.
+		procReleaseCapture.Call()
+		procDefWindowProc.Call(hwnd, wmSysCommand, scDragMove, 0)
+		return 0
 	case wmMButtonDown:
 		middleDown = true
 	case wmMButtonUp:

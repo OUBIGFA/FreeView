@@ -121,3 +121,26 @@ func TestShowsWhyAFileCannotBeShown(t *testing.T) {
 		t.Errorf("error = %q", v.Text)
 	}
 }
+
+// Without a title bar, the default, a strip at the top moves the window.
+func TestDragStripWithoutTitleBar(t *testing.T) {
+	app := start(t)
+	app.WaitFor("id:open", 5*time.Second)
+	// Its height is the hidden title bar's, 0 in the test model.
+	if len(app.QueryMounted("id:drag")) == 0 {
+		t.Error("no drag strip without the title bar")
+	}
+}
+
+// With the title bar, the system's moves the window and the strip goes.
+func TestNoDragStripWithTitleBar(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("AppData", dir)
+	os.MkdirAll(filepath.Join(dir, "FreeView"), 0o755)
+	os.WriteFile(filepath.Join(dir, "FreeView", "config.yaml"), []byte("show_title_bar: true\n"), 0o644)
+	app := nsgotest.Start(t, Root, nsgotest.Size(800, 600))
+	app.WaitFor("id:open", 5*time.Second)
+	if len(app.QueryMounted("id:drag")) > 0 {
+		t.Error("drag strip shown with the title bar")
+	}
+}

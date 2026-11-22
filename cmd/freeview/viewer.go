@@ -17,6 +17,7 @@ import (
 	"github.com/OUBIGFA/FreeView/internal/catalog"
 	"github.com/OUBIGFA/FreeView/internal/picture"
 	"github.com/OUBIGFA/FreeView/internal/settings"
+	"github.com/OUBIGFA/FreeView/internal/winmouse"
 )
 
 const (
@@ -65,7 +66,9 @@ type viewer struct {
 	message   *core.Signal[string]
 
 	pointer    core.Point // last pointer position in the viewport
+	downAt     core.Point // where the left button last went down
 	panStart   core.Point
+	movingWin  bool // the current drag moves the window, not the image
 	touchpad   core.Points
 	loadSeq    uint64
 	messageSeq uint64
@@ -109,7 +112,28 @@ func newViewer(cx *core.Scope) *viewer {
 	cx.Effect(v.updateTitle)
 	cx.Effect(v.updateMenu)
 	cx.Effect(v.scheduleSlide)
+	v.applyWindow()
 	return v
+}
+
+// applyWindow keeps the window topmost and its title bar as the
+// preferences say. Memos limit the calls to real changes, so saving any
+// other preference does not reframe the window.
+func (v *viewer) applyWindow() {
+	cx := v.cx
+	onTop := core.NewMemo(cx, func() bool { return v.cfg.Get().AlwaysOnTop })
+	titleBar := core.NewMemo(cx, func() bool { return v.cfg.Get().ShowTitleBar })
+	cx.Effect(func() {
+		desktop.SetWindowLevel(cx, pick(onTop.Get(), desktop.WindowLevelFloating, desktop.WindowLevelNormal))
+	})
+	cx.Effect(func() {
+		show := titleBar.Get()
+		desktop.SetTitleBar(cx, pick(show, desktop.TitleBarDefault, desktop.TitleBarHidden), 0)
+		// Without a title bar the window has no caption buttons either, as
+		// Honeyview's borderless window; Esc, the middle button, Alt+F4 or
+		// the system menu of the drag strip close it.
+		desktop.SetWindowControls(cx, desktop.WindowControls{Hidden: !show})
+	})
 }
 
 func never[T any](T, T) bool { return false }
@@ -445,6 +469,10 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 		}
 	case settings.Info:
 		v.info.Set(!v.info.Get())
+	case settings.AlwaysOnTop:
+		v.update(func(c *settings.Config) { c.AlwaysOnTop = !c.AlwaysOnTop })
+	case settings.TitleBar:
+		v.update(func(c *settings.Config) { c.ShowTitleBar = !c.ShowTitleBar })
 	case settings.Menu:
 		desktop.PopupMenu(cx, v.menuItems(), v.pointer, nil)
 	case settings.Preferences:
@@ -633,23 +661,29 @@ func formatBytes(n int64) string {
 // centered at the viewport's center plus the offset, then rotated and
 // mirrored about its center.
 func (v *viewer) imageStyle() core.Style {
-	p := v.img.Get().pic
-	vp := v.viewport.Get()
-	pp := v.currentScale() / v.ratio() // points per image pixel
-	w, h := float64(p.Width)*pp, float64(p.Height)*pp
-	// Clamping here keeps the image in place as the window resizes.
-	o := v.clampOffset(v.offset.Get(), v.currentScale())
+	x, y, w, h := v.imageBox()
 	sx := float32(1)
 	if v.mirror.Get() {
 		sx = -1
 	}
 	return core.Style{
 		Position: core.Absolute,
-		Left:     core.Pt(core.Points(float64(vp.Width)/2 + float64(o.X) - w/2)),
-		Top:      core.Pt(core.Points(float64(vp.Height)/2 + float64(o.Y) - h/2)),
+		Left:     core.Pt(core.Points(x - w/2)),
+		Top:      core.Pt(core.Points(y - h/2)),
 		Width:    core.Pt(core.Points(w)), Height: core.Pt(core.Points(h)),
 		Transform: core.Transform{Rotate: float32(v.rotate.Get()), ScaleX: sx, ScaleY: 1},
 	}
+}
+
+// imageBox is the image's unrotated box in the viewport: its center and
+// size in points.
+func (v *viewer) imageBox() (x, y, w, h float64) {
+	p := v.img.Get().pic
+	vp := v.viewport.Get()
+	pp := v.currentScale() / v.ratio() // points per image pixel
+	// Clamping here keeps the image in place as the window resizes.
+	o := v.clampOffset(v.offset.Get(), v.currentScale())
+	return float64(vp.Width)/2 + float64(o.X), float64(vp.Height)/2 + float64(o.Y), float64(p.Width) * pp, float64(p.Height) * pp
 }
 
 func (v *viewer) render(cx *core.Scope) core.Node {
@@ -666,6 +700,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position },
 		OnWheel:       v.wheel,
 		OnPan:         v.pan,
+		OnPressDown:   func(e core.PressEvent) { v.downAt = e.Position },
 		OnPress:       v.press,
 		OnContextMenu: func(e core.ContextMenuEvent) { v.pointer = e.Position; v.gesture(settings.RightClick, &e.Position) },
 		OnFileDrop: func(uris []string) {
@@ -683,6 +718,20 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 				Then: func(cx *core.Scope) core.Node {
 					return core.Image{TestID: "image", SourceFunc: func() core.ImageSource { return v.img.Get().src },
 						ResizeMode: core.Stretch, FadeDuration: time.Nanosecond, StyleFunc: v.imageStyle}
+				},
+			},
+			// Without a title bar, a strip as tall as the hidden one moves the
+			// window: Windows drags it, maximizes it on a double click and
+			// opens the system menu on a right click. Its height is 0 in full
+			// screen, where there is nothing to move.
+			core.Show{
+				When: func() bool { return !v.cfg.Get().ShowTitleBar },
+				Then: func(cx *core.Scope) core.Node {
+					return core.View{TestID: "drag", Desktop: core.DesktopViewProps{WindowDrag: core.WindowDragOn},
+						StyleFunc: func() core.Style {
+							return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0),
+								Height: core.Pt(desktop.TitleBar(cx).Top)}
+						}}
 				},
 			},
 			core.Show{
@@ -772,16 +821,39 @@ func pick[T any](cond bool, a, b T) T {
 	return b
 }
 
-// pan drags the image while it overflows the viewport.
+// pan drags the image while it overflows the viewport. A drag that starts
+// on the background beside the image moves the window instead, as
+// Honeyview's does; clicks there keep their bindings, since only a drag
+// past the pan's threshold starts the move.
 func (v *viewer) pan(e core.PanEvent) {
 	switch e.Phase {
 	case core.GestureBegan:
+		v.movingWin = !v.onImage(v.downAt) && !desktop.FullScreen(v.cx)
+		if v.movingWin {
+			winmouse.DragWindow()
+			return
+		}
 		v.panStart = v.clampOffset(v.offset.Get(), v.currentScale())
 		fallthrough
 	case core.GestureChanged:
+		if v.movingWin {
+			return
+		}
 		next := core.Point{X: v.panStart.X + e.Translation.X, Y: v.panStart.Y + e.Translation.Y}
 		v.offset.Set(v.clampOffset(next, v.currentScale()))
 	}
+}
+
+// onImage reports whether p, in the viewport, is on the shown image.
+func (v *viewer) onImage(p core.Point) bool {
+	if v.img.Get().src.Empty() {
+		return false
+	}
+	x, y, w, h := v.imageBox()
+	if v.rotate.Get()%180 != 0 {
+		w, h = h, w // a quarter turn about the center swaps the box's sides
+	}
+	return math.Abs(float64(p.X)-x) <= w/2 && math.Abs(float64(p.Y)-y) <= h/2
 }
 
 func (v *viewer) press(e core.PressEvent) {

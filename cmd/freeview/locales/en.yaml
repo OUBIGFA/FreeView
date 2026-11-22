@@ -43,6 +43,8 @@ actionCopyPath: Copy path
 actionCopyImage: Copy image
 actionSlideshow: Slideshow
 actionInfo: Show information
+actionAlwaysOnTop: Always on top
+actionTitleBar: Show title bar
 actionMenu: Show menu
 actionPreferences: Preferences…
 gestureWheelUp: Wheel up
@@ -79,6 +81,8 @@ prefsFitOriginal: Always original size
 prefsBackground: Background color
 prefsZoomStep: Zoom step
 prefsShowInfo: Show image information
+prefsAlwaysOnTop: Keep the window on top
+prefsShowTitleBar: Show the title bar
 prefsSort: Sort by
 prefsSortName: Name
 prefsSortModified: Date modified

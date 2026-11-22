@@ -114,6 +114,8 @@ const (
 	textActionCopyImage
 	textActionSlideshow
 	textActionInfo
+	textActionAlwaysOnTop
+	textActionTitleBar
 	textActionMenu
 	textActionPreferences
 	textGestureWheelUp
@@ -150,6 +152,8 @@ const (
 	textPrefsBackground
 	textPrefsZoomStep
 	textPrefsShowInfo
+	textPrefsAlwaysOnTop
+	textPrefsShowTitleBar
 	textPrefsSort
 	textPrefsSortName
 	textPrefsSortModified
@@ -205,6 +209,8 @@ var keyOfText = [numTexts]string{
 	"actionCopyImage",
 	"actionSlideshow",
 	"actionInfo",
+	"actionAlwaysOnTop",
+	"actionTitleBar",
 	"actionMenu",
 	"actionPreferences",
 	"gestureWheelUp",
@@ -241,6 +247,8 @@ var keyOfText = [numTexts]string{
 	"prefsBackground",
 	"prefsZoomStep",
 	"prefsShowInfo",
+	"prefsAlwaysOnTop",
+	"prefsShowTitleBar",
 	"prefsSort",
 	"prefsSortName",
 	"prefsSortModified",
@@ -294,6 +302,8 @@ var textsEn = i18n.NewTexts(""+
 	"Copy image"+
 	"Slideshow"+
 	"Show information"+
+	"Always on top"+
+	"Show title bar"+
 	"Show menu"+
 	"Preferences…"+
 	"Wheel up"+
@@ -330,6 +340,8 @@ var textsEn = i18n.NewTexts(""+
 	"Background color"+
 	"Zoom step"+
 	"Show image information"+
+	"Keep the window on top"+
+	"Show the title bar"+
 	"Sort by"+
 	"Name"+
 	"Date modified"+
@@ -380,6 +392,8 @@ var textsEn = i18n.NewTexts(""+
 		10,
 		9,
 		16,
+		13,
+		14,
 		9,
 		14,
 		8,
@@ -416,6 +430,8 @@ var textsEn = i18n.NewTexts(""+
 		16,
 		9,
 		22,
+		22,
+		18,
 		7,
 		4,
 		13,
@@ -469,6 +485,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"复制图片"+
 	"幻灯片"+
 	"显示图片信息"+
+	"窗口置顶"+
+	"显示标题栏"+
 	"显示菜单"+
 	"设置…"+
 	"滚轮向上"+
@@ -505,6 +523,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"背景颜色"+
 	"缩放步长"+
 	"显示图片信息"+
+	"窗口置顶"+
+	"显示标题栏"+
 	"排序方式"+
 	"名称"+
 	"修改日期"+
@@ -556,6 +576,8 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		18,
 		12,
+		15,
+		12,
 		9,
 		12,
 		12,
@@ -591,6 +613,8 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		12,
 		18,
+		12,
+		15,
 		12,
 		6,
 		12,
@@ -1145,6 +1169,20 @@ func ActionInfo(cx *core.Scope) string { return For(cx).ActionInfo() }
 // ActionInfo is the package's ActionInfo in the language of msgs.
 func (msgs Messages) ActionInfo() string { return msgs.text(textActionInfo) }
 
+// ActionAlwaysOnTop says "Always on top"
+// in the language the app shows under cx.
+func ActionAlwaysOnTop(cx *core.Scope) string { return For(cx).ActionAlwaysOnTop() }
+
+// ActionAlwaysOnTop is the package's ActionAlwaysOnTop in the language of msgs.
+func (msgs Messages) ActionAlwaysOnTop() string { return msgs.text(textActionAlwaysOnTop) }
+
+// ActionTitleBar says "Show title bar"
+// in the language the app shows under cx.
+func ActionTitleBar(cx *core.Scope) string { return For(cx).ActionTitleBar() }
+
+// ActionTitleBar is the package's ActionTitleBar in the language of msgs.
+func (msgs Messages) ActionTitleBar() string { return msgs.text(textActionTitleBar) }
+
 // ActionMenu says "Show menu"
 // in the language the app shows under cx.
 func ActionMenu(cx *core.Scope) string { return For(cx).ActionMenu() }
@@ -1396,6 +1434,20 @@ func PrefsShowInfo(cx *core.Scope) string { return For(cx).PrefsShowInfo() }
 
 // PrefsShowInfo is the package's PrefsShowInfo in the language of msgs.
 func (msgs Messages) PrefsShowInfo() string { return msgs.text(textPrefsShowInfo) }
+
+// PrefsAlwaysOnTop says "Keep the window on top"
+// in the language the app shows under cx.
+func PrefsAlwaysOnTop(cx *core.Scope) string { return For(cx).PrefsAlwaysOnTop() }
+
+// PrefsAlwaysOnTop is the package's PrefsAlwaysOnTop in the language of msgs.
+func (msgs Messages) PrefsAlwaysOnTop() string { return msgs.text(textPrefsAlwaysOnTop) }
+
+// PrefsShowTitleBar says "Show the title bar"
+// in the language the app shows under cx.
+func PrefsShowTitleBar(cx *core.Scope) string { return For(cx).PrefsShowTitleBar() }
+
+// PrefsShowTitleBar is the package's PrefsShowTitleBar in the language of msgs.
+func (msgs Messages) PrefsShowTitleBar() string { return msgs.text(textPrefsShowTitleBar) }
 
 // PrefsSort says "Sort by"
 // in the language the app shows under cx.

@@ -126,6 +126,10 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, x float64) { c.ZoomStep = x }, v, "zoom-step")},
 			{ID: "show-info", Title: locales.PrefsShowInfo(cx), Control: toggle(func(c settings.Config) bool { return c.ShowInfo },
 				func(c *settings.Config, on bool) { c.ShowInfo = on }, v, "show-info")},
+			{ID: "always-on-top", Title: locales.PrefsAlwaysOnTop(cx), Control: toggle(func(c settings.Config) bool { return c.AlwaysOnTop },
+				func(c *settings.Config, on bool) { c.AlwaysOnTop = on }, v, "always-on-top")},
+			{ID: "title-bar", Title: locales.PrefsShowTitleBar(cx), Control: toggle(func(c settings.Config) bool { return c.ShowTitleBar },
+				func(c *settings.Config, on bool) { c.ShowTitleBar = on }, v, "title-bar")},
 		}},
 		{ID: "browse", Title: locales.PrefsBrowseGroup(cx), Items: []ui.SettingsItem{
 			{ID: "sort", Title: locales.PrefsSort(cx), Control: choice(sorts, func(c settings.Config) settings.Sort { return c.Sort },

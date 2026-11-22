@@ -9,7 +9,7 @@
 - 平台：第一版只支持 Windows。macOS 和 Linux 需要另行授权后再做。
 - 原则：先显示图片；操作不阻塞界面；缓存有上限；错误显示给用户；界面元素尽量少。
 
-## 0.1.0 已实现（Windows 测试版）
+## 已实现（Windows 测试版，当前 0.2.0）
 
 功能清单见 [README](../README.md#已实现功能)。实现方式：
 
@@ -20,6 +20,7 @@
 | 解码 | JPEG/PNG/GIF/WebP（含动图）由 nsgo 解码。BMP/TIFF 由 `golang.org/x/image` 解码成像素。EXIF 方向用 `rwcarlsen/goexif` 读取 | 单元测试；GIF 动画在私有桌面实测 |
 | 缩放、平移、旋转 | 按图片像素和屏幕像素比计算位置；用 nsgo Transform 处理旋转和镜像 | 无界面测试检查缩放百分比；私有桌面检查平移 |
 | 输入绑定 | `internal/settings` 定义动作、鼠标操作和快捷键，存为 YAML。键盘用 `Scope.OnKey`；滚轮、拖动、双击、右键用 nsgo 事件；中键和侧键由 `internal/winmouse` 子类化窗口接收 | 单元测试；私有桌面实测改过的中键和滚轮绑定 |
+| 窗口（0.2.0） | 置顶用 nsgo `SetWindowLevel`。隐藏标题栏用 `SetTitleBar` 和 `SetWindowControls`，顶部拖动条用 `WindowDrag`（HTCAPTION）。拖动图片旁的背景时，`internal/winmouse` 让窗口线程执行 `WM_SYSCOMMAND SC_DRAGMOVE`，由 Windows 移动窗口 | 无界面测试检查拖动条；私有桌面用 `deskrun state/hit` 检查置顶、标题栏、拖动条命中和背景拖动的触发。真实鼠标拖动无法在私有桌面模拟，尚未自动验证 |
 | 设置窗口 | nsgo `ui.Settings`，分查看、鼠标、键盘三页 | 私有桌面中查看过界面；尚无自动交互测试 |
 | 预读 | 当前图片前后各一张提前读出字节。缓存最多 6 张、512 MB | 代码审查；还没有性能测量 |
 

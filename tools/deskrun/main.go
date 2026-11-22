@@ -16,6 +16,8 @@
 //	shotall <prefix>                 capture every visible nsgo window of the process
 //	list                             print the process's top-level windows
 //	alive                            print whether the process still runs
+//	state                            print whether the window is topmost, its frame's height beyond the client area (0: no title bar) and its position
+//	hit <x> <y>                      print WM_NCHITTEST at client x, y (2: HTCAPTION, drags the window)
 //
 // Posted messages bypass the system's input state: keys arrive without
 // modifiers held, so shortcuts with Ctrl or Shift cannot be tested here.
@@ -56,6 +58,9 @@ var (
 	pTerminate          = kernel.NewProc("TerminateProcess")
 	pGetClassName       = user32.NewProc("GetClassNameW")
 	pClientToScreen     = user32.NewProc("ClientToScreen")
+	pGetWindowRect      = user32.NewProc("GetWindowRect")
+	pGetWindowLong      = user32.NewProc("GetWindowLongPtrW")
+	pSend               = user32.NewProc("SendMessageW")
 )
 
 type startupInfo struct {
@@ -156,6 +161,18 @@ func main() {
 				return 1
 			})
 			pEnumDesktopWindows.Call(hdesk, cb, 0)
+		case "state":
+			const gwlExStyle, wsExTopmost = ^uintptr(19), 0x8 // GWL_EXSTYLE is -20
+			ex, _, _ := pGetWindowLong.Call(hwnd, gwlExStyle)
+			var wr, cr [4]int32
+			pGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&wr)))
+			pGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&cr)))
+			fmt.Println("state topmost", ex&wsExTopmost != 0, "frame", (wr[3]-wr[1])-cr[3], "at", wr[0], wr[1])
+		case "hit":
+			pt := [2]int32{int32(n(1)), int32(n(2))}
+			pClientToScreen.Call(hwnd, uintptr(unsafe.Pointer(&pt)))
+			r, _, _ := pSend.Call(hwnd, 0x84, 0, uintptr(uint32(uint16(pt[0]))|uint32(uint16(pt[1]))<<16))
+			fmt.Println("hit", f[1], f[2], r)
 		case "shot":
 			shot(hwnd, f[1])
 		case "mouse": // mouse msg wparam x y (client coords; wheel messages get screen coords)

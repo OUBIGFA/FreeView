@@ -95,6 +95,10 @@ func actionLabel(cx *core.Scope, a settings.Action) string {
 		return locales.ActionSlideshow(cx)
 	case settings.Info:
 		return locales.ActionInfo(cx)
+	case settings.AlwaysOnTop:
+		return locales.ActionAlwaysOnTop(cx)
+	case settings.TitleBar:
+		return locales.ActionTitleBar(cx)
 	case settings.Menu:
 		return locales.ActionMenu(cx)
 	case settings.Preferences:
@@ -162,7 +166,8 @@ func (v *viewer) menuItems() []desktop.MenuItem {
 		v.item(settings.ZoomIn), v.item(settings.ZoomOut), v.item(settings.ZoomFit), v.item(settings.ZoomOriginal), separator,
 		v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
 		v.checked(settings.FullScreen, desktop.FullScreen(v.cx)), v.checked(settings.Slideshow, v.slideshow.Get()),
-		v.checked(settings.Info, v.info.Get()), separator,
+		v.checked(settings.Info, v.info.Get()), v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop),
+		v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar), separator,
 		v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Delete), separator,
 		v.item(settings.Preferences), v.item(settings.Close),
 	}
@@ -182,6 +187,7 @@ func (v *viewer) updateMenu() {
 			v.item(settings.ZoomIn), v.item(settings.ZoomOut), v.item(settings.ZoomFit), v.item(settings.ZoomOriginal), separator,
 			v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
 			v.checked(settings.FullScreen, desktop.FullScreen(cx)), v.checked(settings.Info, v.info.Get()),
+			v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop), v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar),
 		}},
 		{Label: locales.MenuGo(cx), Items: []desktop.MenuItem{
 			v.item(settings.Next), v.item(settings.Previous), v.item(settings.First), v.item(settings.Last), separator,

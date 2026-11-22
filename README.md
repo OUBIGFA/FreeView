@@ -2,7 +2,7 @@
 
 FreeView 是一个开源看图软件：轻量、简洁、快速响应。它使用 **Go + [nsgo](https://github.com/nsgo-dev/nsgo) 原生界面**，交互参考 [qView](https://github.com/jurplel/qView)，以 Honeyview 为功能和体验标杆。
 
-**当前版本 0.1.0 是 Windows 测试版。** 尚未正式发布，没有提供下载页面。
+**当前版本 0.2.0 是 Windows 测试版。** 尚未正式发布，没有提供下载页面。
 
 ## 已实现功能
 
@@ -11,6 +11,7 @@ FreeView 是一个开源看图软件：轻量、简洁、快速响应。它使�
 - **压缩包**：ZIP/CBZ、7z/CB7、RAR/CBR、TAR/CBT 按文件夹方式浏览，不需要先解压。ZIP 和 7z 已用实际文件验证；RAR 和 TAR 的读取由依赖库提供，还没有用实际文件验证。
 - **浏览**：上一张、下一张、第一张、最后一张、幻灯片。排序方式可选资源管理器的自然排序（`2.jpg` 排在 `10.jpg` 前面）、修改日期或大小，也可以选择是否循环。相邻图片会提前读入。
 - **查看**：适应窗口、原始大小、以鼠标位置为中心缩放、拖动平移、旋转、水平/垂直翻转、全屏、图片信息叠加层。
+- **窗口**：默认不显示标题栏（类似 Honeyview 的无边框窗口），拖动窗口顶部或图片旁边的背景可移动窗口。可在设置或右键菜单中开启“显示标题栏”和“窗口置顶”（默认都关闭）。
 - **整理**：移到回收站（带确认）、复制图片、复制路径、在资源管理器中显示。
 - **自定义**：下面 13 种鼠标操作都可以绑定任意动作：滚轮（可配合 Ctrl/Shift/Alt）、中键、两个侧键、左键双击、右键。每个动作都可以设置多个快捷键，也可以录制快捷键。设置保存在 `%APPDATA%\FreeView\config.yaml`，这个文件也可以手动编辑。
 
@@ -36,8 +37,10 @@ cd cmd/freeview
 go tool nsgo dev      # 开发运行
 go tool nsgo check    # 检查
 go tool nsgo test     # 无界面测试
-go tool nsgo build    # 构建到 dist/，安装器在 dist/releases/
+go tool nsgo build    # 构建到 dist/
 ```
+
+在仓库根目录运行 `python tools/build_installer.py` 生成测试安装器 `dist/releases/FreeView-<版本>.exe`。脚本会把 `.local/tools/nsis-3.13/Bin` 加入 `PATH`，版本号取自 `cmd/freeview/nsgo.yaml`。
 
 在仓库根目录运行内部包测试：`go test ./internal/...`。运行仓库检查：`python tools/check.py`。
 
@@ -49,7 +52,7 @@ go tool nsgo build    # 构建到 dist/，安装器在 dist/releases/
 | `internal/catalog/` | 列出文件夹和压缩包中的图片，排序，读取图片 |
 | `internal/picture/` | 读取尺寸和 EXIF 方向，解码 BMP/TIFF |
 | `internal/settings/` | 动作、鼠标操作、快捷键与 YAML 设置文件 |
-| `internal/winmouse/` | 接收 nsgo 暂未提供给应用的中键和侧键 |
+| `internal/winmouse/` | 接收 nsgo 暂未提供给应用的中键和侧键；拖动背景时启动 Windows 的窗口移动 |
 | `tools/deskrun/` | 在独立的私有桌面中运行界面测试 |
 
 更多说明：[开发路线](docs/roadmap.md)、[仓库规划](docs/repository-plan.md)、[第三方组件](third_party/README.md)、[品牌素材](assets/branding/README.md)。

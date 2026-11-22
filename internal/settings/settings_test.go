@@ -14,6 +14,10 @@ func TestMissingFileGivesDefaults(t *testing.T) {
 	if c.Mouse[MiddleClick] != Close || c.Mouse[WheelDown] != Next {
 		t.Errorf("defaults = %v", c.Mouse)
 	}
+	// The window starts neither topmost nor with a title bar.
+	if c.AlwaysOnTop || c.ShowTitleBar {
+		t.Errorf("always on top %v, title bar %v", c.AlwaysOnTop, c.ShowTitleBar)
+	}
 }
 
 func TestFileOverridesOnlyWhatItNames(t *testing.T) {
