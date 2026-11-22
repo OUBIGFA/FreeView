@@ -200,10 +200,6 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 	v := p.v
 	fits := []ui.Option[settings.Fit]{{Value: settings.FitShrink, Label: locales.PrefsFitShrink(cx)},
 		{Value: settings.FitWindow, Label: locales.PrefsFitWindow(cx)}, {Value: settings.FitOriginal, Label: locales.PrefsFitOriginal(cx)}}
-	var colors []ui.Option[string]
-	for _, c := range []string{"#1e1e1e", "#000000", "#3c3c3c", "#808080", "#f0f0f0", "#ffffff"} {
-		colors = append(colors, ui.Option[string]{Value: c, Label: c})
-	}
 	var steps []ui.Option[float64]
 	for _, s := range []float64{1.1, 1.25, 1.5, 2} {
 		steps = append(steps, ui.Option[float64]{Value: s, Label: "× " + strconv.FormatFloat(s, 'f', -1, 64)})
@@ -218,8 +214,6 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 		{ID: "display", Title: locales.PrefsViewGroup(cx), Actions: []core.Node{reset}, Items: []ui.SettingsItem{
 			{ID: "fit", Title: locales.PrefsFit(cx), Description: locales.PrefsFitHint(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit },
 				func(c *settings.Config, x settings.Fit) { c.Fit = x }, v, "fit")},
-			{ID: "background", Title: locales.PrefsBackground(cx), Control: choice(colors, func(c settings.Config) string { return c.Background },
-				func(c *settings.Config, x string) { c.Background = x }, v, "background")},
 			{ID: "zoom-step", Title: locales.PrefsZoomStep(cx), Control: choice(steps, func(c settings.Config) float64 { return c.ZoomStep },
 				func(c *settings.Config, x float64) { c.ZoomStep = x }, v, "zoom-step")},
 			{ID: "show-info", Title: locales.PrefsShowInfo(cx), Control: toggle(func(c settings.Config) bool { return c.ShowInfo },
@@ -232,6 +226,9 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, on bool) { c.RememberWindow = on }, v, "remember-window")},
 			{ID: "open-maximized", Title: locales.PrefsOpenMaximized(cx), Control: toggle(func(c settings.Config) bool { return c.OpenMaximized },
 				func(c *settings.Config, on bool) { c.OpenMaximized = on }, v, "open-maximized")},
+			{ID: "multiple-windows", Title: locales.PrefsMultipleWindows(cx), Description: locales.PrefsMultipleWindowsHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.MultipleWindows },
+					func(c *settings.Config, on bool) { c.MultipleWindows = on }, v, "multiple-windows")},
 		}},
 		{ID: "browse", Title: locales.PrefsBrowseGroup(cx), Items: []ui.SettingsItem{
 			{ID: "sort", Title: locales.PrefsSort(cx), Control: choice(sorts, func(c settings.Config) settings.Sort { return c.Sort },

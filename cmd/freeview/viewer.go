@@ -746,11 +746,8 @@ func (v *viewer) updateTitle() {
 	desktop.SetTitle(v.cx, locales.Title(v.cx, name, v.positionText()))
 }
 
-// background is the viewport's color from the preferences.
-func (v *viewer) background() core.Color {
-	c, _ := settings.ParseColor(v.cfg.Get().Background)
-	return core.RGB(c)
-}
+// viewportColor is the dark gray behind the image, as Honeyview's.
+const viewportColor = 0x1e1e1e
 
 // infoText describes the shown image for the information overlay.
 func (v *viewer) infoText() string {
@@ -811,7 +808,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 	return core.View{
 		TestID: "viewport",
 		StyleFunc: func() core.Style {
-			return core.Style{FlexGrow: 1, FlexShrink: 1, Overflow: core.Hidden, Background: v.background()}
+			return core.Style{FlexGrow: 1, FlexShrink: 1, Overflow: core.Hidden, Background: core.RGB(viewportColor)}
 		},
 		OnLayout:      func(b core.Bounds) { v.viewport.Set(b.Size) },
 		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position; v.updateHand() },

@@ -79,7 +79,6 @@ prefsFitShrink: 只缩小大图
 prefsFitWindow: 适应窗口
 prefsFitOriginal: 原始大小
 prefsFitHint: 只缩小大图：大图缩小到窗口内，小图保持原始大小
-prefsBackground: 背景颜色
 prefsZoomStep: 缩放步长
 prefsShowInfo: 显示图片信息
 prefsAlwaysOnTop: 窗口置顶
@@ -100,6 +99,8 @@ menuFile: 文件
 menuView: 查看
 menuGo: 浏览
 prefsOpenMaximized: 打开时最大化窗口
+prefsMultipleWindows: 允许同时打开多张图片
+prefsMultipleWindowsHint: 开启后每次打开图片都使用新窗口；关闭时在已打开的窗口中显示
 prefsAbout: 关于
 aboutVersion: "版本 {version}"
 aboutVersionDevelopment: "版本 {version}（开发版，不检查更新）"

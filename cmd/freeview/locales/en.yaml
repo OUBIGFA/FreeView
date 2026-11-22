@@ -79,7 +79,6 @@ prefsFitShrink: Shrink large images
 prefsFitWindow: Fit to window
 prefsFitOriginal: Original size
 prefsFitHint: "Shrink large images: large images fit the window, small ones stay at original size"
-prefsBackground: Background color
 prefsZoomStep: Zoom step
 prefsShowInfo: Show image information
 prefsAlwaysOnTop: Keep the window on top
@@ -100,6 +99,8 @@ menuFile: File
 menuView: View
 menuGo: Go
 prefsOpenMaximized: Maximize the window when it opens
+prefsMultipleWindows: Allow several images open at once
+prefsMultipleWindowsHint: "On: each image you open gets a new window; off: it shows in the open window"
 prefsAbout: About
 aboutVersion: "Version {version}"
 aboutVersionDevelopment: "Version {version} (development build, does not check for updates)"

@@ -22,6 +22,10 @@ func TestMissingFileGivesDefaults(t *testing.T) {
 	if !c.RememberWindow {
 		t.Error("the window's size is not remembered by default")
 	}
+	// A launch reuses the open window unless the user allows several.
+	if c.MultipleWindows {
+		t.Error("multiple windows are allowed by default")
+	}
 }
 
 func TestFileOverridesOnlyWhatItNames(t *testing.T) {
@@ -68,7 +72,7 @@ func TestSaveThenLoadRoundTrips(t *testing.T) {
 	c := Default()
 	c.Mouse[MiddleClick] = Minimize
 	c.Keys[Delete] = []string{"shift+delete"}
-	c.Background = "#000000"
+	c.Loop = false
 	if err := Save(p, c); err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +80,7 @@ func TestSaveThenLoadRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Mouse[MiddleClick] != Minimize || got.Keys[Delete][0] != "shift+delete" || got.Background != "#000000" {
+	if got.Mouse[MiddleClick] != Minimize || got.Keys[Delete][0] != "shift+delete" || got.Loop {
 		t.Errorf("round trip = %+v", got)
 	}
 }

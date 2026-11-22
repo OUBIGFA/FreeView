@@ -7,6 +7,7 @@ package main
 import (
 	"os"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/nsgo-dev/nsgo"
 	"github.com/nsgo-dev/nsgo/core"
@@ -23,6 +24,11 @@ func main() {
 	// saving of CPU time.
 	debug.SetGCPercent(50)
 	frames = loadFrames()
+	// The viewer reports a configuration it cannot read once it shows;
+	// until then the defaults decide.
+	if path, err := settings.Path(); err == nil {
+		startCfg, _ = settings.Load(path)
+	}
 	// nsgo hands the regular files named on the command line to
 	// OnOpenFiles, as the system's Open With does.
 	for _, arg := range os.Args[1:] {
@@ -30,8 +36,18 @@ func main() {
 			launching = true
 		}
 	}
-	nsgo.Run(App, nsgo.WindowSize(1100, 760))
+	opts := []nsgo.Option{nsgo.WindowSize(1100, 760)}
+	// A key no other run shares gives this run its own single-instance
+	// lock: later launches neither reach this window nor hand theirs here.
+	if startCfg.MultipleWindows {
+		opts = append(opts, nsgo.InstanceKey(strconv.Itoa(os.Getpid())))
+	}
+	nsgo.Run(App, opts...)
 }
+
+// startCfg is the configuration as FreeView starts, which decides the
+// single-instance lock and the main window's frame.
+var startCfg = settings.Default()
 
 // App runs FreeView as a desktop app, which may open windows besides the
 // main one (the preferences); closing the main window quits. The main
@@ -41,13 +57,7 @@ func App(app *core.Scope) {
 	app.SetTheme(grayTheme())
 	desktop.SetShutdownMode(app, desktop.ShutdownOnMainWindowClose)
 	opts := desktop.WindowOptions{Hidden: true, Constraints: core.WindowConstraints{MinWidth: 320, MinHeight: 240}}
-	// The viewer reports a configuration it cannot read once it shows;
-	// until then the defaults decide.
-	cfg := settings.Default()
-	if path, err := settings.Path(); err == nil {
-		cfg, _ = settings.Load(path)
-	}
-	if f, ok := frames.frame("main"); ok && cfg.RememberWindow {
+	if f, ok := frames.frame("main"); ok && startCfg.RememberWindow {
 		opts.Frame = f
 	}
 	desktop.SetMainWindow(app, desktop.OpenWindow(app, opts, Root))

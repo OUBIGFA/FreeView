@@ -154,7 +154,6 @@ const (
 	textPrefsFitWindow
 	textPrefsFitOriginal
 	textPrefsFitHint
-	textPrefsBackground
 	textPrefsZoomStep
 	textPrefsShowInfo
 	textPrefsAlwaysOnTop
@@ -173,6 +172,8 @@ const (
 	textMenuView
 	textMenuGo
 	textPrefsOpenMaximized
+	textPrefsMultipleWindows
+	textPrefsMultipleWindowsHint
 	textPrefsAbout
 	textAboutDevelopment
 	textAboutSummary
@@ -274,7 +275,6 @@ var keyOfText = [numTexts]string{
 	"prefsFitWindow",
 	"prefsFitOriginal",
 	"prefsFitHint",
-	"prefsBackground",
 	"prefsZoomStep",
 	"prefsShowInfo",
 	"prefsAlwaysOnTop",
@@ -293,6 +293,8 @@ var keyOfText = [numTexts]string{
 	"menuView",
 	"menuGo",
 	"prefsOpenMaximized",
+	"prefsMultipleWindows",
+	"prefsMultipleWindowsHint",
 	"prefsAbout",
 	"aboutDevelopment",
 	"aboutSummary",
@@ -392,7 +394,6 @@ var textsEn = i18n.NewTexts(""+
 	"Fit to window"+
 	"Original size"+
 	"Shrink large images: large images fit the window, small ones stay at original size"+
-	"Background color"+
 	"Zoom step"+
 	"Show image information"+
 	"Keep the window on top"+
@@ -411,6 +412,8 @@ var textsEn = i18n.NewTexts(""+
 	"View"+
 	"Go"+
 	"Maximize the window when it opens"+
+	"Allow several images open at once"+
+	"On: each image you open gets a new window; off: it shows in the open window"+
 	"About"+
 	"Development build, does not check for updates"+
 	"A lightweight image viewer for Windows with custom mouse and keyboard actions, archive browsing and animations"+
@@ -507,7 +510,6 @@ var textsEn = i18n.NewTexts(""+
 		13,
 		13,
 		82,
-		16,
 		9,
 		22,
 		22,
@@ -526,6 +528,8 @@ var textsEn = i18n.NewTexts(""+
 		4,
 		2,
 		33,
+		33,
+		75,
 		5,
 		45,
 		110,
@@ -625,7 +629,6 @@ var textsZhHans = i18n.NewTexts(""+
 	"适应窗口"+
 	"原始大小"+
 	"只缩小大图：大图缩小到窗口内，小图保持原始大小"+
-	"背景颜色"+
 	"缩放步长"+
 	"显示图片信息"+
 	"窗口置顶"+
@@ -644,6 +647,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"查看"+
 	"浏览"+
 	"打开时最大化窗口"+
+	"允许同时打开多张图片"+
+	"开启后每次打开图片都使用新窗口；关闭时在已打开的窗口中显示"+
 	"关于"+
 	"开发版，不检查更新"+
 	"轻量的 Windows 看图软件，鼠标和键盘操作都能自定义，也能直接浏览压缩包和播放动图"+
@@ -741,7 +746,6 @@ var textsZhHans = i18n.NewTexts(""+
 		12,
 		69,
 		12,
-		12,
 		18,
 		12,
 		15,
@@ -759,6 +763,8 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		24,
+		30,
+		87,
 		6,
 		27,
 		114,
@@ -1581,13 +1587,6 @@ func PrefsFitHint(cx *core.Scope) string { return For(cx).PrefsFitHint() }
 // PrefsFitHint is the package's PrefsFitHint in the language of msgs.
 func (msgs Messages) PrefsFitHint() string { return msgs.text(textPrefsFitHint) }
 
-// PrefsBackground says "Background color"
-// in the language the app shows under cx.
-func PrefsBackground(cx *core.Scope) string { return For(cx).PrefsBackground() }
-
-// PrefsBackground is the package's PrefsBackground in the language of msgs.
-func (msgs Messages) PrefsBackground() string { return msgs.text(textPrefsBackground) }
-
 // PrefsZoomStep says "Zoom step"
 // in the language the app shows under cx.
 func PrefsZoomStep(cx *core.Scope) string { return For(cx).PrefsZoomStep() }
@@ -1757,6 +1756,22 @@ func PrefsOpenMaximized(cx *core.Scope) string { return For(cx).PrefsOpenMaximiz
 
 // PrefsOpenMaximized is the package's PrefsOpenMaximized in the language of msgs.
 func (msgs Messages) PrefsOpenMaximized() string { return msgs.text(textPrefsOpenMaximized) }
+
+// PrefsMultipleWindows says "Allow several images open at once"
+// in the language the app shows under cx.
+func PrefsMultipleWindows(cx *core.Scope) string { return For(cx).PrefsMultipleWindows() }
+
+// PrefsMultipleWindows is the package's PrefsMultipleWindows in the language of msgs.
+func (msgs Messages) PrefsMultipleWindows() string { return msgs.text(textPrefsMultipleWindows) }
+
+// PrefsMultipleWindowsHint says "On: each image you open gets a new window; off: it shows in the open window"
+// in the language the app shows under cx.
+func PrefsMultipleWindowsHint(cx *core.Scope) string { return For(cx).PrefsMultipleWindowsHint() }
+
+// PrefsMultipleWindowsHint is the package's PrefsMultipleWindowsHint in the language of msgs.
+func (msgs Messages) PrefsMultipleWindowsHint() string {
+	return msgs.text(textPrefsMultipleWindowsHint)
+}
 
 // PrefsAbout says "About"
 // in the language the app shows under cx.

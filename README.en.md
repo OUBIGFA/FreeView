@@ -84,7 +84,7 @@ The window has no title bar by default. To move the window, drag the top edge of
 
 - **Change mouse actions.** Open Preferences. On the Mouse page, select an action for each item.
 - **Change keyboard shortcuts.** On the Keyboard page, add or remove shortcuts. Click Record. Then press a key.
-- **Change the view.** On the Viewing page, select the fit mode, background color, sort order, looping, and slideshow interval.
+- **Change the view.** On the Viewing page, select the fit mode, sort order, looping, and slideshow interval.
 - **Change the window display.** On the Viewing page, turn on or off "Keep the window on top" and "Show the title bar".
 - **Restore the default settings.** On the Viewing page, click Restore defaults.
 - **Stop FreeView from remembering the window.** On the Viewing page, turn off "Open at the last window size and position". When the window is maximized or in full screen, FreeView remembers the size and position from before.

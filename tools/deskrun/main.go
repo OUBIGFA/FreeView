@@ -22,6 +22,7 @@
 //	oshot <file.png>                 shot, of the other visible nsgo window
 //	frame main|other <x> <y> <w> <h>  move and size the main window, or another visible nsgo window, in screen pixels (SetWindowPos)
 //	hit <x> <y>                      print WM_NCHITTEST at client x, y (2: HTCAPTION, drags the window)
+//	launch <ms> [args...]            start the exe again with args, wait ms and print whether that run still runs (false: it handed its launch to the first)
 //
 // Posted messages bypass the system's input state: keys arrive without
 // modifiers held, so shortcuts with Ctrl or Shift cannot be tested here.
@@ -148,6 +149,20 @@ func main() {
 		}
 		n := func(i int) uintptr { v, _ := strconv.ParseInt(f[i], 0, 64); return uintptr(v) }
 		switch f[0] {
+		case "launch":
+			cmd := `"` + os.Args[2] + `"`
+			for _, a := range f[2:] {
+				cmd += ` "` + a + `"`
+			}
+			cl, _ := syscall.UTF16PtrFromString(cmd)
+			var pi2 procInfo
+			if r, _, err := pCreateProcess.Call(0, uintptr(unsafe.Pointer(cl)), 0, 0, 0, 0, 0, 0, uintptr(unsafe.Pointer(&si)), uintptr(unsafe.Pointer(&pi2))); r == 0 {
+				panic(err)
+			}
+			defer pTerminate.Call(uintptr(pi2.Process), 0)
+			time.Sleep(time.Duration(n(1)) * time.Millisecond)
+			r, _, _ := kernel.NewProc("WaitForSingleObject").Call(uintptr(pi2.Process), 0)
+			fmt.Println("launch alive", r == 0x102)
 		case "sleep":
 			time.Sleep(time.Duration(n(1)) * time.Millisecond)
 		case "post":

@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -102,14 +101,14 @@ type Config struct {
 	SortDescending   bool                `yaml:"sort_descending"`
 	Loop             bool                `yaml:"loop"`
 	SlideshowSeconds float64             `yaml:"slideshow_seconds"`
-	ZoomStep         float64             `yaml:"zoom_step"`  // multiplier per zoom step, such as 1.25
-	Background       string              `yaml:"background"` // #rrggbb
+	ZoomStep         float64             `yaml:"zoom_step"` // multiplier per zoom step, such as 1.25
 	ShowInfo         bool                `yaml:"show_info"`
 	ConfirmDelete    bool                `yaml:"confirm_delete"`
 	AlwaysOnTop      bool                `yaml:"always_on_top"`
-	ShowTitleBar     bool                `yaml:"show_title_bar"`  // false: Honeyview's borderless window
-	RememberWindow   bool                `yaml:"remember_window"` // open the viewer at its last size and place
-	OpenMaximized    bool                `yaml:"open_maximized"`  // maximize the viewer as it opens
+	ShowTitleBar     bool                `yaml:"show_title_bar"`   // false: Honeyview's borderless window
+	RememberWindow   bool                `yaml:"remember_window"`  // open the viewer at its last size and place
+	OpenMaximized    bool                `yaml:"open_maximized"`   // maximize the viewer as it opens
+	MultipleWindows  bool                `yaml:"multiple_windows"` // each launch opens its own window (qView's multiple instances); read as FreeView starts
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }
@@ -120,7 +119,7 @@ type Config struct {
 func Default() Config {
 	return Config{
 		Fit: FitShrink, Sort: SortName, Loop: true, SlideshowSeconds: 3, ZoomStep: 1.25,
-		Background: "#1e1e1e", ShowInfo: false, ConfirmDelete: true, RememberWindow: true,
+		ShowInfo: false, ConfirmDelete: true, RememberWindow: true,
 		Mouse: map[Gesture]Action{
 			WheelUp: Previous, WheelDown: Next, CtrlWheelUp: ZoomIn, CtrlWheelDown: ZoomOut,
 			ShiftWheelUp: RotateLeft, ShiftWheelDown: RotateRight, AltWheelUp: First, AltWheelDown: Last,
@@ -214,9 +213,6 @@ func (c Config) normalized() Config {
 	if c.ZoomStep <= 1 || c.ZoomStep > 4 {
 		c.ZoomStep = d.ZoomStep
 	}
-	if _, ok := ParseColor(c.Background); !ok {
-		c.Background = d.Background
-	}
 	for g, a := range c.Mouse {
 		if !slices.Contains(Gestures, g) {
 			delete(c.Mouse, g)
@@ -261,13 +257,4 @@ func (c Config) Clone() Config {
 	}
 	c.Keys = keys
 	return c
-}
-
-// ParseColor reads a #rrggbb color.
-func ParseColor(s string) (uint32, bool) {
-	if len(s) != 7 || s[0] != '#' {
-		return 0, false
-	}
-	v, err := strconv.ParseUint(s[1:], 16, 32)
-	return uint32(v), err == nil
 }
