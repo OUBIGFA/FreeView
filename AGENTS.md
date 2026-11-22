@@ -22,12 +22,12 @@
 
 1. 检查与测试：根目录 `python tools/check.py` 和 `go test ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。改动界面或输入时，用 `go run ./tools/deskrun` 在私有桌面中做界面验收（示例 `tests/desktop/smoke.txt`）。不在用户当前桌面上做界面测试。
 2. 提交并推送到 origin/main。
-3. 每次代码改动后都重新构建测试安装器：根目录运行 `python tools/build_installer.py`，生成 `dist/releases/FreeView-<版本>.exe`（如 `FreeView-0.2.0.exe`，目录被忽略）。测试安装器只供本地试用，不等于正式发布。
+3. 每次代码改动后都重新构建测试安装器：根目录运行 `python tools/build_installer.py`，生成 `dist/releases/FreeView-<版本>.exe`（如 `FreeView-0.1.0.exe`，目录被忽略）。测试安装器只供本地试用，不等于正式发布。
 
 ## 版本号
 
-- 版本号只写在 `cmd/freeview/nsgo.yaml` 的 `version`，按语义化版本递增：新增功能升次版本号（0.1.0 → 0.2.0），只修复问题升修订号（0.2.0 → 0.2.1）。同一轮未提交的改动只升一次。
-- 升版本时同步 README 的“当前版本”。版本号用于安装器命名；创建 Git tag 或 Release 属于正式发布，需要另行授权。
+- 版本号只写在 `cmd/freeview/nsgo.yaml` 的 `version`。日常改代码、加功能都不改版本号，测试安装器沿用当前版本号命名。
+- 只在正式发布打 tag 时更新版本号：把 `version` 改成 tag 的号码（tag `v0.2.0` 对应 `0.2.0`），同步 README 的“当前版本”，再打 tag。创建 tag 或 Release 需要用户另行授权。
 
 ## 开发注意
 

@@ -2,7 +2,7 @@
 
 FreeView 是一个开源看图软件：轻量、简洁、快速响应。它使用 **Go + [nsgo](https://github.com/nsgo-dev/nsgo) 原生界面**，交互参考 [qView](https://github.com/jurplel/qView)，以 Honeyview 为功能和体验标杆。
 
-**当前版本 0.2.0 是 Windows 测试版。** 尚未正式发布，没有提供下载页面。
+**当前版本 0.1.0 是 Windows 测试版。** 尚未正式发布，没有提供下载页面。
 
 ## 已实现功能
 
