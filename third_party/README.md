@@ -42,8 +42,10 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 以上许可都可以与 GPL-3.0 组合使用。
 
-## 发布前必须完成
+## 随安装包分发
 
-- 测试安装器还没有附带上表各模块的许可正文和署名。正式发布前，要把它们随安装包分发，并重新生成上表。
-- 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试。
+- 安装器会在程序目录写入 `LICENSE.txt` 和 `THIRD_PARTY_NOTICES.txt`。
+- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Go 运行时与标准库、上表依赖模块的许可正文和署名。
+- `THIRD_PARTY_NOTICES.txt` 是可再生成的产物，不入库。`python tools/build_installer.py` 每次构建都会重新生成它，并把它加入安装包。
+- 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试，再重新构建并核对 `THIRD_PARTY_NOTICES.txt` 的模块数。
 - 引入新的库、移植代码或外部素材时，登记名称、用途、版本、许可、署名和修改。
