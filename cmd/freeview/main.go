@@ -31,6 +31,7 @@ func main() {
 // App runs FreeView as a desktop app, which may open windows besides the
 // main one (the preferences); closing the main window quits.
 func App(app *core.Scope) {
+	app.SetTheme(grayTheme())
 	desktop.SetShutdownMode(app, desktop.ShutdownOnMainWindowClose)
 	nsgo.SetMainView(app, Root)
 }
@@ -39,4 +40,19 @@ func App(app *core.Scope) {
 func Root(cx *core.Scope) core.Node {
 	desktop.SetMenuBar(cx, desktop.MenuBarAutoHide)
 	return newViewer(cx).render(cx)
+}
+
+// grayTheme is nsgo's theme with a dark gray accent instead of blue: the
+// switches, focus rings, selections and sidebar marks follow it. In the
+// dark appearance the gray is lighter, to stay visible on the dark page.
+func grayTheme() *core.Theme {
+	t := core.DefaultTheme().Clone()
+	accent := func(p *core.Palette, fill, hover, pressed uint32) {
+		p.Accent, p.AccentHover, p.AccentPressed = core.RGB(fill), core.RGB(hover), core.RGB(pressed)
+		p.Selection, p.Focus = core.RGBA(fill, 0.22), core.RGBA(fill, 0.6)
+		p.SetColor("accentFill", core.RGB(fill))
+	}
+	accent(&t.Light, 0x3c3c3c, 0x2e2e2e, 0x222222)
+	accent(&t.Dark, 0x7a7a7a, 0x8c8c8c, 0x686868)
+	return t
 }

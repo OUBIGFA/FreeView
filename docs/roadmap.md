@@ -21,6 +21,7 @@
 | 缩放、平移、旋转 | 按图片像素和屏幕像素比计算位置；用 nsgo Transform 处理旋转和镜像 | 无界面测试检查缩放百分比；私有桌面检查平移 |
 | 输入绑定 | `internal/settings` 定义动作、鼠标操作和快捷键，存为 YAML。键盘用 `Scope.OnKey`；滚轮、拖动、双击、右键用 nsgo 事件；中键和侧键由 `internal/winmouse` 子类化窗口接收 | 单元测试；私有桌面实测改过的中键和滚轮绑定 |
 | 窗口 | 置顶用 nsgo `SetWindowLevel`。隐藏标题栏用 `SetTitleBar` 和 `SetWindowControls`，顶部拖动条用 `WindowDrag`（HTCAPTION）。拖动图片旁的背景时，`internal/winmouse` 让窗口线程执行 `WM_SYSCOMMAND SC_DRAGMOVE`，由 Windows 移动窗口 | 无界面测试检查拖动条；私有桌面用 `deskrun state/hit` 检查置顶、标题栏、拖动条命中和背景拖动的触发。真实鼠标拖动无法在私有桌面模拟，尚未自动验证 |
+| 强调色 | `grayTheme`（`cmd/freeview/main.go`）在应用根部给 nsgo 默认主题换上深灰强调色：浅色外观 `#3c3c3c`，深色外观 `#7a7a7a`（深灰在深色页面上看不清，所以略浅） | 私有桌面截图核对浅色外观；深色外观未验证 |
 | 记住窗口 | 用 nsgo `desktop.Frame` 跟踪窗口位置和外框尺寸，停止变化 0.5 秒后写入 `%APPDATA%\FreeView\windows.yaml`（与设置分开，“恢复默认”不影响窗口）。打开时用 `nsgo.WindowFrame` 和 `WindowOptions.Frame` 恢复；看图窗口由设置项 `remember_window` 控制，默认开启 | 单元测试检查读写；私有桌面中改变两个窗口的位置和大小后重启，确认恢复，关闭设置项后以默认尺寸打开 |
 | 手形指针 | Windows 没有张开/握拳手形系统指针（nsgo 的 `CursorGrab` 映射为食指手形 `IDC_HAND`），`internal/winmouse/cursor.go` 自绘 16×16 像素图，按系统指针尺寸放大，用 `CreateIconIndirect` 生成，在 `WM_SETCURSOR` 中显示；拖动中由窗口线程直接 `SetCursor` | 私有桌面中用临时插桩确认放大、拖动、松开时依次为张开、握拳、张开；指针外观只渲染像素图核对过 |
 | 设置窗口 | 默认 1040×700，分查看、鼠标、键盘三页。侧栏和搜索框由 FreeView 绘制（nsgo `ui.Sidebar`），页面行由 `ui.Settings` 排版；页面两侧各留 40 点边距，最宽 760 点（`ui.Settings` 自带的页面会铺满整个窗格） | 无界面测试检查切换分类和搜索；私有桌面截图核对布局 |
