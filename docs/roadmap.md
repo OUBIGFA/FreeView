@@ -40,7 +40,7 @@
 - APNG 动画、动态 AVIF/HEIC/JPEG XL 只显示第一帧。
 - AVIF、RAW 依赖用户安装的 Windows 扩展，没有扩展时只能显示安装提示。HEIC、JPEG XL 没有扩展时走 WebAssembly 兜底，较慢、占内存较多。
 - SVG 由 nsgo 按每点 4 像素、最长边 2048 像素栅格化，放得很大会变模糊；nsgo 的 SVG 不绘制 `<text>`。
-- 0.1.0 没有 WinSparkle，所以 0.1.0 的用户需要手动安装下一个版本；之后的版本才能自动更新。每个正式 Release 都必须带上签名的 `appcast-windows_x64.xml`。
+- 0.1.0 没有 WinSparkle，所以 0.1.0 的用户需要手动安装下一个版本。按现行约定，Release 只上传安装器、不带 `appcast-windows_x64.xml`，所以应用内的自动更新检查读不到更新源，用户需要手动下载新版。
 - 默认只有一个实例：再次启动时，文件交给已经运行的窗口打开；可开启“允许同时打开多张图片”在新窗口打开。
 
 ## 后续计划
