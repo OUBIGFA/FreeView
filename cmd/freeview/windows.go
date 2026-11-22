@@ -48,16 +48,25 @@ func (s *frameStore) frame(key string) (core.WindowFrame, bool) {
 
 // remember saves the frame of cx's window under key whenever the user
 // moves or resizes it, half a second after the last change so a drag
-// writes the file once. Maximized and in full screen nsgo reports the
-// frame the window had before, which is the one to open with.
+// writes the file once. Maximized or in full screen the window keeps the
+// frame saved before: nsgo v0.2.0 on Windows reports the maximized or
+// full-screen rectangle there (GetWindowRect), and opening with it put
+// the window over the whole screen, as if maximized.
 func (s *frameStore) remember(cx *core.Scope, key string, failed func(error)) {
 	if s == nil || s.path == "" {
 		return
 	}
 	frame := core.NewMemo(cx, func() core.WindowFrame { return desktop.Frame(cx) })
+	whole := core.NewMemo(cx, func() bool { return desktop.Maximized(cx) || desktop.FullScreen(cx) })
 	var seq uint64
 	cx.Effect(func() {
 		f := frame.Get()
+		if whole.Get() {
+			// The frame can change a moment before the state does, so a
+			// save already waiting may hold the whole screen: drop it.
+			seq++
+			return
+		}
 		next := settings.Frame{X: float64(f.X), Y: float64(f.Y), Width: float64(f.Width), Height: float64(f.Height)}
 		s.mu.Lock()
 		same := s.saved[key] == next

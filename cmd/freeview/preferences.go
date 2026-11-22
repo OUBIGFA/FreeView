@@ -98,6 +98,7 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 			{ID: "view", Title: locales.PrefsView(cx), Groups: p.viewGroups(cx, reset)},
 			{ID: "mouse", Title: locales.PrefsMouse(cx), Groups: []ui.SettingsGroup{{ID: "mouse", Title: locales.PrefsMouseGroup(cx), Items: p.mouseItems(cx)}}},
 			{ID: "keyboard", Title: locales.PrefsKeyboard(cx), Groups: []ui.SettingsGroup{{ID: "keys", Title: locales.PrefsKeyboardGroup(cx), Items: p.keyItems(cx)}}},
+			{ID: "about", Title: locales.PrefsAbout(cx), Groups: aboutGroups(cx)},
 		}
 	}
 	var nav []ui.SidebarItem
@@ -215,7 +216,7 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 	}
 	return []ui.SettingsGroup{
 		{ID: "display", Title: locales.PrefsViewGroup(cx), Actions: []core.Node{reset}, Items: []ui.SettingsItem{
-			{ID: "fit", Title: locales.PrefsFit(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit },
+			{ID: "fit", Title: locales.PrefsFit(cx), Description: locales.PrefsFitHint(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit },
 				func(c *settings.Config, x settings.Fit) { c.Fit = x }, v, "fit")},
 			{ID: "background", Title: locales.PrefsBackground(cx), Control: choice(colors, func(c settings.Config) string { return c.Background },
 				func(c *settings.Config, x string) { c.Background = x }, v, "background")},
@@ -229,6 +230,8 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, on bool) { c.ShowTitleBar = on }, v, "title-bar")},
 			{ID: "remember-window", Title: locales.PrefsRememberWindow(cx), Control: toggle(func(c settings.Config) bool { return c.RememberWindow },
 				func(c *settings.Config, on bool) { c.RememberWindow = on }, v, "remember-window")},
+			{ID: "open-maximized", Title: locales.PrefsOpenMaximized(cx), Control: toggle(func(c settings.Config) bool { return c.OpenMaximized },
+				func(c *settings.Config, on bool) { c.OpenMaximized = on }, v, "open-maximized")},
 		}},
 		{ID: "browse", Title: locales.PrefsBrowseGroup(cx), Items: []ui.SettingsItem{
 			{ID: "sort", Title: locales.PrefsSort(cx), Control: choice(sorts, func(c settings.Config) settings.Sort { return c.Sort },

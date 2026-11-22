@@ -2,6 +2,8 @@
 
 `FreeView_logo.png` 是仓库所有者提供的 1200×1200 RGBA PNG。原始字节不改动；公开使用遵循仓库 [GPL-3.0-only 许可](../../LICENSE)。许可不构成额外商标授权。
 
+`branding.go` 把源图嵌入应用，供设置窗口的“关于”页显示。
+
 原始 SHA-256：`c939bd0ec7fc9d772955daa13aa2ad2881b27b1e6663ab45acf070e4c6319369`。
 
 ## 生成图标

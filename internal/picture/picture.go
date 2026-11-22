@@ -1,18 +1,29 @@
 // Package picture prepares an image file's bytes for display: it reads the
 // size and EXIF orientation without decoding the pixels, and decodes the
-// formats nsgo does not (BMP and TIFF, through golang.org/x/image) into
-// pixels. nsgo decodes JPEG, PNG, GIF and WebP itself, animations included.
+// formats nsgo does not into pixels: BMP and TIFF through golang.org/x/image,
+// and ICO, HEIF, AVIF, JPEG XL and camera RAW through Windows' own codecs
+// (WIC). nsgo decodes JPEG, PNG, GIF, WebP and SVG itself, animations
+// included.
 package picture
 
 import (
 	"bytes"
+	"compress/gzip"
+	"errors"
 	"fmt"
 	"image"
 	"image/draw"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
+	"maps"
+	"math"
+	"path/filepath"
+	"slices"
+	"strings"
 
+	"github.com/nsgo-dev/nsgo/core"
 	"github.com/rwcarlsen/goexif/exif"
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
@@ -34,10 +45,61 @@ type Picture struct {
 // nativeFormats are the formats nsgo decodes and animates itself.
 var nativeFormats = map[string]bool{"jpeg": true, "png": true, "gif": true, "webp": true}
 
-// Load prepares data, the bytes of an image file.
-func Load(data []byte) (Picture, error) {
+// Codec names the Windows extension, from the Microsoft Store, that a
+// format needs before Windows can decode it.
+type Codec string
+
+const (
+	CodecHEIF Codec = "heif" // HEIF Image Extensions, with HEVC Video Extensions
+	CodecAV1  Codec = "av1"  // AV1 Video Extension
+	CodecJXL  Codec = "jxl"  // JPEG XL Image Extension
+	CodecRaw  Codec = "raw"  // Raw Image Extension
+)
+
+// MissingCodecError says Windows has no codec for the file: its
+// extension Codec is not installed.
+type MissingCodecError struct{ Codec Codec }
+
+func (e MissingCodecError) Error() string {
+	return "Windows has no codec for this format: " + string(e.Codec)
+}
+
+// RawExtensions are the camera RAW formats, which Windows' Raw Image
+// Extension (LibRaw) decodes.
+var RawExtensions = []string{".dng", ".cr2", ".cr3", ".crw", ".nef", ".nrw", ".arw", ".srf", ".sr2", ".orf",
+	".rw2", ".raf", ".pef", ".srw", ".x3f", ".3fr", ".erf", ".kdc", ".mrw", ".mos", ".iiq", ".rwl"}
+
+// wicExtensions are the other formats only WIC decodes, with the codec
+// each needs; ICO needs none.
+var wicExtensions = map[string]Codec{".ico": "", ".heic": CodecHEIF, ".heif": CodecHEIF, ".hif": CodecHEIF,
+	".avif": CodecAV1, ".jxl": CodecJXL}
+
+// Extensions are the formats Load decodes beyond the ones Go and nsgo
+// recognize by content: the WIC formats and SVG.
+func Extensions() []string {
+	exts := slices.Sorted(maps.Keys(wicExtensions))
+	return append(append(exts, ".svg", ".svgz"), RawExtensions...)
+}
+
+// Load prepares data, the bytes of the image file name; name's extension
+// chooses the decoder only for formats that cannot be told by content.
+func Load(data []byte, name string) (Picture, error) {
+	ext := strings.ToLower(filepath.Ext(name))
+	if slices.Contains(RawExtensions, ext) {
+		return loadWIC(data, CodecRaw, ext[1:])
+	}
+	if codec, ok := wicExtensions[ext]; ok {
+		return loadWIC(data, codec, ext[1:])
+	}
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
+		if p, svgErr := loadSVG(data); svgErr == nil {
+			return p, nil
+		}
+		// A HEIC or ICO saved under another extension still opens.
+		if p, wicErr := loadWIC(data, "", "wic"); wicErr == nil {
+			return p, nil
+		}
 		return Picture{}, fmt.Errorf("unrecognized image: %w", err)
 	}
 	p := Picture{Width: cfg.Width, Height: cfg.Height, Format: format, Orientation: orientation(data)}
@@ -55,6 +117,50 @@ func Load(data []byte) (Picture, error) {
 		draw.Draw(rgba, rgba.Rect, img, img.Bounds().Min, draw.Src)
 	}
 	p.Pixels = rgba
+	return p, nil
+}
+
+// loadSVG keeps an SVG's bytes for nsgo, which draws it, with its size
+// in points as its pixel size.
+func loadSVG(data []byte) (Picture, error) {
+	doc := data
+	if bytes.HasPrefix(data, []byte{0x1f, 0x8b}) { // .svgz
+		zr, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return Picture{}, err
+		}
+		if doc, err = io.ReadAll(io.LimitReader(zr, 64<<20)); err != nil {
+			return Picture{}, err
+		}
+	}
+	s, err := core.ParseSVG(doc)
+	if err != nil {
+		return Picture{}, err
+	}
+	w, h := s.Size()
+	if w <= 0 || h <= 0 {
+		return Picture{}, errors.New("an SVG without a size")
+	}
+	return Picture{Data: data, Width: int(math.Ceil(float64(w))), Height: int(math.Ceil(float64(h))), Format: "svg", Orientation: 1}, nil
+}
+
+// loadWIC decodes data with Windows' codecs. A missing codec is reported
+// as the extension to install. The pixels come upright: Windows' HEIF,
+// AVIF and JPEG XL decoders apply the image's own rotation, and the
+// orientation WIC reports is applied for the formats that leave it, as
+// RAW does.
+func loadWIC(data []byte, codec Codec, format string) (Picture, error) {
+	img, orient, err := decodeWIC(data, codec)
+	if err != nil {
+		if missingCodec(err) && codec != "" {
+			return Picture{}, MissingCodecError{codec}
+		}
+		return Picture{}, err
+	}
+	p := Picture{Pixels: img, Width: img.Rect.Dx(), Height: img.Rect.Dy(), Format: format, Orientation: 1}
+	if codec == CodecRaw {
+		p.Orientation = orient
+	}
 	return p, nil
 }
 

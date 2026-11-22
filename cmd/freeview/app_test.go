@@ -8,12 +8,17 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/nsgotest"
+	"go.yaml.in/yaml/v3"
+
+	"github.com/OUBIGFA/FreeView/internal/catalog"
+	"github.com/OUBIGFA/FreeView/internal/settings"
 )
 
 // TestMain hands the main thread to the platform under nsgo test -target.
@@ -203,5 +208,94 @@ func TestPreferencesNavigateAndSearch(t *testing.T) {
 	app.WaitFor("id:settings-keyboard-key-always_on_top", 5*time.Second)
 	if app.Exists("id:settings-view-fit") || app.Exists("id:settings-mouse-middle_click") {
 		t.Error("rows that do not match shown while searching")
+	}
+}
+
+// A maximized or full-screen window keeps the frame it had before, even
+// when the platform reports the whole screen a moment before the state,
+// so the next start does not open it over the whole screen.
+func TestRemembersTheFrameBeforeMaximizing(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "windows.yaml")
+	s := &frameStore{path: path, saved: settings.Windows{}}
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+		s.remember(cx, "main", func(err error) { t.Error(err) })
+		return core.View{}
+	}, nsgotest.Size(800, 600))
+	saved := func() settings.Frame {
+		w, err := settings.LoadWindows(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return w["main"]
+	}
+	normal := core.WindowFrame{X: 100, Y: 80, Move: true, Width: 900, Height: 640}
+	want := settings.Frame{X: 100, Y: 80, Width: 900, Height: 640}
+	app.SetEnvironment(core.Environment{WindowFrame: normal})
+	app.WaitUntil(5*time.Second, func() bool { return saved() == want })
+	if got := saved(); got != want {
+		t.Fatalf("saved %+v, want %+v", got, want)
+	}
+	whole := core.WindowFrame{X: -8, Y: -8, Move: true, Width: 3456, Height: 1408}
+	// The frame first, then the state, as Windows reports maximizing.
+	app.SetEnvironment(core.Environment{WindowFrame: whole})
+	app.SetEnvironment(core.Environment{WindowFrame: whole, Maximized: true})
+	app.SetEnvironment(core.Environment{WindowFrame: whole, Maximized: true, FullScreen: true})
+	// Past the half second a save waits, and the write it starts.
+	for end := time.Now().Add(1500 * time.Millisecond); time.Now().Before(end); time.Sleep(50 * time.Millisecond) {
+		app.Settle()
+		if got := saved(); got != want {
+			t.Fatalf("saved %+v while maximized, want the frame before, %+v", got, want)
+		}
+	}
+}
+
+// The About page shows the logo and the version, and links the repository.
+func TestAboutPage(t *testing.T) {
+	if logoPixels() == nil {
+		t.Fatal("the embedded logo does not decode")
+	}
+	t.Setenv("AppData", t.TempDir())
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
+		nsgotest.Size(1040, 700))
+	app.WaitFor("id:settings-nav-about", 5*time.Second)
+	app.Press("id:settings-nav-about")
+	app.WaitFor("id:about-logo", 5*time.Second)
+	app.Press("id:about-github")
+	if len(app.OpenedURLs) != 1 || app.OpenedURLs[0] != repositoryURL {
+		t.Errorf("opened %v, want %s", app.OpenedURLs, repositoryURL)
+	}
+	// "update" finds the update rows wherever the search starts.
+	app.Type("id:settings-search", "update")
+	app.WaitFor("id:about-check-updates", 5*time.Second)
+}
+
+// nsgo.yaml registers FreeView for the formats it opens, no more and no fewer.
+func TestFileTypesMatchTheCatalog(t *testing.T) {
+	data, err := os.ReadFile("nsgo.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var project struct {
+		FileTypes []struct {
+			Name       string   `yaml:"name"`
+			Extensions []string `yaml:"extensions"`
+		} `yaml:"file_types"`
+	}
+	if err := yaml.Unmarshal(data, &project); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string][]string{"Image": catalog.ImageExtensions(), "Comic archive": catalog.ArchiveExtensions()}
+	for _, ft := range project.FileTypes {
+		var got []string
+		for _, e := range ft.Extensions {
+			got = append(got, "."+e)
+		}
+		if !slices.Equal(got, want[ft.Name]) {
+			t.Errorf("%s: nsgo.yaml lists %v, the catalog %v", ft.Name, got, want[ft.Name])
+		}
+		delete(want, ft.Name)
+	}
+	if len(want) > 0 {
+		t.Errorf("nsgo.yaml registers no %v", want)
 	}
 }

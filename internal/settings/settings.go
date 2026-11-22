@@ -107,8 +107,9 @@ type Config struct {
 	ShowInfo         bool                `yaml:"show_info"`
 	ConfirmDelete    bool                `yaml:"confirm_delete"`
 	AlwaysOnTop      bool                `yaml:"always_on_top"`
-	ShowTitleBar     bool                `yaml:"show_title_bar"` // false: Honeyview's borderless window
+	ShowTitleBar     bool                `yaml:"show_title_bar"`  // false: Honeyview's borderless window
 	RememberWindow   bool                `yaml:"remember_window"` // open the viewer at its last size and place
+	OpenMaximized    bool                `yaml:"open_maximized"`  // maximize the viewer as it opens
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }

@@ -32,13 +32,15 @@ FreeView is an image viewer for Windows. It opens images, folders, and archives 
 
 ## What you can do
 
-- **View images.** Open JPEG, PNG, GIF, WebP, BMP, and TIFF images. Animated GIF and WebP images play automatically.
+- **View images.** Open JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, and ICO images. Animated GIF and WebP images play automatically.
+- **View phone and camera photos.** Open HEIC, AVIF, JPEG XL, and camera RAW photos (such as DNG, CR3, NEF, and ARW). Windows decodes these formats. You must install the matching Windows extension first. See [Notes](#notes).
 - **Browse a folder.** Go to the previous, next, first, or last image. Start a slideshow.
 - **Open an archive.** Look at images in ZIP, 7z, RAR, and TAR archives.
 - **Zoom and move an image.** Zoom in, zoom out, fit the image to the window, or show the original size. If the image is larger than the window, you can drag it.
 - **View an image in full screen.** Rotate or flip an image. Show image information.
 - **Organize images.** Move an image to the Recycle Bin. Copy the image or its path. Show the image in File Explorer.
 - **Customize the controls.** Change 13 mouse actions and the shortcut keys for each action.
+- **Stay up to date.** FreeView checks for a new version once a day. When it finds one, it asks you before it installs it.
 
 ## Download and start
 
@@ -85,7 +87,9 @@ The window has no title bar by default. To move the window, drag the top edge of
 - **Change the view.** On the Viewing page, select the fit mode, background color, sort order, looping, and slideshow interval.
 - **Change the window display.** On the Viewing page, turn on or off "Keep the window on top" and "Show the title bar".
 - **Restore the default settings.** On the Viewing page, click Restore defaults.
-- **Stop FreeView from remembering the window.** On the Viewing page, turn off "Open at the last window size and position".
+- **Stop FreeView from remembering the window.** On the Viewing page, turn off "Open at the last window size and position". When the window is maximized or in full screen, FreeView remembers the size and position from before.
+- **Maximize the window when it opens.** On the Viewing page, turn on "Maximize the window when it opens". This option is off by default.
+- **See the version and check for updates.** On the About page, see the version, open the GitHub repository, report a problem, or click Check now.
 
 ## Notes
 
@@ -93,7 +97,13 @@ The window has no title bar by default. To move the window, drag the top edge of
 - FreeView uses one main window. If you open another image, the image appears in that window.
 - You cannot delete an image inside an archive.
 - Animated images play continuously. You cannot pause them or view one frame at a time.
-- FreeView cannot open HEIC, AVIF, JPEG XL, RAW, ICO, and SVG images.
+- HEIC, AVIF, JPEG XL, and RAW photos need a Windows extension from the Microsoft Store. If the extension is missing, FreeView tells you which one to install:
+  - HEIC: HEIF Image Extensions and HEVC Video Extensions.
+  - AVIF: AV1 Video Extension.
+  - JPEG XL: JPEG XL Image Extension. It needs Windows 11 24H2 or later.
+  - RAW: Raw Image Extension. If the photo contains a full-size preview from the camera, FreeView shows the preview, because it opens faster.
+- FreeView shows only the first frame of HEIC, AVIF, JPEG XL, and RAW photos. Text in SVG images may not show.
+- Version 0.1.0 does not support these new formats and does not update itself. These features start with the version after 0.1.0.
 
 ## Sources and license
 

@@ -42,10 +42,20 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 以上许可都可以与 GPL-3.0 组合使用。
 
+## 安装在程序旁的库
+
+| 组件 | 版本 | 许可 | 引入原因 |
+| --- | --- | --- | --- |
+| [WinSparkle](https://github.com/vslavik/winsparkle) | 0.9.4（`WinSparkle.dll`，x64） | MIT；内含 expat（MIT），并含 OpenSSL 署名 | 自动更新。`nsgo build` 从官方 Release 下载并按 nsgo 固定的 SHA-256 `6037df37fc263bd1650a1c4949681a9d40ffe991d01f35892a406cb5d103c976` 校验后放到程序旁 |
+
+## 使用的系统组件
+
+ICO、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映像组件（WIC）及用户从 Microsoft Store 安装的扩展解码。FreeView 只调用系统接口，不随安装包分发这些解码器。
+
 ## 随安装包分发
 
 - 安装器会在程序目录写入 `LICENSE.txt` 和 `THIRD_PARTY_NOTICES.txt`。
-- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Go 运行时与标准库、上表依赖模块的许可正文和署名。
+- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Go 运行时与标准库、上表依赖模块的许可正文和署名，以及 WinSparkle 发布包中的 `COPYING` 和 `COPYING.expat`。
 - `THIRD_PARTY_NOTICES.txt` 是可再生成的产物，不入库。`python tools/build_installer.py` 每次构建都会重新生成它，并把它加入安装包。
 - 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试，再重新构建并核对 `THIRD_PARTY_NOTICES.txt` 的模块数。
 - 引入新的库、移植代码或外部素材时，登记名称、用途、版本、许可、署名和修改。

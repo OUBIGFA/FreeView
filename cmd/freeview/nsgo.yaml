@@ -18,8 +18,17 @@ windows:
 
 file_types:
   - name: Image
-    extensions: [jpg, jpeg, jpe, jfif, png, gif, webp, bmp, dib, tif, tiff]
+    extensions: [jpg, jpeg, jpe, jfif, png, gif, webp, bmp, dib, tif, tiff, avif, heic, heif, hif, ico, jxl, svg, svgz, dng, cr2, cr3, crw, nef, nrw, arw, srf, sr2, orf, rw2, raf, pef, srw, x3f, 3fr, erf, kdc, mrw, mos, iiq, rwl]
     role: viewer
   - name: Comic archive
     extensions: [zip, cbz, rar, cbr, 7z, cb7, tar, cbt]
     role: viewer
+
+release:
+  github: OUBIGFA/FreeView
+
+# Windows builds carry WinSparkle, which checks the latest GitHub Release's
+# appcast once a day. The secret key stays out of the repository; release
+# builds read it from NSGO_UPDATES_KEY (tools/build_installer.py).
+updates:
+  key: aiL8e2E94EkRqqAcklCjbAJO0bOIzASo2OQufOLn4jc=

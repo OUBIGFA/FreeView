@@ -6,6 +6,7 @@ package main
 
 import (
 	"os"
+	"runtime/debug"
 
 	"github.com/nsgo-dev/nsgo"
 	"github.com/nsgo-dev/nsgo/core"
@@ -16,6 +17,11 @@ import (
 )
 
 func main() {
+	// Collect at half the default heap growth: decoding a photo makes
+	// garbage several times its pixels, and at the default the heap grew
+	// about 100 MB further while browsing 24 MP JPEGs, at no measurable
+	// saving of CPU time.
+	debug.SetGCPercent(50)
 	frames = loadFrames()
 	// nsgo hands the regular files named on the command line to
 	// OnOpenFiles, as the system's Open With does.

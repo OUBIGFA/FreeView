@@ -75,9 +75,10 @@ prefsView: Viewing
 prefsViewGroup: Display
 prefsBrowseGroup: Browsing
 prefsFit: Fit
-prefsFitShrink: Shrink large images to the window
-prefsFitWindow: Fit every image to the window
-prefsFitOriginal: Always original size
+prefsFitShrink: Shrink large images
+prefsFitWindow: Fit to window
+prefsFitOriginal: Original size
+prefsFitHint: "Shrink large images: large images fit the window, small ones stay at original size"
 prefsBackground: Background color
 prefsZoomStep: Zoom step
 prefsShowInfo: Show image information
@@ -98,3 +99,30 @@ prefsLoadFailed: "Preferences file is invalid, defaults are used: {error}"
 menuFile: File
 menuView: View
 menuGo: Go
+prefsOpenMaximized: Maximize the window when it opens
+prefsAbout: About
+aboutVersion: "Version {version}"
+aboutVersionDevelopment: "Version {version} (development build, does not check for updates)"
+aboutDevelopment: Development build, does not check for updates
+aboutSummary: A lightweight image viewer for Windows with custom mouse and keyboard actions, archive browsing and animations
+aboutOpenRepository: Open repository
+aboutFeedback: Feedback
+aboutFeedbackHint: Report a problem or make a suggestion on GitHub
+aboutFeedbackButton: Report an issue
+aboutUpdates: Updates
+aboutCheckUpdates: Check for updates
+aboutCheckUpdatesHint: Checks once a day; asks before it downloads and installs a new version, then opens FreeView again
+aboutCheckNow: Check now
+aboutReleases: Release notes
+aboutReleasesHint: See what changed in each version and download it on GitHub
+aboutOpen: Open
+aboutLicenses: Sources and licenses
+aboutLicense: License
+aboutNotices: Third-party software
+aboutNoticesHint: The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder
+aboutView: View
+codecHEIF: Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store
+codecAV1: Install AV1 Video Extension from the Microsoft Store
+codecJXL: Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store
+codecRaw: Install Raw Image Extension from the Microsoft Store
+aboutApp: Information

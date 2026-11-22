@@ -43,16 +43,18 @@ func For(cx *core.Scope) Messages {
 // its method, for the TSX declarations of the messages
 // (tsx.RegisterMessages).
 var Parameters = map[string][]string{
-	"LoadFailed":      {"name", "error_"},
-	"FolderEmpty":     {"name"},
-	"OpenFailed":      {"name", "error_"},
-	"DeleteMessage":   {"name"},
-	"DeleteFailed":    {"name", "error_"},
-	"InfoPosition":    {"index", "count"},
-	"InfoZoom":        {"percent"},
-	"Title":           {"name", "position"},
-	"PrefsSaveFailed": {"error_"},
-	"PrefsLoadFailed": {"error_"},
+	"LoadFailed":              {"name", "error_"},
+	"FolderEmpty":             {"name"},
+	"OpenFailed":              {"name", "error_"},
+	"DeleteMessage":           {"name"},
+	"DeleteFailed":            {"name", "error_"},
+	"InfoPosition":            {"index", "count"},
+	"InfoZoom":                {"percent"},
+	"Title":                   {"name", "position"},
+	"PrefsSaveFailed":         {"error_"},
+	"PrefsLoadFailed":         {"error_"},
+	"AboutVersion":            {"version"},
+	"AboutVersionDevelopment": {"version"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -60,17 +62,19 @@ var Parameters = map[string][]string{
 // of the others; a key or a field left out leaves the message to the
 // catalog.
 type Translation struct {
-	Texts           map[string]string
-	LoadFailed      func(name string, error_ string) string
-	FolderEmpty     func(name string) string
-	OpenFailed      func(name string, error_ string) string
-	DeleteMessage   func(name string) string
-	DeleteFailed    func(name string, error_ string) string
-	InfoPosition    func(index string, count string) string
-	InfoZoom        func(percent string) string
-	Title           func(name string, position string) string
-	PrefsSaveFailed func(error_ string) string
-	PrefsLoadFailed func(error_ string) string
+	Texts                   map[string]string
+	LoadFailed              func(name string, error_ string) string
+	FolderEmpty             func(name string) string
+	OpenFailed              func(name string, error_ string) string
+	DeleteMessage           func(name string) string
+	DeleteFailed            func(name string, error_ string) string
+	InfoPosition            func(index string, count string) string
+	InfoZoom                func(percent string) string
+	Title                   func(name string, position string) string
+	PrefsSaveFailed         func(error_ string) string
+	PrefsLoadFailed         func(error_ string) string
+	AboutVersion            func(version string) string
+	AboutVersionDevelopment func(version string) string
 }
 
 var supplied = map[string]Translation{}
@@ -149,6 +153,7 @@ const (
 	textPrefsFitShrink
 	textPrefsFitWindow
 	textPrefsFitOriginal
+	textPrefsFitHint
 	textPrefsBackground
 	textPrefsZoomStep
 	textPrefsShowInfo
@@ -167,6 +172,31 @@ const (
 	textMenuFile
 	textMenuView
 	textMenuGo
+	textPrefsOpenMaximized
+	textPrefsAbout
+	textAboutDevelopment
+	textAboutSummary
+	textAboutOpenRepository
+	textAboutFeedback
+	textAboutFeedbackHint
+	textAboutFeedbackButton
+	textAboutUpdates
+	textAboutCheckUpdates
+	textAboutCheckUpdatesHint
+	textAboutCheckNow
+	textAboutReleases
+	textAboutReleasesHint
+	textAboutOpen
+	textAboutLicenses
+	textAboutLicense
+	textAboutNotices
+	textAboutNoticesHint
+	textAboutView
+	textCodecHEIF
+	textCodecAV1
+	textCodecJXL
+	textCodecRaw
+	textAboutApp
 	numTexts
 )
 
@@ -245,6 +275,7 @@ var keyOfText = [numTexts]string{
 	"prefsFitShrink",
 	"prefsFitWindow",
 	"prefsFitOriginal",
+	"prefsFitHint",
 	"prefsBackground",
 	"prefsZoomStep",
 	"prefsShowInfo",
@@ -263,6 +294,31 @@ var keyOfText = [numTexts]string{
 	"menuFile",
 	"menuView",
 	"menuGo",
+	"prefsOpenMaximized",
+	"prefsAbout",
+	"aboutDevelopment",
+	"aboutSummary",
+	"aboutOpenRepository",
+	"aboutFeedback",
+	"aboutFeedbackHint",
+	"aboutFeedbackButton",
+	"aboutUpdates",
+	"aboutCheckUpdates",
+	"aboutCheckUpdatesHint",
+	"aboutCheckNow",
+	"aboutReleases",
+	"aboutReleasesHint",
+	"aboutOpen",
+	"aboutLicenses",
+	"aboutLicense",
+	"aboutNotices",
+	"aboutNoticesHint",
+	"aboutView",
+	"codecHEIF",
+	"codecAV1",
+	"codecJXL",
+	"codecRaw",
+	"aboutApp",
 }
 
 // textsEn are the messages without arguments in en.
@@ -336,9 +392,10 @@ var textsEn = i18n.NewTexts(""+
 	"Display"+
 	"Browsing"+
 	"Fit"+
-	"Shrink large images to the window"+
-	"Fit every image to the window"+
-	"Always original size"+
+	"Shrink large images"+
+	"Fit to window"+
+	"Original size"+
+	"Shrink large images: large images fit the window, small ones stay at original size"+
 	"Background color"+
 	"Zoom step"+
 	"Show image information"+
@@ -356,7 +413,32 @@ var textsEn = i18n.NewTexts(""+
 	"Restore defaults"+
 	"File"+
 	"View"+
-	"Go",
+	"Go"+
+	"Maximize the window when it opens"+
+	"About"+
+	"Development build, does not check for updates"+
+	"A lightweight image viewer for Windows with custom mouse and keyboard actions, archive browsing and animations"+
+	"Open repository"+
+	"Feedback"+
+	"Report a problem or make a suggestion on GitHub"+
+	"Report an issue"+
+	"Updates"+
+	"Check for updates"+
+	"Checks once a day; asks before it downloads and installs a new version, then opens FreeView again"+
+	"Check now"+
+	"Release notes"+
+	"See what changed in each version and download it on GitHub"+
+	"Open"+
+	"Sources and licenses"+
+	"License"+
+	"Third-party software"+
+	"The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder"+
+	"View"+
+	"Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store"+
+	"Install AV1 Video Extension from the Microsoft Store"+
+	"Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store"+
+	"Install Raw Image Extension from the Microsoft Store"+
+	"Information",
 	[]uint16{
 		8,
 		37,
@@ -427,9 +509,10 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		8,
 		3,
-		33,
-		29,
-		20,
+		19,
+		13,
+		13,
+		82,
 		16,
 		9,
 		22,
@@ -448,6 +531,31 @@ var textsEn = i18n.NewTexts(""+
 		4,
 		4,
 		2,
+		33,
+		5,
+		45,
+		110,
+		15,
+		8,
+		47,
+		15,
+		7,
+		17,
+		97,
+		9,
+		13,
+		58,
+		4,
+		20,
+		7,
+		20,
+		110,
+		4,
+		80,
+		52,
+		83,
+		52,
+		11,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -521,9 +629,10 @@ var textsZhHans = i18n.NewTexts(""+
 	"显示"+
 	"浏览"+
 	"缩放方式"+
-	"大图缩小到窗口，小图保持原始大小"+
-	"所有图片适应窗口"+
-	"始终原始大小"+
+	"只缩小大图"+
+	"适应窗口"+
+	"原始大小"+
+	"只缩小大图：大图缩小到窗口内，小图保持原始大小"+
 	"背景颜色"+
 	"缩放步长"+
 	"显示图片信息"+
@@ -541,7 +650,32 @@ var textsZhHans = i18n.NewTexts(""+
 	"恢复默认"+
 	"文件"+
 	"查看"+
-	"浏览",
+	"浏览"+
+	"打开时最大化窗口"+
+	"关于"+
+	"开发版，不检查更新"+
+	"轻量的 Windows 看图软件，鼠标和键盘操作都能自定义，也能直接浏览压缩包和播放动图"+
+	"打开仓库"+
+	"问题反馈"+
+	"在 GitHub 上报告问题或提出建议"+
+	"反馈问题"+
+	"软件更新"+
+	"检查更新"+
+	"每天自动检查一次；发现新版本时询问是否下载安装，安装后自动重新打开"+
+	"立即检查"+
+	"更新日志"+
+	"在 GitHub 上查看各版本的变化和下载"+
+	"打开"+
+	"来源与许可"+
+	"许可"+
+	"第三方组件"+
+	"使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt"+
+	"查看"+
+	"需要从 Microsoft Store 安装“HEIF 图像扩展”和“HEVC 视频扩展”"+
+	"需要从 Microsoft Store 安装“AV1 视频扩展”"+
+	"需要 Windows 11 24H2 或更新版本，并从 Microsoft Store 安装“JPEG XL 图像扩展”"+
+	"需要从 Microsoft Store 安装“Raw 图像扩展”"+
+	"基本信息",
 	[]uint16{
 		8,
 		45,
@@ -612,9 +746,10 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		12,
-		48,
-		24,
-		18,
+		15,
+		12,
+		12,
+		69,
 		12,
 		12,
 		18,
@@ -633,6 +768,31 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
+		24,
+		6,
+		27,
+		114,
+		12,
+		12,
+		41,
+		12,
+		12,
+		12,
+		99,
+		12,
+		12,
+		47,
+		6,
+		15,
+		6,
+		15,
+		81,
+		6,
+		81,
+		54,
+		96,
+		54,
+		12,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -718,6 +878,12 @@ func Supply(lang string, t Translation) {
 	}
 	if t.PrefsLoadFailed != nil {
 		s.PrefsLoadFailed = t.PrefsLoadFailed
+	}
+	if t.AboutVersion != nil {
+		s.AboutVersion = t.AboutVersion
+	}
+	if t.AboutVersionDevelopment != nil {
+		s.AboutVersionDevelopment = t.AboutVersionDevelopment
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -1399,26 +1565,33 @@ func PrefsFit(cx *core.Scope) string { return For(cx).PrefsFit() }
 // PrefsFit is the package's PrefsFit in the language of msgs.
 func (msgs Messages) PrefsFit() string { return msgs.text(textPrefsFit) }
 
-// PrefsFitShrink says "Shrink large images to the window"
+// PrefsFitShrink says "Shrink large images"
 // in the language the app shows under cx.
 func PrefsFitShrink(cx *core.Scope) string { return For(cx).PrefsFitShrink() }
 
 // PrefsFitShrink is the package's PrefsFitShrink in the language of msgs.
 func (msgs Messages) PrefsFitShrink() string { return msgs.text(textPrefsFitShrink) }
 
-// PrefsFitWindow says "Fit every image to the window"
+// PrefsFitWindow says "Fit to window"
 // in the language the app shows under cx.
 func PrefsFitWindow(cx *core.Scope) string { return For(cx).PrefsFitWindow() }
 
 // PrefsFitWindow is the package's PrefsFitWindow in the language of msgs.
 func (msgs Messages) PrefsFitWindow() string { return msgs.text(textPrefsFitWindow) }
 
-// PrefsFitOriginal says "Always original size"
+// PrefsFitOriginal says "Original size"
 // in the language the app shows under cx.
 func PrefsFitOriginal(cx *core.Scope) string { return For(cx).PrefsFitOriginal() }
 
 // PrefsFitOriginal is the package's PrefsFitOriginal in the language of msgs.
 func (msgs Messages) PrefsFitOriginal() string { return msgs.text(textPrefsFitOriginal) }
+
+// PrefsFitHint says "Shrink large images: large images fit the window, small ones stay at original size"
+// in the language the app shows under cx.
+func PrefsFitHint(cx *core.Scope) string { return For(cx).PrefsFitHint() }
+
+// PrefsFitHint is the package's PrefsFitHint in the language of msgs.
+func (msgs Messages) PrefsFitHint() string { return msgs.text(textPrefsFitHint) }
 
 // PrefsBackground says "Background color"
 // in the language the app shows under cx.
@@ -1589,3 +1762,224 @@ func MenuGo(cx *core.Scope) string { return For(cx).MenuGo() }
 
 // MenuGo is the package's MenuGo in the language of msgs.
 func (msgs Messages) MenuGo() string { return msgs.text(textMenuGo) }
+
+// PrefsOpenMaximized says "Maximize the window when it opens"
+// in the language the app shows under cx.
+func PrefsOpenMaximized(cx *core.Scope) string { return For(cx).PrefsOpenMaximized() }
+
+// PrefsOpenMaximized is the package's PrefsOpenMaximized in the language of msgs.
+func (msgs Messages) PrefsOpenMaximized() string { return msgs.text(textPrefsOpenMaximized) }
+
+// PrefsAbout says "About"
+// in the language the app shows under cx.
+func PrefsAbout(cx *core.Scope) string { return For(cx).PrefsAbout() }
+
+// PrefsAbout is the package's PrefsAbout in the language of msgs.
+func (msgs Messages) PrefsAbout() string { return msgs.text(textPrefsAbout) }
+
+// AboutVersion says "Version {version}"
+// in the language the app shows under cx.
+func AboutVersion(cx *core.Scope, version string) string { return For(cx).AboutVersion(version) }
+
+// AboutVersion is the package's AboutVersion in the language of msgs.
+func (msgs Messages) AboutVersion(version string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AboutVersion(version))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].AboutVersion; f != nil {
+			return f(version)
+		}
+		switch lang {
+		case "", "en":
+			return "Version " + msgs.arg(version)
+		case "zh-Hans":
+			return "版本 " + version
+		}
+	}
+}
+
+// AboutVersionDevelopment says "Version {version} (development build, does not check for updates)"
+// in the language the app shows under cx.
+func AboutVersionDevelopment(cx *core.Scope, version string) string {
+	return For(cx).AboutVersionDevelopment(version)
+}
+
+// AboutVersionDevelopment is the package's AboutVersionDevelopment in the language of msgs.
+func (msgs Messages) AboutVersionDevelopment(version string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AboutVersionDevelopment(version))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].AboutVersionDevelopment; f != nil {
+			return f(version)
+		}
+		switch lang {
+		case "", "en":
+			return "Version " + msgs.arg(version) + " (development build, does not check for updates)"
+		case "zh-Hans":
+			return "版本 " + version + "（开发版，不检查更新）"
+		}
+	}
+}
+
+// AboutDevelopment says "Development build, does not check for updates"
+// in the language the app shows under cx.
+func AboutDevelopment(cx *core.Scope) string { return For(cx).AboutDevelopment() }
+
+// AboutDevelopment is the package's AboutDevelopment in the language of msgs.
+func (msgs Messages) AboutDevelopment() string { return msgs.text(textAboutDevelopment) }
+
+// AboutSummary says "A lightweight image viewer for Windows with custom mouse and keyboard actions, archive browsing and animations"
+// in the language the app shows under cx.
+func AboutSummary(cx *core.Scope) string { return For(cx).AboutSummary() }
+
+// AboutSummary is the package's AboutSummary in the language of msgs.
+func (msgs Messages) AboutSummary() string { return msgs.text(textAboutSummary) }
+
+// AboutOpenRepository says "Open repository"
+// in the language the app shows under cx.
+func AboutOpenRepository(cx *core.Scope) string { return For(cx).AboutOpenRepository() }
+
+// AboutOpenRepository is the package's AboutOpenRepository in the language of msgs.
+func (msgs Messages) AboutOpenRepository() string { return msgs.text(textAboutOpenRepository) }
+
+// AboutFeedback says "Feedback"
+// in the language the app shows under cx.
+func AboutFeedback(cx *core.Scope) string { return For(cx).AboutFeedback() }
+
+// AboutFeedback is the package's AboutFeedback in the language of msgs.
+func (msgs Messages) AboutFeedback() string { return msgs.text(textAboutFeedback) }
+
+// AboutFeedbackHint says "Report a problem or make a suggestion on GitHub"
+// in the language the app shows under cx.
+func AboutFeedbackHint(cx *core.Scope) string { return For(cx).AboutFeedbackHint() }
+
+// AboutFeedbackHint is the package's AboutFeedbackHint in the language of msgs.
+func (msgs Messages) AboutFeedbackHint() string { return msgs.text(textAboutFeedbackHint) }
+
+// AboutFeedbackButton says "Report an issue"
+// in the language the app shows under cx.
+func AboutFeedbackButton(cx *core.Scope) string { return For(cx).AboutFeedbackButton() }
+
+// AboutFeedbackButton is the package's AboutFeedbackButton in the language of msgs.
+func (msgs Messages) AboutFeedbackButton() string { return msgs.text(textAboutFeedbackButton) }
+
+// AboutUpdates says "Updates"
+// in the language the app shows under cx.
+func AboutUpdates(cx *core.Scope) string { return For(cx).AboutUpdates() }
+
+// AboutUpdates is the package's AboutUpdates in the language of msgs.
+func (msgs Messages) AboutUpdates() string { return msgs.text(textAboutUpdates) }
+
+// AboutCheckUpdates says "Check for updates"
+// in the language the app shows under cx.
+func AboutCheckUpdates(cx *core.Scope) string { return For(cx).AboutCheckUpdates() }
+
+// AboutCheckUpdates is the package's AboutCheckUpdates in the language of msgs.
+func (msgs Messages) AboutCheckUpdates() string { return msgs.text(textAboutCheckUpdates) }
+
+// AboutCheckUpdatesHint says "Checks once a day; asks before it downloads and installs a new version, then opens FreeView again"
+// in the language the app shows under cx.
+func AboutCheckUpdatesHint(cx *core.Scope) string { return For(cx).AboutCheckUpdatesHint() }
+
+// AboutCheckUpdatesHint is the package's AboutCheckUpdatesHint in the language of msgs.
+func (msgs Messages) AboutCheckUpdatesHint() string { return msgs.text(textAboutCheckUpdatesHint) }
+
+// AboutCheckNow says "Check now"
+// in the language the app shows under cx.
+func AboutCheckNow(cx *core.Scope) string { return For(cx).AboutCheckNow() }
+
+// AboutCheckNow is the package's AboutCheckNow in the language of msgs.
+func (msgs Messages) AboutCheckNow() string { return msgs.text(textAboutCheckNow) }
+
+// AboutReleases says "Release notes"
+// in the language the app shows under cx.
+func AboutReleases(cx *core.Scope) string { return For(cx).AboutReleases() }
+
+// AboutReleases is the package's AboutReleases in the language of msgs.
+func (msgs Messages) AboutReleases() string { return msgs.text(textAboutReleases) }
+
+// AboutReleasesHint says "See what changed in each version and download it on GitHub"
+// in the language the app shows under cx.
+func AboutReleasesHint(cx *core.Scope) string { return For(cx).AboutReleasesHint() }
+
+// AboutReleasesHint is the package's AboutReleasesHint in the language of msgs.
+func (msgs Messages) AboutReleasesHint() string { return msgs.text(textAboutReleasesHint) }
+
+// AboutOpen says "Open"
+// in the language the app shows under cx.
+func AboutOpen(cx *core.Scope) string { return For(cx).AboutOpen() }
+
+// AboutOpen is the package's AboutOpen in the language of msgs.
+func (msgs Messages) AboutOpen() string { return msgs.text(textAboutOpen) }
+
+// AboutLicenses says "Sources and licenses"
+// in the language the app shows under cx.
+func AboutLicenses(cx *core.Scope) string { return For(cx).AboutLicenses() }
+
+// AboutLicenses is the package's AboutLicenses in the language of msgs.
+func (msgs Messages) AboutLicenses() string { return msgs.text(textAboutLicenses) }
+
+// AboutLicense says "License"
+// in the language the app shows under cx.
+func AboutLicense(cx *core.Scope) string { return For(cx).AboutLicense() }
+
+// AboutLicense is the package's AboutLicense in the language of msgs.
+func (msgs Messages) AboutLicense() string { return msgs.text(textAboutLicense) }
+
+// AboutNotices says "Third-party software"
+// in the language the app shows under cx.
+func AboutNotices(cx *core.Scope) string { return For(cx).AboutNotices() }
+
+// AboutNotices is the package's AboutNotices in the language of msgs.
+func (msgs Messages) AboutNotices() string { return msgs.text(textAboutNotices) }
+
+// AboutNoticesHint says "The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder"
+// in the language the app shows under cx.
+func AboutNoticesHint(cx *core.Scope) string { return For(cx).AboutNoticesHint() }
+
+// AboutNoticesHint is the package's AboutNoticesHint in the language of msgs.
+func (msgs Messages) AboutNoticesHint() string { return msgs.text(textAboutNoticesHint) }
+
+// AboutView says "View"
+// in the language the app shows under cx.
+func AboutView(cx *core.Scope) string { return For(cx).AboutView() }
+
+// AboutView is the package's AboutView in the language of msgs.
+func (msgs Messages) AboutView() string { return msgs.text(textAboutView) }
+
+// CodecHEIF says "Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store"
+// in the language the app shows under cx.
+func CodecHEIF(cx *core.Scope) string { return For(cx).CodecHEIF() }
+
+// CodecHEIF is the package's CodecHEIF in the language of msgs.
+func (msgs Messages) CodecHEIF() string { return msgs.text(textCodecHEIF) }
+
+// CodecAV1 says "Install AV1 Video Extension from the Microsoft Store"
+// in the language the app shows under cx.
+func CodecAV1(cx *core.Scope) string { return For(cx).CodecAV1() }
+
+// CodecAV1 is the package's CodecAV1 in the language of msgs.
+func (msgs Messages) CodecAV1() string { return msgs.text(textCodecAV1) }
+
+// CodecJXL says "Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store"
+// in the language the app shows under cx.
+func CodecJXL(cx *core.Scope) string { return For(cx).CodecJXL() }
+
+// CodecJXL is the package's CodecJXL in the language of msgs.
+func (msgs Messages) CodecJXL() string { return msgs.text(textCodecJXL) }
+
+// CodecRaw says "Install Raw Image Extension from the Microsoft Store"
+// in the language the app shows under cx.
+func CodecRaw(cx *core.Scope) string { return For(cx).CodecRaw() }
+
+// CodecRaw is the package's CodecRaw in the language of msgs.
+func (msgs Messages) CodecRaw() string { return msgs.text(textCodecRaw) }
+
+// AboutApp says "Information"
+// in the language the app shows under cx.
+func AboutApp(cx *core.Scope) string { return For(cx).AboutApp() }
+
+// AboutApp is the package's AboutApp in the language of msgs.
+func (msgs Messages) AboutApp() string { return msgs.text(textAboutApp) }

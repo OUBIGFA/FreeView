@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"image/png"
 	"math"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -23,9 +25,13 @@ import (
 const (
 	minScale = 0.01
 	maxScale = 64
-	// cacheEntries and cacheBytes bound the images kept read ahead.
-	cacheEntries = 6
-	cacheBytes   = 512 << 20
+	// cacheEntries and cacheBytes bound the images kept read ahead: the
+	// shown one and one on either side, and the one before them, which
+	// the other image view also holds decoded. Decoded pixels (BMP, TIFF
+	// and the WIC formats) take far more than file bytes: a 24 MP RAW is
+	// 96 MB of them.
+	cacheEntries = 4
+	cacheBytes   = 256 << 20
 	// touchpadStep is how far a touchpad scrolls for one wheel gesture.
 	touchpadStep = 120
 	// revealWait is the longest the main window stays hidden waiting for
@@ -88,6 +94,7 @@ type viewer struct {
 	loadSeq    uint64
 	messageSeq uint64
 	slideSeq   uint64
+	trimSeq    uint64
 	revealed   bool
 	cache      map[string]picture.Picture
 	cacheOrder []string
@@ -154,7 +161,13 @@ func (v *viewer) reveal() {
 		return
 	}
 	v.revealed = true
-	v.cx.Post(desktop.CurrentWindow(v.cx).Focus)
+	v.cx.Post(func() {
+		// Maximized while still hidden, so it never shows at its frame first.
+		if v.cfg.Get().OpenMaximized && !desktop.Maximized(v.cx) {
+			desktop.ToggleMaximize(v.cx)
+		}
+		desktop.CurrentWindow(v.cx).Focus()
+	})
 }
 
 // applyWindow keeps the window topmost and its title bar as the
@@ -254,7 +267,7 @@ func readPicture(cat *catalog.Catalog, item catalog.Item) (picture.Picture, erro
 	if err != nil {
 		return picture.Picture{}, err
 	}
-	return picture.Load(data)
+	return picture.Load(data, item.Name)
 }
 
 // prefetch reads the images on either side of i ahead of time, so moving
@@ -366,6 +379,24 @@ func (v *viewer) commit(s shown, k int) {
 		v.scale.Set(1)
 	})
 	v.reveal()
+	v.trimMemory()
+}
+
+// trimMemory hands the memory decoding left behind back to Windows once
+// browsing pauses for a second. Decoding a photo leaves garbage several
+// times its pixels, which the Go runtime would otherwise keep reserved
+// for the next decode: measured with 24 MP JPEGs, after browsing ten of
+// them the process kept about 1 GB.
+func (v *viewer) trimMemory() {
+	v.trimSeq++
+	seq := v.trimSeq
+	time.AfterFunc(time.Second, func() {
+		v.cx.Post(func() {
+			if seq == v.trimSeq {
+				go debug.FreeOSMemory()
+			}
+		})
+	})
 }
 
 // displaySize is the image's size in device pixels as shown, after its
@@ -829,7 +860,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 								return e
 							}
 							img := v.img.Get()
-							return locales.LoadFailed(cx, img.item.Name, img.err.Error())
+							return locales.LoadFailed(cx, img.item.Name, loadError(cx, img.err))
 						}}}}
 				},
 			},
@@ -997,4 +1028,22 @@ func (v *viewer) gesture(g settings.Gesture, at *core.Point) {
 	if a := v.cfg.Get().Mouse[g]; a != "" && a != settings.None {
 		v.run(a, at)
 	}
+}
+
+// loadError says why an image cannot be shown; for a format Windows has
+// no codec for, which Microsoft Store extension to install.
+func loadError(cx *core.Scope, err error) string {
+	var missing picture.MissingCodecError
+	if !errors.As(err, &missing) {
+		return err.Error()
+	}
+	switch missing.Codec {
+	case picture.CodecHEIF:
+		return locales.CodecHEIF(cx)
+	case picture.CodecAV1:
+		return locales.CodecAV1(cx)
+	case picture.CodecJXL:
+		return locales.CodecJXL(cx)
+	}
+	return locales.CodecRaw(cx)
 }

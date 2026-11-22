@@ -75,9 +75,10 @@ prefsView: 查看
 prefsViewGroup: 显示
 prefsBrowseGroup: 浏览
 prefsFit: 缩放方式
-prefsFitShrink: 大图缩小到窗口，小图保持原始大小
-prefsFitWindow: 所有图片适应窗口
-prefsFitOriginal: 始终原始大小
+prefsFitShrink: 只缩小大图
+prefsFitWindow: 适应窗口
+prefsFitOriginal: 原始大小
+prefsFitHint: 只缩小大图：大图缩小到窗口内，小图保持原始大小
 prefsBackground: 背景颜色
 prefsZoomStep: 缩放步长
 prefsShowInfo: 显示图片信息
@@ -98,3 +99,30 @@ prefsLoadFailed: "设置文件无效，已使用默认值：{error}"
 menuFile: 文件
 menuView: 查看
 menuGo: 浏览
+prefsOpenMaximized: 打开时最大化窗口
+prefsAbout: 关于
+aboutVersion: "版本 {version}"
+aboutVersionDevelopment: "版本 {version}（开发版，不检查更新）"
+aboutDevelopment: 开发版，不检查更新
+aboutSummary: 轻量的 Windows 看图软件，鼠标和键盘操作都能自定义，也能直接浏览压缩包和播放动图
+aboutOpenRepository: 打开仓库
+aboutFeedback: 问题反馈
+aboutFeedbackHint: 在 GitHub 上报告问题或提出建议
+aboutFeedbackButton: 反馈问题
+aboutUpdates: 软件更新
+aboutCheckUpdates: 检查更新
+aboutCheckUpdatesHint: 每天自动检查一次；发现新版本时询问是否下载安装，安装后自动重新打开
+aboutCheckNow: 立即检查
+aboutReleases: 更新日志
+aboutReleasesHint: 在 GitHub 上查看各版本的变化和下载
+aboutOpen: 打开
+aboutLicenses: 来源与许可
+aboutLicense: 许可
+aboutNotices: 第三方组件
+aboutNoticesHint: 使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt
+aboutView: 查看
+codecHEIF: 需要从 Microsoft Store 安装“HEIF 图像扩展”和“HEVC 视频扩展”
+codecAV1: 需要从 Microsoft Store 安装“AV1 视频扩展”
+codecJXL: 需要 Windows 11 24H2 或更新版本，并从 Microsoft Store 安装“JPEG XL 图像扩展”
+codecRaw: 需要从 Microsoft Store 安装“Raw 图像扩展”
+aboutApp: 基本信息

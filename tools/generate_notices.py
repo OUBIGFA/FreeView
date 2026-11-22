@@ -58,6 +58,8 @@ def main():
     parser.add_argument("exe", type=Path, help="the built FreeView.exe")
     parser.add_argument("output", type=Path, help="where to write THIRD_PARTY_NOTICES.txt")
     parser.add_argument("--version", required=True, help="the FreeView version")
+    parser.add_argument("--extra", action="append", default=[], metavar="TITLE=FILE[,FILE...]",
+                        help="license files of software beside the executable, such as WinSparkle.dll")
     arguments = parser.parse_args()
 
     executable = arguments.exe.resolve()
@@ -85,7 +87,7 @@ def main():
             "",
             "This file is installed with FreeView. It reproduces the licenses and notices",
             "of the software FreeView includes: FreeView itself, its dependencies, the Go",
-            "runtime and the Go standard library.",
+            "runtime and the Go standard library, and the libraries installed beside it.",
             "",
         ]) + "\n",
     ]
@@ -100,6 +102,13 @@ def main():
         directory = module_dir(path, version)
         files = [(name, directory / name) for name in license_files(directory)]
         parts.append(section(f"{path} {version}", files))
+
+    for extra in arguments.extra:
+        title, _, names = extra.partition("=")
+        paths = [Path(name) for name in names.split(",") if name]
+        if not title or not paths or not all(path.is_file() for path in paths):
+            sys.exit(f"--extra {extra}: needs a title and existing license files")
+        parts.append(section(title, [(path.name, path) for path in paths]))
 
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text("".join(parts), encoding="utf-8", newline="\n")

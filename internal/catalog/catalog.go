@@ -21,12 +21,16 @@ import (
 	"time"
 
 	"github.com/mholt/archives"
+
+	"github.com/OUBIGFA/FreeView/internal/picture"
 )
 
-// imageExts are the formats FreeView shows. JPEG, PNG, GIF and WebP are
-// decoded by nsgo (animated GIF and WebP included); BMP and TIFF by
-// golang.org/x/image.
-var imageExts = []string{".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".gif", ".webp", ".bmp", ".dib", ".tif", ".tiff"}
+// imageExts are the formats FreeView shows. JPEG, PNG, GIF, WebP and SVG
+// are decoded by nsgo (animated GIF and WebP included); BMP and TIFF by
+// golang.org/x/image; ICO, HEIF, AVIF, JPEG XL and RAW by Windows
+// (package picture).
+var imageExts = append([]string{".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".gif", ".webp", ".bmp", ".dib", ".tif", ".tiff"},
+	picture.Extensions()...)
 
 // archiveExts are the archives FreeView opens like folders.
 var archiveExts = []string{".zip", ".cbz", ".rar", ".cbr", ".7z", ".cb7", ".tar", ".cbt"}

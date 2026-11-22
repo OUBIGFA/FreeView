@@ -16,7 +16,10 @@
 //	shotall <prefix>                 capture every visible nsgo window of the process
 //	list                             print the process's top-level windows, visible or not and topmost or not
 //	alive                            print whether the process still runs
+//	mem                              print the process's working set, private bytes and CPU time so far
 //	state                            print whether the window is topmost, its frame's height beyond the client area (0: no title bar) and its position
+//	omouse <msg> <wparam> <x> <y>    mouse, to the other visible nsgo window (such as the preferences)
+//	oshot <file.png>                 shot, of the other visible nsgo window
 //	frame main|other <x> <y> <w> <h>  move and size the main window, or another visible nsgo window, in screen pixels (SetWindowPos)
 //	hit <x> <y>                      print WM_NCHITTEST at client x, y (2: HTCAPTION, drags the window)
 //
@@ -122,6 +125,23 @@ func main() {
 	}
 	fmt.Println("hwnd", hwnd)
 	for _, line := range strings.Split(string(script), "\n") {
+		// other is the process's visible nsgo window besides the main one.
+		other := func() (target uintptr) {
+			cb := syscall.NewCallback(func(h, _ uintptr) uintptr {
+				var p uint32
+				pGetTid.Call(h, uintptr(unsafe.Pointer(&p)))
+				var cn [64]uint16
+				pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
+				v, _, _ := pIsVisible.Call(h)
+				if p == pi.Pid && v != 0 && h != hwnd && syscall.UTF16ToString(cn[:]) == "NsgoWindow" {
+					target = h
+					return 0
+				}
+				return 1
+			})
+			pEnumDesktopWindows.Call(hdesk, cb, 0)
+			return target
+		}
 		f := strings.Fields(line)
 		if len(f) == 0 {
 			continue
@@ -132,6 +152,22 @@ func main() {
 			time.Sleep(time.Duration(n(1)) * time.Millisecond)
 		case "post":
 			pPost.Call(hwnd, n(1), n(2), n(3))
+		case "mem":
+			// PROCESS_MEMORY_COUNTERS_EX, through K32GetProcessMemoryInfo.
+			var pmc struct {
+				cb                                                          uint32
+				faults                                                      uint32
+				peakWorkingSet, workingSet, qpPeakPaged, qpPaged            uintptr
+				qpPeakNonPaged, qpNonPaged, pagefile, peakPagefile, private uintptr
+			}
+			pmc.cb = uint32(unsafe.Sizeof(pmc))
+			kernel.NewProc("K32GetProcessMemoryInfo").Call(uintptr(pi.Process), uintptr(unsafe.Pointer(&pmc)), uintptr(pmc.cb))
+			var created, exited, kernelTime, userTime syscall.Filetime
+			syscall.GetProcessTimes(syscall.Handle(pi.Process), &created, &exited, &kernelTime, &userTime)
+			ticks := func(t syscall.Filetime) int64 { return int64(t.HighDateTime)<<32 | int64(t.LowDateTime) }
+			cpu := time.Duration(ticks(kernelTime)+ticks(userTime)) * 100
+			fmt.Printf("mem working=%.1fMB peak=%.1fMB private=%.1fMB cpu=%v\n", float64(pmc.workingSet)/(1<<20),
+				float64(pmc.peakWorkingSet)/(1<<20), float64(pmc.private)/(1<<20), cpu)
 		case "alive":
 			r, _, _ := kernel.NewProc("WaitForSingleObject").Call(uintptr(pi.Process), 0)
 			fmt.Println("alive", r == 0x102)
@@ -174,20 +210,7 @@ func main() {
 		case "frame":
 			target := hwnd
 			if f[1] == "other" {
-				target = 0
-				cb := syscall.NewCallback(func(h, _ uintptr) uintptr {
-					var p uint32
-					pGetTid.Call(h, uintptr(unsafe.Pointer(&p)))
-					var cn [64]uint16
-					pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
-					v, _, _ := pIsVisible.Call(h)
-					if p == pi.Pid && v != 0 && h != hwnd && syscall.UTF16ToString(cn[:]) == "NsgoWindow" {
-						target = h
-						return 0
-					}
-					return 1
-				})
-				pEnumDesktopWindows.Call(hdesk, cb, 0)
+				target = other()
 			}
 			const swpNoZOrder, swpNoActivate = 0x4, 0x10
 			r, _, _ := pSetWindowPos.Call(target, 0, n(2), n(3), n(4), n(5), swpNoZOrder|swpNoActivate)
@@ -199,12 +222,18 @@ func main() {
 			fmt.Println("hit", f[1], f[2], r)
 		case "shot":
 			shot(hwnd, f[1])
-		case "mouse": // mouse msg wparam x y (client coords; wheel messages get screen coords)
+		case "mouse", "omouse": // mouse msg wparam x y (client coords; wheel messages get screen coords)
+			target := hwnd
+			if f[0] == "omouse" {
+				target = other()
+			}
 			pt := [2]int32{int32(n(3)), int32(n(4))}
 			if n(1) == 0x20A || n(1) == 0x20E {
-				pClientToScreen.Call(hwnd, uintptr(unsafe.Pointer(&pt)))
+				pClientToScreen.Call(target, uintptr(unsafe.Pointer(&pt)))
 			}
-			pPost.Call(hwnd, n(1), n(2), uintptr(uint32(uint16(pt[0]))|uint32(uint16(pt[1]))<<16))
+			pPost.Call(target, n(1), n(2), uintptr(uint32(uint16(pt[0]))|uint32(uint16(pt[1]))<<16))
+		case "oshot":
+			shot(other(), f[1])
 		}
 	}
 }
