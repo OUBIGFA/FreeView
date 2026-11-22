@@ -39,7 +39,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Test internal packages
-        run: go test ./internal/...
+        run: go test -tags nodynamic ./internal/...
       - name: Check and test the app
         working-directory: cmd/freeview
         run: |

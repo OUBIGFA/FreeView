@@ -17,7 +17,7 @@
 | --- | --- | --- |
 | 列出、排序、导航 | `internal/catalog`：文件夹用 `os.ReadDir`，名称排序用 Windows 的 `StrCmpLogicalW`（与资源管理器一致） | 单元测试；在私有桌面中实测 |
 | 压缩包 | 用 `github.com/mholt/archives` 把压缩包当作 `io/fs` 文件系统读取 | ZIP：单元测试和界面测试；7z：私有桌面实测；RAR/TAR：未用实际文件验证 |
-| 解码 | JPEG/PNG/GIF/WebP（含动图）和 SVG 由 nsgo 解码（SVG 尺寸用 `core.ParseSVG` 读取）。BMP/TIFF 由 `golang.org/x/image` 解码成像素。ICO、HEIF/HEIC、AVIF、JPEG XL 和 RAW 由 Windows WIC 解码成像素（`internal/picture/wic_windows.go`）：HEIF/AVIF、JPEG XL、RAW 按容器 GUID 指定解码器，缺少扩展时报出要安装的 Microsoft Store 扩展；RAW 有全尺寸内嵌预览时显示预览。EXIF 方向用 `rwcarlsen/goexif` 读取，RAW 用 WIC 的 `System.Photo.Orientation` | 单元测试（ICO、SVG、损坏文件）；本机（26H2）用样本实测：AVIF（含 irot 旋转，WIC 已转正）、HEIC、ICO、SVG、DNG/NEF/CR3 正常显示，JPEG XL 未装扩展时显示安装提示；私有桌面截图核对 |
+| 解码 | JPEG/PNG/GIF/WebP（含动图）和 SVG 由 nsgo 解码（SVG 尺寸用 `core.ParseSVG` 读取）。BMP/TIFF 由 `golang.org/x/image` 解码成像素。ICO、HEIF/HEIC、AVIF、JPEG XL 和 RAW 由 Windows WIC 解码成像素（`internal/picture/wic_windows.go`）：HEIF/AVIF、JPEG XL、RAW 按容器 GUID 指定解码器，缺少扩展时报出要安装的 Microsoft Store 扩展。HEIC 和 JPEG XL 在 WIC 失败时改用 gen2brain/heic、gen2brain/jpegxl（WebAssembly，wazero，`nodynamic` 标签）；RAW 有全尺寸内嵌预览时显示预览。EXIF 方向用 `rwcarlsen/goexif` 读取，RAW 用 WIC 的 `System.Photo.Orientation` | 单元测试（ICO、SVG、损坏文件）；本机（26H2）用样本实测：AVIF（含 irot 旋转，WIC 已转正）、HEIC、ICO、SVG、DNG/NEF/CR3 正常显示，JPEG XL 未装扩展时由 gen2brain/jpegxl 解码（单元测试编码再解码），HEIC 兜底解码与 WIC 结果的红色通道平均差 2.9/255；HEIC 兜底第二次解码 222 ms，WIC 39 ms；私有桌面截图核对 |
 | 缩放、平移、旋转 | 按图片像素和屏幕像素比计算位置；用 nsgo Transform 处理旋转和镜像 | 无界面测试检查缩放百分比；私有桌面检查平移 |
 | 输入绑定 | `internal/settings` 定义动作、鼠标操作和快捷键，存为 YAML。键盘用 `Scope.OnKey`；滚轮、拖动、双击、右键用 nsgo 事件；中键和侧键由 `internal/winmouse` 子类化窗口接收 | 单元测试；私有桌面实测改过的中键和滚轮绑定 |
 | 窗口 | 置顶用 nsgo `SetWindowLevel`。隐藏标题栏用 `SetTitleBar` 和 `SetWindowControls`，顶部拖动条用 `WindowDrag`（HTCAPTION）。拖动图片旁的背景时，`internal/winmouse` 让窗口线程执行 `WM_SYSCOMMAND SC_DRAGMOVE`，由 Windows 移动窗口 | 无界面测试检查拖动条；私有桌面用 `deskrun state/hit` 检查置顶、标题栏、拖动条命中和背景拖动的触发。真实鼠标拖动无法在私有桌面模拟，尚未自动验证 |
@@ -37,7 +37,7 @@
 - **预读只读取文件字节。** 解码仍在显示时由 nsgo 完成，所以大 JPEG 首次显示仍需要等待解码。
 - 动图不能暂停、逐帧查看或调速，nsgo 的 Image 没有提供这些控制。
 - APNG 动画、动态 AVIF/HEIC/JPEG XL 只显示第一帧。
-- HEIC、AVIF、JPEG XL、RAW 依赖用户安装的 Windows 扩展；没有扩展时只能显示安装提示。
+- AVIF、RAW 依赖用户安装的 Windows 扩展，没有扩展时只能显示安装提示。HEIC、JPEG XL 没有扩展时走 WebAssembly 兜底，较慢、占内存较多。
 - SVG 由 nsgo 按每点 4 像素、最长边 2048 像素栅格化，放得很大会变模糊；nsgo 的 SVG 不绘制 `<text>`。
 - 0.1.0 没有 WinSparkle，所以 0.1.0 的用户需要手动安装下一个版本；之后的版本才能自动更新。每个正式 Release 都必须带上签名的 `appcast-windows_x64.xml`。
 - 只有一个实例：再次启动时，文件交给已经运行的窗口打开。

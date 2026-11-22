@@ -33,7 +33,7 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 ## 可以用来做什么
 
 - **查看图片。** 打开 JPEG、PNG、GIF、WebP、BMP、TIFF、SVG 和 ICO 图片。GIF 和 WebP 动画图片会自动播放。
-- **查看手机和相机照片。** 打开 HEIC、AVIF、JPEG XL 和相机 RAW 照片（如 DNG、CR3、NEF、ARW）。这些格式由 Windows 解码，需要先安装对应的 Windows 扩展，见[注意](#注意)。
+- **查看手机和相机照片。** 打开 HEIC、AVIF、JPEG XL 和相机 RAW 照片（如 DNG、CR3、NEF、ARW）。这些格式优先由 Windows 解码；HEIC 和 JPEG XL 在没有 Windows 扩展时也能打开，见[注意](#注意)。
 - **浏览文件夹。** 看上一张、下一张、第一张或最后一张图片。也可以开始幻灯片。
 - **打开压缩包。** 直接查看 ZIP、7z、RAR 和 TAR 压缩包中的图片。
 - **缩放和移动图片。** 放大、缩小、适应窗口或显示原始大小。图片比窗口大时，你可以拖动图片。
@@ -97,11 +97,10 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 - FreeView 只使用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。
 - 压缩包中的图片不能删除。
 - 动画图片会一直播放。现在不能暂停或逐帧查看。
-- HEIC、AVIF、JPEG XL 和 RAW 照片需要从 Microsoft Store 安装对应的 Windows 扩展。缺少扩展时，FreeView 会提示要安装哪一个：
-  - HEIC：HEIF 图像扩展和 HEVC 视频扩展。
+- AVIF 和 RAW 照片需要从 Microsoft Store 安装对应的 Windows 扩展。缺少扩展时，FreeView 会提示要安装哪一个：
   - AVIF：AV1 视频扩展。
-  - JPEG XL：JPEG XL 图像扩展。需要 Windows 11 24H2 或更新版本。
   - RAW：Raw 图像扩展。如果照片中有相机生成的全尺寸预览图，FreeView 显示预览图，因为预览图打开更快。
+- HEIC 和 JPEG XL 不需要安装扩展。没有扩展时，FreeView 用自带的解码器打开，速度慢一些，内存占用也更大。装了扩展（HEIC 需要 HEIF 图像扩展和 HEVC 视频扩展；JPEG XL 需要 Windows 11 24H2 和 JPEG XL 图像扩展）后会更快。
 - HEIC、AVIF、JPEG XL 和 RAW 照片只显示第一帧。SVG 图片中的文字可能不显示。
 - 版本 0.1.0 不支持上面这些新格式，也不能自动更新。这些功能从 0.1.0 之后的版本开始提供。
 

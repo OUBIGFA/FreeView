@@ -121,8 +121,6 @@ aboutLicense: License
 aboutNotices: Third-party software
 aboutNoticesHint: The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder
 aboutView: View
-codecHEIF: Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store
 codecAV1: Install AV1 Video Extension from the Microsoft Store
-codecJXL: Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store
 codecRaw: Install Raw Image Extension from the Microsoft Store
 aboutApp: Information

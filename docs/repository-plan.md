@@ -50,7 +50,7 @@ README 预览图放在 `assets/screenshots/`，只使用 FreeView 的默认窗�
 ## 检查
 
 - `python tools/check.py`：读取 Git 暂存区检查文件边界、编码、大小、凭据、机器路径、二进制登记和链接。
-- `go test ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。
+- `go test -tags nodynamic ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。
 - 界面测试：`go run ./tools/deskrun <脚本> <exe> <参数>` 在私有桌面中运行，示例脚本见 `tests/desktop/smoke.txt`。
 
 仓库检查通过只说明公开文件符合边界，不说明应用功能或性能达标。

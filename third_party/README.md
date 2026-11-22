@@ -19,6 +19,9 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | --- | --- | --- | --- |
 | github.com/nsgo-dev/nsgo | v0.2.0 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
 | github.com/mholt/archives | v0.1.5 | MIT | 读取压缩包 |
+| github.com/gen2brain/heic | v0.7.2 | MIT；内嵌的 HEIC 解码器（Rust crate `heic` 0.1.6）为 AGPL-3.0-only，其余 Rust 依赖为 MIT/Apache-2.0/Zlib（[清单与正文](licenses/heic-wasm-notices.txt)） | Windows 缺少 HEIF/HEVC 扩展时解码 HEIC |
+| github.com/gen2brain/jpegxl | v0.6.0 | MIT；内嵌 libjxl v0.11.2（BSD-3-Clause 及专利授权）和 Highway（Apache-2.0 或 BSD-3-Clause）（[正文](licenses/jpegxl-wasm-notices.txt)） | Windows 缺少 JPEG XL 扩展时解码 JPEG XL |
+| github.com/tetratelabs/wazero | v1.12.0 | Apache-2.0 | 运行上面两个 WebAssembly 解码器 |
 | github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向 |
 | golang.org/x/image | v0.48.0 | BSD-3-Clause | BMP/TIFF 解码；nsgo 也使用 |
 | go.yaml.in/yaml/v3 | v3.0.6 | MIT 与 Apache-2.0 | 设置文件；nsgo 也使用 |
@@ -40,7 +43,9 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/yuin/goldmark | v1.8.7 | MIT | nsgo 依赖 |
 | golang.org/x/net、golang.org/x/text | v0.62.0、v0.44.0 | BSD-3-Clause | nsgo 依赖 |
 
-以上许可都可以与 GPL-3.0 组合使用。
+以上许可都可以与 GPL-3.0 组合使用。`heic` crate 的 AGPL-3.0-only 按 GPL-3.0 第 13 条与 FreeView 组合发布（2026-11-22 用户确认），这部分按 AGPL-3.0 的条款提供，源码见 [imazen/heic](https://github.com/imazen/heic)。
+
+两个 WebAssembly 解码器的许可正文整理自 crates.io 上对应版本的 crate 包、gen2brain/jpegxl 自带的 `lib/LICENSE.libjxl`、libjxl v0.11.2 的 `PATENTS` 和 google/highway 的 `LICENSE`。升级这两个模块时，按它们 `lib/` 中的 `Cargo.lock` 和 `Makefile` 重新核对。构建时启用 `nodynamic` 标签（`nsgo.yaml`），它们不加载系统中的 libheif 或 libjxl DLL。
 
 ## 安装在程序旁的库
 

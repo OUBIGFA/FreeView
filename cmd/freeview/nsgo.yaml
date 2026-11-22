@@ -12,6 +12,9 @@ dev:
 build:
   output: ../../dist
   targets: [windows_x64]
+  # gen2brain/heic and gen2brain/jpegxl would otherwise try to load
+  # libheif.dll and libjxl.dll from the DLL search path as they start.
+  tags: [nodynamic]
 
 windows:
   publisher: FreeView

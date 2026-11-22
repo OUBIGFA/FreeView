@@ -20,7 +20,7 @@
 
 每次完成代码任务后，按顺序执行：
 
-1. 检查与测试：根目录 `python tools/check.py` 和 `go test ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。改动界面或输入时，用 `go run ./tools/deskrun` 在私有桌面中做界面验收（示例 `tests/desktop/smoke.txt`）。不在用户当前桌面上做界面测试。
+1. 检查与测试：根目录 `python tools/check.py` 和 `go test -tags nodynamic ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。改动界面或输入时，用 `go run ./tools/deskrun` 在私有桌面中做界面验收（示例 `tests/desktop/smoke.txt`）。不在用户当前桌面上做界面测试。
 2. 提交并推送到 origin/main。
 3. 每次代码改动后都重新构建测试安装器：根目录运行 `python tools/build_installer.py`，生成 `dist/releases/FreeView-<版本>.exe`（如 `FreeView-0.1.0.exe`，目录被忽略）。测试安装器只供本地试用，不等于正式发布。
 

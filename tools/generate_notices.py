@@ -14,6 +14,13 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+# Modules that embed code compiled to WebAssembly, whose licenses their
+# module's own license file does not cover: third_party/README.md says
+# where each file comes from.
+EMBEDDED = {
+    "github.com/gen2brain/heic": ["third_party/licenses/heic-wasm-notices.txt"],
+    "github.com/gen2brain/jpegxl": ["third_party/licenses/jpegxl-wasm-notices.txt"],
+}
 LICENSE_NAME = re.compile(r"^(?:LICEN[CS]E|COPYING|NOTICE|PATENT)", re.IGNORECASE)
 
 
@@ -101,6 +108,7 @@ def main():
     for path, version in modules:
         directory = module_dir(path, version)
         files = [(name, directory / name) for name in license_files(directory)]
+        files += [(Path(name).name, ROOT / name) for name in EMBEDDED.get(path, [])]
         parts.append(section(f"{path} {version}", files))
 
     for extra in arguments.extra:

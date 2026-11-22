@@ -6,10 +6,12 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/gif"
 	"image/png"
 	"testing"
 
+	"github.com/gen2brain/jpegxl"
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/tiff"
 )
@@ -130,6 +132,29 @@ func TestBrokenFilesOfCodecFormats(t *testing.T) {
 		var missing MissingCodecError
 		if err == nil || errors.As(err, &missing) && missing.Codec != codec {
 			t.Errorf("%s: err = %v", name, err)
+		}
+	}
+}
+
+// JPEG XL opens whether or not Windows has its extension: the fallback
+// decodes it otherwise.
+func TestJPEGXLOpens(t *testing.T) {
+	src := image.NewRGBA(image.Rect(0, 0, 40, 30))
+	draw.Draw(src, src.Rect, image.NewUniform(color.RGBA{0, 128, 255, 255}), image.Point{}, draw.Src)
+	var buf bytes.Buffer
+	if err := jpegxl.Encode(&buf, src, jpegxl.Options{Quality: 100, Effort: 1}); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"photo.jxl", "misnamed.png"} {
+		p, err := Load(buf.Bytes(), name)
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if p.Pixels == nil || p.Width != 40 || p.Height != 30 || p.Format != "jxl" {
+			t.Errorf("%s = %dx%d %s", name, p.Width, p.Height, p.Format)
+		}
+		if c := p.Pixels.RGBAAt(20, 15); c.B < 240 || c.R > 15 {
+			t.Errorf("%s: pixel %v, want the blue it was encoded with", name, c)
 		}
 	}
 }

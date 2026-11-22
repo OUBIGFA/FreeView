@@ -121,8 +121,6 @@ aboutLicense: 许可
 aboutNotices: 第三方组件
 aboutNoticesHint: 使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt
 aboutView: 查看
-codecHEIF: 需要从 Microsoft Store 安装“HEIF 图像扩展”和“HEVC 视频扩展”
 codecAV1: 需要从 Microsoft Store 安装“AV1 视频扩展”
-codecJXL: 需要 Windows 11 24H2 或更新版本，并从 Microsoft Store 安装“JPEG XL 图像扩展”
 codecRaw: 需要从 Microsoft Store 安装“Raw 图像扩展”
 aboutApp: 基本信息

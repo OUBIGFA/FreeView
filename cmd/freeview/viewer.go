@@ -1037,13 +1037,9 @@ func loadError(cx *core.Scope, err error) string {
 	if !errors.As(err, &missing) {
 		return err.Error()
 	}
-	switch missing.Codec {
-	case picture.CodecHEIF:
-		return locales.CodecHEIF(cx)
-	case picture.CodecAV1:
+	// HEIF and JPEG XL have fallback decoders, so only these two are missed.
+	if missing.Codec == picture.CodecAV1 {
 		return locales.CodecAV1(cx)
-	case picture.CodecJXL:
-		return locales.CodecJXL(cx)
 	}
 	return locales.CodecRaw(cx)
 }

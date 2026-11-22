@@ -2,8 +2,9 @@
 // size and EXIF orientation without decoding the pixels, and decodes the
 // formats nsgo does not into pixels: BMP and TIFF through golang.org/x/image,
 // and ICO, HEIF, AVIF, JPEG XL and camera RAW through Windows' own codecs
-// (WIC). nsgo decodes JPEG, PNG, GIF, WebP and SVG itself, animations
-// included.
+// (WIC), with gen2brain/heic and gen2brain/jpegxl decoding HEIF and JPEG XL
+// where Windows lacks their extensions. nsgo decodes JPEG, PNG, GIF, WebP
+// and SVG itself, animations included.
 package picture
 
 import (
@@ -23,6 +24,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/gen2brain/heic"
+	"github.com/gen2brain/jpegxl"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/rwcarlsen/goexif/exif"
 	_ "golang.org/x/image/bmp"
@@ -57,7 +60,8 @@ const (
 )
 
 // MissingCodecError says Windows has no codec for the file: its
-// extension Codec is not installed.
+// extension Codec is not installed. HEIF and JPEG XL never report it, as
+// their fallback decoders take over.
 type MissingCodecError struct{ Codec Codec }
 
 func (e MissingCodecError) Error() string {
@@ -102,6 +106,11 @@ func Load(data []byte, name string) (Picture, error) {
 		}
 		return Picture{}, fmt.Errorf("unrecognized image: %w", err)
 	}
+	// The fallback decoders register their formats with package image:
+	// Windows still decodes a HEIC or JPEG XL found by content first.
+	if codec, ok := map[string]Codec{"heic": CodecHEIF, "jxl": CodecJXL}[format]; ok {
+		return loadWIC(data, codec, format)
+	}
 	p := Picture{Width: cfg.Width, Height: cfg.Height, Format: format, Orientation: orientation(data)}
 	if nativeFormats[format] {
 		p.Data = data
@@ -111,14 +120,27 @@ func Load(data []byte, name string) (Picture, error) {
 	if err != nil {
 		return Picture{}, err
 	}
-	rgba, ok := img.(*image.RGBA)
-	if !ok {
-		rgba = image.NewRGBA(img.Bounds())
-		draw.Draw(rgba, rgba.Rect, img, img.Bounds().Min, draw.Src)
-	}
-	p.Pixels = rgba
+	p.Pixels = rgbaOf(img)
 	return p, nil
 }
+
+func rgbaOf(img image.Image) *image.RGBA {
+	if rgba, ok := img.(*image.RGBA); ok {
+		return rgba
+	}
+	rgba := image.NewRGBA(img.Bounds())
+	draw.Draw(rgba, rgba.Rect, img, img.Bounds().Min, draw.Src)
+	return rgba
+}
+
+// fallbacks decode the formats whose Windows extensions users most often
+// lack: HEIF needs the paid HEVC Video Extensions, and JPEG XL Windows 11
+// 24H2 with an extension few install. They run in WebAssembly (wazero),
+// slower than Windows' codecs and with more memory (a 1280 × 854 HEIC:
+// 222 ms against 39 ms), so Windows decodes first whenever it can. Both apply
+// the image's own rotation. Built with the nodynamic tag (nsgo.yaml),
+// they never load a libheif or libjxl DLL from the search path.
+var fallbacks = map[Codec]func(io.Reader) (image.Image, error){CodecHEIF: heic.Decode, CodecJXL: jpegxl.Decode}
 
 // loadSVG keeps an SVG's bytes for nsgo, which draws it, with its size
 // in points as its pixel size.
@@ -152,7 +174,21 @@ func loadSVG(data []byte) (Picture, error) {
 func loadWIC(data []byte, codec Codec, format string) (Picture, error) {
 	img, orient, err := decodeWIC(data, codec)
 	if err != nil {
-		if missingCodec(err) && codec != "" {
+		missing := missingCodec(err) && codec != ""
+		if fallback := fallbacks[codec]; fallback != nil {
+			// Also when the extension is there but fails, as HEIF does
+			// without the HEVC extension it decodes with.
+			m, fbErr := fallback(bytes.NewReader(data))
+			if fbErr == nil {
+				img := rgbaOf(m)
+				return Picture{Pixels: img, Width: img.Rect.Dx(), Height: img.Rect.Dy(), Format: format, Orientation: 1}, nil
+			}
+			if missing {
+				return Picture{}, fbErr
+			}
+			return Picture{}, err
+		}
+		if missing {
 			return Picture{}, MissingCodecError{codec}
 		}
 		return Picture{}, err

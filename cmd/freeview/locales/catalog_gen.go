@@ -192,9 +192,7 @@ const (
 	textAboutNotices
 	textAboutNoticesHint
 	textAboutView
-	textCodecHEIF
 	textCodecAV1
-	textCodecJXL
 	textCodecRaw
 	textAboutApp
 	numTexts
@@ -314,9 +312,7 @@ var keyOfText = [numTexts]string{
 	"aboutNotices",
 	"aboutNoticesHint",
 	"aboutView",
-	"codecHEIF",
 	"codecAV1",
-	"codecJXL",
 	"codecRaw",
 	"aboutApp",
 }
@@ -434,9 +430,7 @@ var textsEn = i18n.NewTexts(""+
 	"Third-party software"+
 	"The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder"+
 	"View"+
-	"Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store"+
 	"Install AV1 Video Extension from the Microsoft Store"+
-	"Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store"+
 	"Install Raw Image Extension from the Microsoft Store"+
 	"Information",
 	[]uint16{
@@ -551,9 +545,7 @@ var textsEn = i18n.NewTexts(""+
 		20,
 		110,
 		4,
-		80,
 		52,
-		83,
 		52,
 		11,
 	})
@@ -671,9 +663,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"第三方组件"+
 	"使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt"+
 	"查看"+
-	"需要从 Microsoft Store 安装“HEIF 图像扩展”和“HEVC 视频扩展”"+
 	"需要从 Microsoft Store 安装“AV1 视频扩展”"+
-	"需要 Windows 11 24H2 或更新版本，并从 Microsoft Store 安装“JPEG XL 图像扩展”"+
 	"需要从 Microsoft Store 安装“Raw 图像扩展”"+
 	"基本信息",
 	[]uint16{
@@ -788,9 +778,7 @@ var textsZhHans = i18n.NewTexts(""+
 		15,
 		81,
 		6,
-		81,
 		54,
-		96,
 		54,
 		12,
 	})
@@ -1949,26 +1937,12 @@ func AboutView(cx *core.Scope) string { return For(cx).AboutView() }
 // AboutView is the package's AboutView in the language of msgs.
 func (msgs Messages) AboutView() string { return msgs.text(textAboutView) }
 
-// CodecHEIF says "Install HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store"
-// in the language the app shows under cx.
-func CodecHEIF(cx *core.Scope) string { return For(cx).CodecHEIF() }
-
-// CodecHEIF is the package's CodecHEIF in the language of msgs.
-func (msgs Messages) CodecHEIF() string { return msgs.text(textCodecHEIF) }
-
 // CodecAV1 says "Install AV1 Video Extension from the Microsoft Store"
 // in the language the app shows under cx.
 func CodecAV1(cx *core.Scope) string { return For(cx).CodecAV1() }
 
 // CodecAV1 is the package's CodecAV1 in the language of msgs.
 func (msgs Messages) CodecAV1() string { return msgs.text(textCodecAV1) }
-
-// CodecJXL says "Needs Windows 11 24H2 or later and JPEG XL Image Extension from the Microsoft Store"
-// in the language the app shows under cx.
-func CodecJXL(cx *core.Scope) string { return For(cx).CodecJXL() }
-
-// CodecJXL is the package's CodecJXL in the language of msgs.
-func (msgs Messages) CodecJXL() string { return msgs.text(textCodecJXL) }
 
 // CodecRaw says "Install Raw Image Extension from the Microsoft Store"
 // in the language the app shows under cx.
