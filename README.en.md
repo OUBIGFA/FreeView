@@ -8,7 +8,7 @@
 
 [简体中文](README.md) · English
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.0-2E7D32" alt="Version 0.1.0"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.2-2E7D32" alt="Version 0.1.2"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 and 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only license"></a>
 
@@ -51,7 +51,7 @@ FreeView is an image viewer for Windows. It opens images, folders, and archives 
 3. Open the downloaded file.
 4. Follow the instructions on the screen to install FreeView.
 
-The current version is 0.1.0. It runs on 64-bit Windows 10 and Windows 11.
+The current version is 0.1.2. It runs on 64-bit Windows 10 and Windows 11.
 
 The installer installs FreeView for your user account. You do not need administrator rights. After you install FreeView, open it from the Start menu. You can also create a desktop shortcut during installation.
 
@@ -102,7 +102,6 @@ The window has no title bar by default. To move the window, drag anywhere in it.
   - RAW: Raw Image Extension. If the photo contains a full-size preview from the camera, FreeView shows the preview, because it opens faster.
 - HEIC and JPEG XL do not need an extension. Without one, FreeView opens them with its own decoder, which is slower and uses more memory. With the extension (HEIC: HEIF Image Extensions and HEVC Video Extensions; JPEG XL: Windows 11 24H2 and JPEG XL Image Extension), they open faster.
 - FreeView shows only the first frame of HEIC, AVIF, JPEG XL, and RAW photos. Text in SVG images may not show.
-- Version 0.1.0 does not support these new formats and does not update itself. These features start with the version after 0.1.0.
 
 ## Sources and license
 

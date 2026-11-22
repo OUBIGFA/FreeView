@@ -8,7 +8,7 @@
 
 简体中文 · [English](README.en.md)
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.0-2E7D32" alt="版本 0.1.0"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.2-2E7D32" alt="版本 0.1.2"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 和 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only 许可证"></a>
 
@@ -51,7 +51,7 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 3. 打开下载的文件。
 4. 按屏幕上的提示安装 FreeView。
 
-当前版本是 0.1.0。它支持 64 位 Windows 10 和 Windows 11。
+当前版本是 0.1.2。它支持 64 位 Windows 10 和 Windows 11。
 
 安装程序为当前用户安装 FreeView。你不需要管理员权限。安装后，从开始菜单打开 FreeView。你也可以在安装时创建桌面快捷方式。
 
@@ -102,7 +102,6 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
   - RAW：Raw 图像扩展。如果照片中有相机生成的全尺寸预览图，FreeView 显示预览图，因为预览图打开更快。
 - HEIC 和 JPEG XL 不需要安装扩展。没有扩展时，FreeView 用自带的解码器打开，速度慢一些，内存占用也更大。装了扩展（HEIC 需要 HEIF 图像扩展和 HEVC 视频扩展；JPEG XL 需要 Windows 11 24H2 和 JPEG XL 图像扩展）后会更快。
 - HEIC、AVIF、JPEG XL 和 RAW 照片只显示第一帧。SVG 图片中的文字可能不显示。
-- 版本 0.1.0 不支持上面这些新格式，也不能自动更新。这些功能从 0.1.0 之后的版本开始提供。
 
 ## 来源与许可
 
