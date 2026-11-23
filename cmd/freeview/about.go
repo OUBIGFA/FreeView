@@ -19,6 +19,26 @@ const (
 	logoPoints    = 56
 )
 
+var launchBrowser = openBrowser
+
+// openWebURL keeps the shell's browser handoff off both the nsgo engine
+// and the Windows message thread. nsgo v0.2.0's Scope.OpenURL calls
+// ShellExecuteEx on the message thread, freezing every window if it waits.
+func openWebURL(cx *core.Scope, url string) {
+	launch := launchBrowser
+	go func() {
+		err := launch(url)
+		if err != nil {
+			// Post also drops the reply if this settings page has closed.
+			cx.Post(func() {
+				cx.ShowAlert(core.AlertConfig{Title: locales.AboutOpenFailed(cx),
+					Message: locales.OpenFailed(cx, url, err.Error()), Cancelable: true,
+					Actions: []core.AlertAction{{Label: locales.UpdateOk(cx), Role: core.AlertDefault}}}, func(int) {})
+			})
+		}
+	}()
+}
+
 // logoPixels is the brand image shrunk once to 128 pixels a side: the
 // 1200-pixel source decoded as it is would hold 5.5 MB for a 56-point
 // mark. It is made the first time the About page shows.
@@ -48,7 +68,7 @@ func appVersion(cx *core.Scope) string {
 // aboutGroups is the About page: the app and its version, its repository,
 // updates and licenses. Links open in the browser.
 func aboutGroups(cx *core.Scope) []ui.SettingsGroup {
-	open := func(url string) func() { return func() { cx.OpenURL(url, nil) } }
+	open := func(url string) func() { return func() { openWebURL(cx, url) } }
 	button := func(id, text string, press func()) core.Node {
 		return ui.Button{Text: text, Variant: ui.ButtonOutline, Size: ui.SizeSmall, TestID: id, OnPress: press}
 	}

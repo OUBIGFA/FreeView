@@ -1,0 +1,52 @@
+# Regression for a browser handoff that never returns, using real windows.
+# Build: go test -c -tags nodynamic -o <work>/FreeView.test.exe ./cmd/freeview
+# Use a fresh APPDATA with FreeView/config.yaml containing multiple_windows: true.
+# Set FREEVIEW_DESKTOP_BROWSER_LOG to <work>/links.txt, then run:
+#   go run ./tools/deskrun tests/desktop/about-links.txt <work>/FreeView.test.exe
+# The log must contain the LICENSE and third_party/README.md URLs, in that order.
+# Coordinates are client pixels at 100% display scaling, 1040 x 700 settings.
+sleep 1200
+post 0x100 0x50 0x00190001
+post 0x101 0x50 0xC0190001
+sleep 600
+other true
+omouse 0x201 1 55 222
+omouse 0x202 0 55 222
+sleep 300
+omouse 0x201 1 955 550
+omouse 0x202 0 955 550
+sleep 300
+responsive main
+responsive other
+# Switch away and back while the license link is still waiting.
+omouse 0x201 1 55 120
+omouse 0x202 0 55 120
+sleep 300
+omouse 0x201 1 55 222
+omouse 0x202 0 55 222
+sleep 300
+omouse 0x201 1 955 607
+omouse 0x202 0 955 607
+sleep 300
+responsive main
+responsive other
+# Moving and closing settings must work while both handoffs are pending.
+frame other 250 150 1056 739
+opost 0x10 0 0
+sleep 500
+other false
+responsive main
+frame main 200 150 1000 700
+state
+# The viewer can open settings again and close it normally.
+post 0x100 0x50 0x00190001
+post 0x101 0x50 0xC0190001
+sleep 500
+other true
+responsive other
+opost 0x10 0 0
+sleep 400
+other false
+post 0x10 0 0
+sleep 700
+alive false

@@ -25,6 +25,7 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/Masterminds/semver/v3 | v3.5.0 | MIT | 比较版本号，检查更新 |
 | github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向 |
 | golang.org/x/image | v0.48.0 | BSD-3-Clause | BMP/TIFF 解码；nsgo 也使用 |
+| golang.org/x/sys | v0.50.0 | BSD-3-Clause | Windows 后台打开默认浏览器；nsgo 也使用 |
 | go.yaml.in/yaml/v3 | v3.0.6 | MIT 与 Apache-2.0 | 设置文件；nsgo 也使用 |
 | github.com/nwaples/rardecode/v2 | v2.2.0 | BSD-2-Clause | archives：RAR |
 | github.com/bodgit/sevenzip | v1.6.1 | BSD-3-Clause | archives：7z |

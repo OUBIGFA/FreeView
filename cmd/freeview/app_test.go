@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"errors"
 	"image"
 	"image/png"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 	"github.com/nsgo-dev/nsgo/nsgotest"
 	"go.yaml.in/yaml/v3"
 
@@ -21,8 +23,15 @@ import (
 	"github.com/OUBIGFA/FreeView/internal/settings"
 )
 
-// TestMain hands the main thread to the platform under nsgo test -target.
-func TestMain(m *testing.M) { nsgotest.Main(m) }
+// TestMain also supplies the real app with a waiting browser for the
+// private-desktop regression script, without opening the user's browser.
+func TestMain(m *testing.M) {
+	if path := os.Getenv("FREEVIEW_DESKTOP_BROWSER_LOG"); path != "" {
+		runBrowserWaitDesktop(path)
+		return
+	}
+	nsgotest.Main(m)
+}
 
 func pngOf(t *testing.T, w, h int) []byte {
 	t.Helper()
@@ -249,7 +258,7 @@ func TestRemembersTheFrameBeforeMaximizing(t *testing.T) {
 	}
 }
 
-// The About page shows the logo and the version, and links the repository.
+// The About page shows the logo and sends each link to the browser.
 func TestAboutPage(t *testing.T) {
 	if logoPixels() == nil {
 		t.Fatal("the embedded logo does not decode")
@@ -260,13 +269,91 @@ func TestAboutPage(t *testing.T) {
 	app.WaitFor("id:settings-nav-about", 5*time.Second)
 	app.Press("id:settings-nav-about")
 	app.WaitFor("id:about-logo", 5*time.Second)
-	app.Press("id:about-github")
-	if len(app.OpenedURLs) != 1 || app.OpenedURLs[0] != repositoryURL {
-		t.Errorf("opened %v, want %s", app.OpenedURLs, repositoryURL)
+	opened := make(chan string, 1)
+	stubBrowser(t, func(url string) error { opened <- url; return nil })
+	for _, link := range []struct{ id, url string }{
+		{"about-github", "https://github.com/OUBIGFA/FreeView"},
+		{"about-feedback", "https://github.com/OUBIGFA/FreeView/issues"},
+		{"about-releases", "https://github.com/OUBIGFA/FreeView/releases"},
+		{"about-license", "https://github.com/OUBIGFA/FreeView/blob/main/LICENSE"},
+		{"about-notices", "https://github.com/OUBIGFA/FreeView/blob/main/third_party/README.md"},
+	} {
+		app.Press("id:" + link.id)
+		select {
+		case got := <-opened:
+			if got != link.url {
+				t.Errorf("%s opened %q, want %q", link.id, got, link.url)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("%s did not launch the browser", link.id)
+		}
 	}
 	// "update" finds the update rows wherever the search starts.
 	app.Type("id:settings-search", "update")
 	app.WaitFor("id:about-check-updates", 5*time.Second)
+}
+
+// Only the OS browser handoff is replaced; buttons, scopes and windows
+// still use the real app. No tests may launch the user's browser.
+func stubBrowser(t *testing.T, launch func(string) error) {
+	t.Helper()
+	previous := launchBrowser
+	launchBrowser = launch
+	t.Cleanup(func() { launchBrowser = previous })
+}
+
+// A slow browser launch must not hold up the preferences event handler.
+func TestAboutLinkDoesNotBlockSettings(t *testing.T) {
+	for _, id := range []string{"about-license", "about-notices"} {
+		t.Run(id, func(t *testing.T) {
+			t.Setenv("APPDATA", t.TempDir())
+			app := nsgotest.StartApp(t, func(cx *core.Scope) {
+				desktop.SetMainWindow(cx, desktop.OpenWindow(cx, desktop.WindowOptions{Width: 1040, Height: 700},
+					func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) }))
+			}, nsgotest.Environment(core.Environment{OS: core.OSWindows}))
+			app.Press("id:settings-nav-about")
+			entered, release := make(chan struct{}), make(chan struct{})
+			// A watchdog releases a regressed synchronous call so the test
+			// fails instead of hanging the whole suite.
+			timer := time.AfterFunc(2*time.Second, func() { close(release) })
+			defer func() {
+				if timer.Stop() {
+					close(release)
+				}
+			}()
+			stubBrowser(t, func(string) error { close(entered); <-release; return nil })
+			app.Press("id:" + id)
+			select {
+			case <-entered:
+			case <-time.After(time.Second):
+				t.Fatal("the browser handoff did not start")
+			}
+			app.Press("id:settings-nav-view")
+			app.WaitForGone("id:"+id, time.Second)
+			if !app.CloseWindow() {
+				t.Fatal("settings did not close while the browser was waiting")
+			}
+			select {
+			case <-release:
+				t.Fatal("settings waited for the browser before switching or closing")
+			default:
+			}
+		})
+	}
+}
+
+func TestAboutLinkReportsBrowserFailure(t *testing.T) {
+	t.Setenv("APPDATA", t.TempDir())
+	stubBrowser(t, func(string) error { return errors.New("browser unavailable") })
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
+		nsgotest.Size(1040, 700), nsgotest.PendingAlerts())
+	app.Press("id:settings-nav-about")
+	app.Press("id:about-license")
+	app.WaitUntil(time.Second, func() bool { return len(app.Alerts()) == 1 })
+	alert := app.Alerts()[0]
+	if !strings.Contains(alert.Message, "browser unavailable") || !strings.Contains(alert.Message, "/blob/main/LICENSE") {
+		t.Fatalf("browser failure omitted its cause or link: %+v", alert)
+	}
 }
 
 // nsgo.yaml registers FreeView for the formats it opens, no more and no fewer.

@@ -199,6 +199,7 @@ const (
 	textAboutNotices
 	textAboutNoticesHint
 	textAboutView
+	textAboutOpenFailed
 	textCodecAV1
 	textCodecRaw
 	textAboutApp
@@ -326,6 +327,7 @@ var keyOfText = [numTexts]string{
 	"aboutNotices",
 	"aboutNoticesHint",
 	"aboutView",
+	"aboutOpenFailed",
 	"codecAV1",
 	"codecRaw",
 	"aboutApp",
@@ -451,6 +453,7 @@ var textsEn = i18n.NewTexts(""+
 	"Third-party software"+
 	"The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder"+
 	"View"+
+	"Cannot open the link"+
 	"Install AV1 Video Extension from the Microsoft Store"+
 	"Install Raw Image Extension from the Microsoft Store"+
 	"Information"+
@@ -573,6 +576,7 @@ var textsEn = i18n.NewTexts(""+
 		20,
 		110,
 		4,
+		20,
 		52,
 		52,
 		11,
@@ -698,6 +702,7 @@ var textsZhHans = i18n.NewTexts(""+
 	"第三方组件"+
 	"使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt"+
 	"查看"+
+	"无法打开链接"+
 	"需要从 Microsoft Store 安装“AV1 视频扩展”"+
 	"需要从 Microsoft Store 安装“Raw 图像扩展”"+
 	"基本信息"+
@@ -820,6 +825,7 @@ var textsZhHans = i18n.NewTexts(""+
 		15,
 		81,
 		6,
+		18,
 		54,
 		54,
 		12,
@@ -2002,6 +2008,13 @@ func AboutView(cx *core.Scope) string { return For(cx).AboutView() }
 
 // AboutView is the package's AboutView in the language of msgs.
 func (msgs Messages) AboutView() string { return msgs.text(textAboutView) }
+
+// AboutOpenFailed says "Cannot open the link"
+// in the language the app shows under cx.
+func AboutOpenFailed(cx *core.Scope) string { return For(cx).AboutOpenFailed() }
+
+// AboutOpenFailed is the package's AboutOpenFailed in the language of msgs.
+func (msgs Messages) AboutOpenFailed() string { return msgs.text(textAboutOpenFailed) }
 
 // CodecAV1 says "Install AV1 Video Extension from the Microsoft Store"
 // in the language the app shows under cx.

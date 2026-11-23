@@ -11,11 +11,14 @@
 //
 //	sleep <ms>                       wait
 //	post <msg> <wparam> <lparam>     PostMessage to the main window
+//	opost <msg> <wparam> <lparam>    PostMessage to the other visible nsgo window
+//	responsive main|other           fail if the window cannot answer within one second
+//	other true|false                assert whether another nsgo window is visible
 //	mouse <msg> <wparam> <x> <y>     a mouse message at client x, y (wheel messages get screen coordinates)
 //	shot <file.png>                  capture the main window's client area
 //	shotall <prefix>                 capture every visible nsgo window of the process
 //	list                             print the process's top-level windows, visible or not and topmost or not
-//	alive                            print whether the process still runs
+//	alive [true|false]               print, optionally assert, whether the process still runs
 //	mem                              print the process's working set, private bytes and CPU time so far
 //	state                            print whether the window is topmost, its frame's height beyond the client area (0: no title bar) and its position
 //	omouse <msg> <wparam> <x> <y>    mouse, to the other visible nsgo window (such as the preferences)
@@ -66,6 +69,7 @@ var (
 	pGetWindowRect      = user32.NewProc("GetWindowRect")
 	pGetWindowLong      = user32.NewProc("GetWindowLongPtrW")
 	pSend               = user32.NewProc("SendMessageW")
+	pSendTimeout        = user32.NewProc("SendMessageTimeoutW")
 	pSetWindowPos       = user32.NewProc("SetWindowPos")
 )
 
@@ -165,8 +169,31 @@ func main() {
 			fmt.Println("launch alive", r == 0x102)
 		case "sleep":
 			time.Sleep(time.Duration(n(1)) * time.Millisecond)
-		case "post":
-			pPost.Call(hwnd, n(1), n(2), n(3))
+		case "post", "opost":
+			target := hwnd
+			if f[0] == "opost" {
+				target = other()
+			}
+			pPost.Call(target, n(1), n(2), n(3))
+		case "responsive":
+			target := hwnd
+			if f[1] == "other" {
+				target = other()
+			}
+			// WM_NULL with SMTO_BLOCK|SMTO_ABORTIFHUNG gives a bounded
+			// failure before PrintWindow or SetWindowPos could hang.
+			var result uintptr
+			ok, _, _ := pSendTimeout.Call(target, 0, 0, 0, 0x3, 1000, uintptr(unsafe.Pointer(&result)))
+			if target == 0 || ok == 0 {
+				panic("unresponsive window: " + f[1])
+			}
+			fmt.Println("responsive", f[1], true)
+		case "other":
+			got := other() != 0
+			if got != (f[1] == "true") {
+				panic(fmt.Sprintf("other = %v, want %s", got, f[1]))
+			}
+			fmt.Println("other", got)
 		case "mem":
 			// PROCESS_MEMORY_COUNTERS_EX, through K32GetProcessMemoryInfo.
 			var pmc struct {
@@ -186,6 +213,9 @@ func main() {
 		case "alive":
 			r, _, _ := kernel.NewProc("WaitForSingleObject").Call(uintptr(pi.Process), 0)
 			fmt.Println("alive", r == 0x102)
+			if len(f) > 1 && (r == 0x102) != (f[1] == "true") {
+				panic("unexpected process lifetime")
+			}
 		case "shotall":
 			k := 0
 			cb := syscall.NewCallback(func(h, _ uintptr) uintptr {

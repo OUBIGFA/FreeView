@@ -3,6 +3,7 @@ module github.com/OUBIGFA/FreeView
 go 1.27.4
 
 require (
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/gen2brain/heic v0.7.2
 	github.com/gen2brain/jpegxl v0.6.0
 	github.com/mholt/archives v0.1.5
@@ -10,10 +11,10 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/image v0.48.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/andybalholm/brotli v1.3.0 // indirect
 	github.com/bodgit/plumbing v1.3.0 // indirect
@@ -45,7 +46,6 @@ require (
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
-	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
