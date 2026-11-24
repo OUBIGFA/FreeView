@@ -93,6 +93,8 @@ func aboutGroups(cx *core.Scope) []ui.SettingsGroup {
 				Control: button("about-license", locales.AboutView(cx), open(repositoryURL+"/blob/main/LICENSE"))},
 			{ID: "notices", Title: locales.AboutNotices(cx), Description: locales.AboutNoticesHint(cx),
 				Control: button("about-notices", locales.AboutView(cx), open(repositoryURL+"/blob/main/third_party/README.md"))},
+			{ID: "icons", Title: locales.AboutIcons(cx), Description: locales.AboutIconsHint(cx),
+				Control: button("about-icons", locales.AboutView(cx), open(repositoryURL+"/blob/main/assets/icons/solar/README.md"))},
 		}},
 	}
 }

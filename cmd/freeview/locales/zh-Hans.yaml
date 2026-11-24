@@ -121,6 +121,8 @@ aboutLicenses: 来源与许可
 aboutLicense: 许可
 aboutNotices: 第三方组件
 aboutNoticesHint: 使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt
+aboutIcons: 图标
+aboutIconsHint: Solar Icons，作者 480 Design，按 CC BY 4.0 许可使用
 aboutView: 查看
 aboutOpenFailed: 无法打开链接
 codecAV1: 需要从 Microsoft Store 安装“AV1 视频扩展”

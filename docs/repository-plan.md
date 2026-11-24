@@ -33,6 +33,7 @@ Go 和 nsgo 跟随官方最新稳定版。2026-11-24 核对：Go 1.27.4，nsgo v
 | `internal/` | 是 | 不依赖界面的逻辑和 Windows 适配 |
 | `docs/` | 是 | 长期文档 |
 | `assets/branding/` | 是 | 品牌源图 |
+| `assets/icons/solar/` | 是 | 用到的 Solar Linear 图标原文件、许可和来源登记 |
 | `assets/screenshots/` | 是 | README 预览图；按二进制登记来源、许可和 SHA-256 |
 | `tools/`、`tests/` | 是 | 图标生成、仓库检查、安装器构建、私有桌面测试工具和测试脚本 |
 | `.github/workflows/` | 是 | 只读检查；不接收发布密钥 |

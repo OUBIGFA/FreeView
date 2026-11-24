@@ -198,6 +198,8 @@ const (
 	textAboutLicense
 	textAboutNotices
 	textAboutNoticesHint
+	textAboutIcons
+	textAboutIconsHint
 	textAboutView
 	textAboutOpenFailed
 	textCodecAV1
@@ -326,6 +328,8 @@ var keyOfText = [numTexts]string{
 	"aboutLicense",
 	"aboutNotices",
 	"aboutNoticesHint",
+	"aboutIcons",
+	"aboutIconsHint",
 	"aboutView",
 	"aboutOpenFailed",
 	"codecAV1",
@@ -452,6 +456,8 @@ var textsEn = i18n.NewTexts(""+
 	"License"+
 	"Third-party software"+
 	"The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder"+
+	"Icons"+
+	"Solar Icons by 480 Design, licensed under CC BY 4.0"+
 	"View"+
 	"Cannot open the link"+
 	"Install AV1 Video Extension from the Microsoft Store"+
@@ -575,6 +581,8 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		20,
 		110,
+		5,
+		51,
 		4,
 		20,
 		52,
@@ -701,6 +709,8 @@ var textsZhHans = i18n.NewTexts(""+
 	"许可"+
 	"第三方组件"+
 	"使用的开源组件及其许可；安装目录中也有 THIRD_PARTY_NOTICES.txt"+
+	"图标"+
+	"Solar Icons，作者 480 Design，按 CC BY 4.0 许可使用"+
 	"查看"+
 	"无法打开链接"+
 	"需要从 Microsoft Store 安装“AV1 视频扩展”"+
@@ -824,6 +834,8 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		15,
 		81,
+		6,
+		60,
 		6,
 		18,
 		54,
@@ -2001,6 +2013,20 @@ func AboutNoticesHint(cx *core.Scope) string { return For(cx).AboutNoticesHint()
 
 // AboutNoticesHint is the package's AboutNoticesHint in the language of msgs.
 func (msgs Messages) AboutNoticesHint() string { return msgs.text(textAboutNoticesHint) }
+
+// AboutIcons says "Icons"
+// in the language the app shows under cx.
+func AboutIcons(cx *core.Scope) string { return For(cx).AboutIcons() }
+
+// AboutIcons is the package's AboutIcons in the language of msgs.
+func (msgs Messages) AboutIcons() string { return msgs.text(textAboutIcons) }
+
+// AboutIconsHint says "Solar Icons by 480 Design, licensed under CC BY 4.0"
+// in the language the app shows under cx.
+func AboutIconsHint(cx *core.Scope) string { return For(cx).AboutIconsHint() }
+
+// AboutIconsHint is the package's AboutIconsHint in the language of msgs.
+func (msgs Messages) AboutIconsHint() string { return msgs.text(textAboutIconsHint) }
 
 // AboutView says "View"
 // in the language the app shows under cx.

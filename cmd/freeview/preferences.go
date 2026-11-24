@@ -7,9 +7,9 @@ import (
 	"github.com/nsgo-dev/nsgo/base"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/desktop"
-	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/ui"
 
+	"github.com/OUBIGFA/FreeView/assets/icons/solar"
 	"github.com/OUBIGFA/FreeView/cmd/freeview/locales"
 	"github.com/OUBIGFA/FreeView/internal/settings"
 )
@@ -155,7 +155,7 @@ func searchField(cx *core.Scope, query *core.Signal[string]) core.Node {
 			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderCurve: core.BorderCurveContinuous,
 			BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
 	}, Children: []core.Node{
-		ui.Icon(lucide.Search, 14, colors.Faint),
+		ui.Icon(solar.Magnifier, 14, colors.Faint),
 		base.Input{Value: query.Get, OnChange: query.Set, Placeholder: locales.PrefsSearch(cx), Label: locales.PrefsSearch(cx), TestID: "settings-search",
 			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13},
 			StyleFunc: func() core.Style {

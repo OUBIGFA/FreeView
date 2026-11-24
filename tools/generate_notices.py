@@ -99,6 +99,11 @@ def main():
         ]) + "\n",
     ]
     parts.append(section(f"FreeView {arguments.version}", [("LICENSE", own_license)]))
+    # Icons copied into FreeView's own module, which the module scan below
+    # does not reach: assets/icons/solar/README.md says where they come from.
+    solar = ROOT / "assets" / "icons" / "solar"
+    parts.append(section("Solar Icons (saoudi-h/solar-icons ab241e1, icons by 480 Design, CC BY 4.0)",
+                         [("LICENSE", solar / "LICENSE"), ("LICENSE-THIRD-PARTY", solar / "LICENSE-THIRD-PARTY")]))
 
     go_files = [("LICENSE", go_root / "LICENSE")]
     if (go_root / "PATENTS").is_file():

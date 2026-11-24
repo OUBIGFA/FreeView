@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -16,9 +17,11 @@ import (
 
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/nsgo-dev/nsgo/desktop"
+	"github.com/nsgo-dev/nsgo/icons/lucide"
 	"github.com/nsgo-dev/nsgo/nsgotest"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/OUBIGFA/FreeView/assets/icons/solar"
 	"github.com/OUBIGFA/FreeView/internal/catalog"
 	"github.com/OUBIGFA/FreeView/internal/settings"
 )
@@ -277,6 +280,7 @@ func TestAboutPage(t *testing.T) {
 		{"about-releases", "https://github.com/OUBIGFA/FreeView/releases"},
 		{"about-license", "https://github.com/OUBIGFA/FreeView/blob/main/LICENSE"},
 		{"about-notices", "https://github.com/OUBIGFA/FreeView/blob/main/third_party/README.md"},
+		{"about-icons", "https://github.com/OUBIGFA/FreeView/blob/main/assets/icons/solar/README.md"},
 	} {
 		app.Press("id:" + link.id)
 		select {
@@ -384,5 +388,12 @@ func TestFileTypesMatchTheCatalog(t *testing.T) {
 	}
 	if len(want) > 0 {
 		t.Errorf("nsgo.yaml registers no %v", want)
+	}
+}
+
+// Every select ends in Solar's arrow, not Lucide's chevron.
+func TestSelectsDrawSolarArrows(t *testing.T) {
+	if !reflect.DeepEqual(*lucide.ChevronDown(), *solar.AltArrowDown()) {
+		t.Fatal("lucide.ChevronDown still draws Lucide's chevron")
 	}
 }

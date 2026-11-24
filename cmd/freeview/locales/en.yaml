@@ -121,6 +121,8 @@ aboutLicenses: Sources and licenses
 aboutLicense: License
 aboutNotices: Third-party software
 aboutNoticesHint: The open-source software FreeView uses and its licenses; THIRD_PARTY_NOTICES.txt is also in the install folder
+aboutIcons: Icons
+aboutIconsHint: Solar Icons by 480 Design, licensed under CC BY 4.0
 aboutView: View
 aboutOpenFailed: Cannot open the link
 codecAV1: Install AV1 Video Extension from the Microsoft Store
