@@ -8,7 +8,7 @@
 
 简体中文 · [English](README.en.md)
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.2-2E7D32" alt="版本 0.1.2"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.3-2E7D32" alt="版本 0.1.3"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 和 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only 许可证"></a>
 
@@ -51,7 +51,9 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 3. 打开下载的文件。
 4. 按屏幕上的提示安装 FreeView。
 
-当前版本是 0.1.2。它支持 64 位 Windows 10 和 Windows 11。
+当前版本是 0.1.3。它支持 64 位 Windows 10 和 Windows 11。
+
+从 0.1.0 或 0.1.2 升级时，请手动下载并运行 `FreeView-0.1.3.exe`。安装此版本后，FreeView 使用新的 GitHub Release 自动更新方式。
 
 安装程序为当前用户安装 FreeView。你不需要管理员权限。安装后，从开始菜单打开 FreeView。你也可以在安装时创建桌面快捷方式。
 
@@ -86,6 +88,7 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 - **更改键盘快捷键。** 在“键盘”页添加或删除快捷键。点“录制”。然后按一个键。
 - **更改查看方式。** 在“查看”页选择缩放方式、排序方式、循环和幻灯片间隔。
 - **更改窗口显示。** 在“查看”页打开或关闭“窗口置顶”和“显示标题栏”。
+- **查看顶部标题。** 隐藏标题栏时，把鼠标移到窗口顶部可显示完整图片标题，默认显示在右上方。在“查看”页可关闭“鼠标移到顶部时显示完整标题”，或把“顶部标题位置”改为左侧、居中或右侧。
 - **恢复默认设置。** 在“查看”页点“恢复默认”。
 - **停止记住窗口。** 在“查看”页关闭“打开时恢复上次的窗口大小和位置”。窗口最大化或全屏时，FreeView 记住的是最大化之前的大小和位置。
 - **打开时最大化窗口。** 在“查看”页打开“打开时最大化窗口”。默认关闭。
@@ -94,7 +97,7 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 ## 注意
 
 - 这个版本的安装程序没有数字签名。Windows 可能显示“未知发布者”提示。
-- FreeView 只使用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。
+- FreeView 默认复用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。可在设置的“查看”页开启“允许同时打开多张图片”，之后每次打开图片都使用新窗口。
 - 压缩包中的图片不能删除。
 - 动画图片会一直播放。现在不能暂停或逐帧查看。
 - AVIF 和 RAW 照片需要从 Microsoft Store 安装对应的 Windows 扩展。缺少扩展时，FreeView 会提示要安装哪一个：

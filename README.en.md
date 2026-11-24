@@ -8,7 +8,7 @@
 
 [简体中文](README.md) · English
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.2-2E7D32" alt="Version 0.1.2"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.3-2E7D32" alt="Version 0.1.3"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 and 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only license"></a>
 
@@ -51,7 +51,9 @@ FreeView is an image viewer for Windows. It opens images, folders, and archives 
 3. Open the downloaded file.
 4. Follow the instructions on the screen to install FreeView.
 
-The current version is 0.1.2. It runs on 64-bit Windows 10 and Windows 11.
+The current version is 0.1.3. It runs on 64-bit Windows 10 and Windows 11.
+
+If you use 0.1.0 or 0.1.2, manually download and run `FreeView-0.1.3.exe`. After installing this version, FreeView uses the new GitHub Release update mechanism.
 
 The installer installs FreeView for your user account. You do not need administrator rights. After you install FreeView, open it from the Start menu. You can also create a desktop shortcut during installation.
 
@@ -86,6 +88,7 @@ The window has no title bar by default. To move the window, drag anywhere in it.
 - **Change keyboard shortcuts.** On the Keyboard page, add or remove shortcuts. Click Record. Then press a key.
 - **Change the view.** On the Viewing page, select the fit mode, sort order, looping, and slideshow interval.
 - **Change the window display.** On the Viewing page, turn on or off "Keep the window on top" and "Show the title bar".
+- **See the top title.** With the title bar hidden, move the pointer to the top of the window to see the full image title at the top right by default. On the Viewing page, turn off "Show the full title when the mouse is at the top", or set "Top title position" to Left, Center, or Right.
 - **Restore the default settings.** On the Viewing page, click Restore defaults.
 - **Stop FreeView from remembering the window.** On the Viewing page, turn off "Open at the last window size and position". When the window is maximized or in full screen, FreeView remembers the size and position from before.
 - **Maximize the window when it opens.** On the Viewing page, turn on "Maximize the window when it opens". This option is off by default.
@@ -94,7 +97,7 @@ The window has no title bar by default. To move the window, drag anywhere in it.
 ## Notes
 
 - This version of the installer is not digitally signed. Windows can show an "Unknown publisher" message.
-- FreeView uses one main window. If you open another image, the image appears in that window.
+- FreeView reuses one main window by default. If you open another image, it appears in that window. Turn on "Allow several images open at once" on the Viewing page in Preferences to open each image in a new window.
 - You cannot delete an image inside an archive.
 - Animated images play continuously. You cannot pause them or view one frame at a time.
 - AVIF and RAW photos need a Windows extension from the Microsoft Store. If the extension is missing, FreeView tells you which one to install:
