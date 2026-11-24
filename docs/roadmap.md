@@ -32,8 +32,8 @@
 
 ## 已知限制
 
-- **nsgo v0.2.0 在 Windows 窗口线程同步打开网页。** 默认浏览器交接如果阻塞，会冻结所有窗口。“关于”页通过 `cmd/freeview/browser_windows.go` 在后台调用系统的 `ShellExecuteExW`，并用 `Scope.Post` 返回失败提示；不修改依赖缓存。nsgo 正式版修复后可重新评估这个临时方案。
-- **nsgo v0.2.0 在 Windows 上不把中键和侧键交给应用。** `internal/winmouse` 子类化主窗口作为临时方案。nsgo 支持后删除这个包。
+- **nsgo v0.2.0 在 Windows 窗口线程同步打开网页（升级到 v0.3.0 后尚未重新评估）。** 默认浏览器交接如果阻塞，会冻结所有窗口。“关于”页通过 `cmd/freeview/browser_windows.go` 在后台调用系统的 `ShellExecuteExW`，并用 `Scope.Post` 返回失败提示；不修改依赖缓存。nsgo 正式版修复后可重新评估这个临时方案。
+- **nsgo v0.2.0 在 Windows 上不把中键和侧键交给应用（升级到 v0.3.0 后尚未重新评估）。** `internal/winmouse` 子类化主窗口作为临时方案。nsgo 支持后删除这个包。
 - **在 App 模式下 `CloseWindow` 只隐藏主窗口，进程不退出。** 因此“关闭”动作直接调用 `Scope.Quit`。点击窗口的关闭按钮可以正常退出。
 - **缩小显示的质量**：nsgo 用 Direct2D 线性插值绘制图片，缩到 50% 以下时细线可能出现锯齿。改进方案是自己用 `golang.org/x/image/draw` 预先缩小后再显示，先做对比测量再决定。
 - **预读只读取文件字节。** 解码仍在显示时由 nsgo 完成，所以大 JPEG 首次显示仍需要等待解码。

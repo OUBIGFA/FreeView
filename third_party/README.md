@@ -13,11 +13,11 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 ## 编译进应用的 Go 模块
 
-清单来自 `go version -m FreeView.exe`（0.1.0，2026-11-22）。许可按各模块自带的许可文件判断。
+清单来自 `go version -m FreeView.exe`（nsgo v0.3.0，2026-11-24）。许可按各模块自带的许可文件判断。
 
 | 模块 | 版本 | 许可 | 引入原因 |
 | --- | --- | --- | --- |
-| github.com/nsgo-dev/nsgo | v0.2.0 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
+| github.com/nsgo-dev/nsgo | v0.3.0 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
 | github.com/mholt/archives | v0.1.5 | MIT | 读取压缩包 |
 | github.com/gen2brain/heic | v0.7.2 | MIT；内嵌的 HEIC 解码器（Rust crate `heic` 0.1.6）为 AGPL-3.0-only，其余 Rust 依赖为 MIT/Apache-2.0/Zlib（[清单与正文](licenses/heic-wasm-notices.txt)） | Windows 缺少 HEIF/HEVC 扩展时解码 HEIC |
 | github.com/gen2brain/jpegxl | v0.6.0 | MIT；内嵌 libjxl v0.11.2（BSD-3-Clause 及专利授权）和 Highway（Apache-2.0 或 BSD-3-Clause）（[正文](licenses/jpegxl-wasm-notices.txt)） | Windows 缺少 JPEG XL 扩展时解码 JPEG XL |
@@ -43,6 +43,8 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/spf13/afero | v1.15.0 | Apache-2.0 | archives 依赖 |
 | go4.org | v0.0.0-20230225012048-214862532bf5 | Apache-2.0 | sevenzip 依赖 |
 | github.com/yuin/goldmark | v1.8.7 | MIT | nsgo 依赖 |
+| github.com/makiuchi-d/gozxing | v0.1.1 | MIT | nsgo 依赖（读取条码） |
+| golang.org/x/xerrors | v0.0.0-20200804184101-5ec99f83aff1 | BSD-3-Clause | gozxing 依赖 |
 | golang.org/x/net、golang.org/x/text | v0.62.0、v0.44.0 | BSD-3-Clause | nsgo 依赖 |
 
 以上许可都可以与 GPL-3.0 组合使用。`heic` crate 的 AGPL-3.0-only 按 GPL-3.0 第 13 条与 FreeView 组合发布（2026-11-22 用户确认），这部分按 AGPL-3.0 的条款提供，源码见 [imazen/heic](https://github.com/imazen/heic)。
