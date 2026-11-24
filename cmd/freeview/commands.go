@@ -32,8 +32,10 @@ func (v *viewer) keyBindings() core.Node {
 }
 
 // attachMouse reports the middle and side buttons, which nsgo does not
-// pass to apps on Windows, as gestures.
+// pass to apps on Windows, as gestures, and watches hovering at the top
+// of the window.
 func attachMouse(v *viewer) {
+	winmouse.WatchTop(func(over bool) { v.cx.Post(func() { v.hoverTop(over) }) })
 	go func() {
 		err := winmouse.Attach(10*time.Second, func(b winmouse.Button) {
 			g := map[winmouse.Button]settings.Gesture{winmouse.Middle: settings.MiddleClick,

@@ -164,6 +164,12 @@ const (
 	textPrefsShowInfo
 	textPrefsAlwaysOnTop
 	textPrefsShowTitleBar
+	textPrefsHoverTitle
+	textPrefsHoverTitleHint
+	textPrefsHoverTitlePlace
+	textPrefsTitlePlaceLeft
+	textPrefsTitlePlaceCenter
+	textPrefsTitlePlaceRight
 	textPrefsRememberWindow
 	textPrefsSort
 	textPrefsSortName
@@ -294,6 +300,12 @@ var keyOfText = [numTexts]string{
 	"prefsShowInfo",
 	"prefsAlwaysOnTop",
 	"prefsShowTitleBar",
+	"prefsHoverTitle",
+	"prefsHoverTitleHint",
+	"prefsHoverTitlePlace",
+	"prefsTitlePlaceLeft",
+	"prefsTitlePlaceCenter",
+	"prefsTitlePlaceRight",
 	"prefsRememberWindow",
 	"prefsSort",
 	"prefsSortName",
@@ -422,6 +434,12 @@ var textsEn = i18n.NewTexts(""+
 	"Show image information"+
 	"Keep the window on top"+
 	"Show the title bar"+
+	"Show the full title when the mouse is at the top"+
+	"Works while the title bar is hidden"+
+	"Top title position"+
+	"Left"+
+	"Center"+
+	"Right"+
 	"Open at the last window size and position"+
 	"Sort by"+
 	"Name"+
@@ -547,6 +565,12 @@ var textsEn = i18n.NewTexts(""+
 		22,
 		22,
 		18,
+		48,
+		35,
+		18,
+		4,
+		6,
+		5,
 		41,
 		7,
 		4,
@@ -675,6 +699,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"显示图片信息"+
 	"窗口置顶"+
 	"显示标题栏"+
+	"鼠标移到顶部时显示完整标题"+
+	"隐藏标题栏时生效"+
+	"顶部标题位置"+
+	"左侧"+
+	"居中"+
+	"右侧"+
 	"打开时恢复上次的窗口大小和位置"+
 	"排序方式"+
 	"名称"+
@@ -800,6 +830,12 @@ var textsZhHans = i18n.NewTexts(""+
 		18,
 		12,
 		15,
+		39,
+		24,
+		18,
+		6,
+		6,
+		6,
 		45,
 		12,
 		6,
@@ -1683,6 +1719,48 @@ func PrefsShowTitleBar(cx *core.Scope) string { return For(cx).PrefsShowTitleBar
 
 // PrefsShowTitleBar is the package's PrefsShowTitleBar in the language of msgs.
 func (msgs Messages) PrefsShowTitleBar() string { return msgs.text(textPrefsShowTitleBar) }
+
+// PrefsHoverTitle says "Show the full title when the mouse is at the top"
+// in the language the app shows under cx.
+func PrefsHoverTitle(cx *core.Scope) string { return For(cx).PrefsHoverTitle() }
+
+// PrefsHoverTitle is the package's PrefsHoverTitle in the language of msgs.
+func (msgs Messages) PrefsHoverTitle() string { return msgs.text(textPrefsHoverTitle) }
+
+// PrefsHoverTitleHint says "Works while the title bar is hidden"
+// in the language the app shows under cx.
+func PrefsHoverTitleHint(cx *core.Scope) string { return For(cx).PrefsHoverTitleHint() }
+
+// PrefsHoverTitleHint is the package's PrefsHoverTitleHint in the language of msgs.
+func (msgs Messages) PrefsHoverTitleHint() string { return msgs.text(textPrefsHoverTitleHint) }
+
+// PrefsHoverTitlePlace says "Top title position"
+// in the language the app shows under cx.
+func PrefsHoverTitlePlace(cx *core.Scope) string { return For(cx).PrefsHoverTitlePlace() }
+
+// PrefsHoverTitlePlace is the package's PrefsHoverTitlePlace in the language of msgs.
+func (msgs Messages) PrefsHoverTitlePlace() string { return msgs.text(textPrefsHoverTitlePlace) }
+
+// PrefsTitlePlaceLeft says "Left"
+// in the language the app shows under cx.
+func PrefsTitlePlaceLeft(cx *core.Scope) string { return For(cx).PrefsTitlePlaceLeft() }
+
+// PrefsTitlePlaceLeft is the package's PrefsTitlePlaceLeft in the language of msgs.
+func (msgs Messages) PrefsTitlePlaceLeft() string { return msgs.text(textPrefsTitlePlaceLeft) }
+
+// PrefsTitlePlaceCenter says "Center"
+// in the language the app shows under cx.
+func PrefsTitlePlaceCenter(cx *core.Scope) string { return For(cx).PrefsTitlePlaceCenter() }
+
+// PrefsTitlePlaceCenter is the package's PrefsTitlePlaceCenter in the language of msgs.
+func (msgs Messages) PrefsTitlePlaceCenter() string { return msgs.text(textPrefsTitlePlaceCenter) }
+
+// PrefsTitlePlaceRight says "Right"
+// in the language the app shows under cx.
+func PrefsTitlePlaceRight(cx *core.Scope) string { return For(cx).PrefsTitlePlaceRight() }
+
+// PrefsTitlePlaceRight is the package's PrefsTitlePlaceRight in the language of msgs.
+func (msgs Messages) PrefsTitlePlaceRight() string { return msgs.text(textPrefsTitlePlaceRight) }
 
 // PrefsRememberWindow says "Open at the last window size and position"
 // in the language the app shows under cx.

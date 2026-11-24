@@ -94,6 +94,15 @@ const (
 	SortSize     Sort = "size"
 )
 
+// TitlePlace says where the hover title shows along the window's top.
+type TitlePlace string
+
+const (
+	TitleLeft   TitlePlace = "left"
+	TitleCenter TitlePlace = "center"
+	TitleRight  TitlePlace = "right"
+)
+
 // Config is the whole configuration file.
 type Config struct {
 	Fit              Fit                 `yaml:"fit"`
@@ -105,10 +114,12 @@ type Config struct {
 	ShowInfo         bool                `yaml:"show_info"`
 	ConfirmDelete    bool                `yaml:"confirm_delete"`
 	AlwaysOnTop      bool                `yaml:"always_on_top"`
-	ShowTitleBar     bool                `yaml:"show_title_bar"`   // false: Honeyview's borderless window
-	RememberWindow   bool                `yaml:"remember_window"`  // open the viewer at its last size and place
-	OpenMaximized    bool                `yaml:"open_maximized"`   // maximize the viewer as it opens
-	MultipleWindows  bool                `yaml:"multiple_windows"` // each launch opens its own window (qView's multiple instances); read as FreeView starts
+	ShowTitleBar     bool                `yaml:"show_title_bar"`    // false: Honeyview's borderless window
+	HoverTitle       bool                `yaml:"hover_title"`       // without the title bar, the mouse at the top shows the full title
+	HoverTitlePlace  TitlePlace          `yaml:"hover_title_place"` // where the hover title shows: left, center or right
+	RememberWindow   bool                `yaml:"remember_window"`   // open the viewer at its last size and place
+	OpenMaximized    bool                `yaml:"open_maximized"`    // maximize the viewer as it opens
+	MultipleWindows  bool                `yaml:"multiple_windows"`  // each launch opens its own window (qView's multiple instances); read as FreeView starts
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }
@@ -119,7 +130,7 @@ type Config struct {
 func Default() Config {
 	return Config{
 		Fit: FitShrink, Sort: SortName, Loop: true, SlideshowSeconds: 3, ZoomStep: 1.25,
-		ShowInfo: false, ConfirmDelete: true, RememberWindow: true,
+		ShowInfo: false, ConfirmDelete: true, HoverTitle: true, HoverTitlePlace: TitleRight, RememberWindow: true,
 		Mouse: map[Gesture]Action{
 			WheelUp: Previous, WheelDown: Next, CtrlWheelUp: ZoomIn, CtrlWheelDown: ZoomOut,
 			ShiftWheelUp: RotateLeft, ShiftWheelDown: RotateRight, AltWheelUp: First, AltWheelDown: Last,
@@ -206,6 +217,9 @@ func (c Config) normalized() Config {
 	}
 	if !slices.Contains([]Sort{SortName, SortModified, SortSize}, c.Sort) {
 		c.Sort = d.Sort
+	}
+	if !slices.Contains([]TitlePlace{TitleLeft, TitleCenter, TitleRight}, c.HoverTitlePlace) {
+		c.HoverTitlePlace = d.HoverTitlePlace
 	}
 	if c.SlideshowSeconds < 0.5 {
 		c.SlideshowSeconds = d.SlideshowSeconds

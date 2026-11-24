@@ -37,6 +37,9 @@ const (
 	// revealWait is the longest the main window stays hidden waiting for
 	// the image the app launched with.
 	revealWait = time.Second
+	// hoverHide delays hiding the top title pill briefly so crossing the
+	// drag strip edge does not make it flicker.
+	hoverHide = 300 * time.Millisecond
 )
 
 // launching is whether the command line names a file to open, as nsgo
@@ -84,6 +87,7 @@ type viewer struct {
 	info      *core.Signal[bool]
 	slideshow *core.Signal[bool]
 	message   *core.Signal[string]
+	topHover  *core.Signal[bool]
 
 	pointer    core.Point // last pointer position in the viewport
 	downAt     core.Point // where the left button last went down
@@ -93,6 +97,7 @@ type viewer struct {
 	touchpad   core.Points
 	loadSeq    uint64
 	messageSeq uint64
+	hoverSeq   uint64
 	slideSeq   uint64
 	trimSeq    uint64
 	revealed   bool
@@ -127,6 +132,7 @@ func newViewer(cx *core.Scope) *viewer {
 	v.info = core.NewSignal(cx, cfg.ShowInfo)
 	v.slideshow = core.NewSignal(cx, false)
 	v.message = core.NewSignal(cx, "")
+	v.topHover = core.NewSignal(cx, false)
 	if loadErr != nil {
 		v.flash(locales.PrefsLoadFailed(cx, loadErr.Error()))
 	}
@@ -733,17 +739,36 @@ func (v *viewer) positionText() string {
 	return locales.InfoPosition(v.cx, strconv.Itoa(v.index.Get()+1), strconv.Itoa(v.count.Get()))
 }
 
-func (v *viewer) updateTitle() {
+func (v *viewer) titleText() string {
 	img := v.img.Get()
 	if v.index.Get() < 0 || img.item.Name == "" {
-		desktop.SetTitle(v.cx, locales.AppName(v.cx))
-		return
+		return locales.AppName(v.cx)
 	}
 	name := img.item.Name
 	if v.cat != nil && v.cat.Archive != "" {
 		name = v.cat.Title() + " › " + name
 	}
-	desktop.SetTitle(v.cx, locales.Title(v.cx, name, v.positionText()))
+	return locales.Title(v.cx, name, v.positionText())
+}
+
+func (v *viewer) updateTitle() {
+	desktop.SetTitle(v.cx, v.titleText())
+}
+
+func (v *viewer) hoverTop(over bool) {
+	v.hoverSeq++
+	if over {
+		v.topHover.Set(true)
+		return
+	}
+	seq := v.hoverSeq
+	time.AfterFunc(hoverHide, func() {
+		v.cx.Post(func() {
+			if seq == v.hoverSeq {
+				v.topHover.Set(false)
+			}
+		})
+	})
 }
 
 // viewportColor is the dark gray behind the image, as Honeyview's.
@@ -866,6 +891,38 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 				Then: func(cx *core.Scope) core.Node {
 					return core.Text{TestID: "info", ContentFunc: v.infoText,
 						Style: overlayText(core.Style{Position: core.Absolute, Left: core.Pt(12), Top: core.Pt(12)})}
+				},
+			},
+			core.Show{
+				When: func() bool {
+					c := v.cfg.Get()
+					return !c.ShowTitleBar && c.HoverTitle && v.topHover.Get() && v.img.Get().item.Name != ""
+				},
+				Then: func(cx *core.Scope) core.Node {
+					return core.View{TestID: "hover-title",
+						StyleFunc: func() core.Style {
+							align := core.AlignEnd
+							switch v.cfg.Get().HoverTitlePlace {
+							case settings.TitleLeft:
+								align = core.AlignStart
+							case settings.TitleCenter:
+								align = core.AlignCenter
+							}
+							return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0),
+								MinHeight: core.Pt(desktop.TitleBar(cx).Top), Padding: core.Symmetric(4, 8),
+								AlignItems: align, JustifyContent: core.JustifyCenter, PointerEvents: core.PointerEventsNone}
+						},
+						Children: []core.Node{core.Text{TestID: "hover-title-text", ContentFunc: v.titleText,
+							StyleFunc: func() core.Style {
+								align := core.TextAlignRight
+								switch v.cfg.Get().HoverTitlePlace {
+								case settings.TitleLeft:
+									align = core.TextAlignLeft
+								case settings.TitleCenter:
+									align = core.TextAlignCenter
+								}
+								return overlayText(core.Style{MaxWidth: core.Pct(100), TextAlign: align})
+							}}}}
 				},
 			},
 			core.Show{

@@ -199,6 +199,20 @@ func TestNoDragStripWithTitleBar(t *testing.T) {
 	}
 }
 
+func TestNoHoverTitleUntilTheMouseIsAtTheTop(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "sample.png")
+	if err := os.WriteFile(p, pngOf(t, 40, 30), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	app := start(t)
+	app.DropFiles("id:viewport", fileURI(p))
+	app.Key("i")
+	waitInfo(t, app, "sample.png\n1 / 1")
+	if len(app.QueryMounted("id:hover-title")) > 0 {
+		t.Error("hover title shown before mouse enters the top")
+	}
+}
+
 // The preferences show one category at a time beside their own sidebar,
 // and every matching row while searching.
 func TestPreferencesNavigateAndSearch(t *testing.T) {

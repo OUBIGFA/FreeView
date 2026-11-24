@@ -6,8 +6,9 @@
 // subclasses the window (SetWindowLongPtrW with GWLP_WNDPROC), reports
 // clicks of those buttons and lets every other message through unchanged.
 // The same subclass starts Windows' own window move for DragWindow,
-// shows the hand cursors of SetHand and closes without the system's
-// animation (CloseQuietly).
+// shows the hand cursors of SetHand, reports hovering at the top of the
+// window (WatchTop) and closes without the system's animation
+// (CloseQuietly).
 //
 // The buttons are a stopgap until nsgo reports them itself; see
 // docs/roadmap.md.
@@ -151,6 +152,14 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		return 0
 	case wmClose:
 		disableTransitions(hwnd)
+	case wmNCMouseMove:
+		if over, changed := top.nc(wParam); changed {
+			notifyTop(over)
+		}
+	case wmNCMouseLeave, wmMouseMove:
+		if top.leave() {
+			notifyTop(false)
+		}
 	case wmSetCursor:
 		if lParam&0xffff == htClient {
 			if c := handCursor(); c != 0 {

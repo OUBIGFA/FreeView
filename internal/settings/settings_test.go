@@ -14,9 +14,12 @@ func TestMissingFileGivesDefaults(t *testing.T) {
 	if c.Mouse[MiddleClick] != Close || c.Mouse[WheelDown] != Next {
 		t.Errorf("defaults = %v", c.Mouse)
 	}
-	// The window starts neither topmost nor with a title bar.
+	// The window starts neither topmost nor with a title bar, and shows the full title at the top-right on hover.
 	if c.AlwaysOnTop || c.ShowTitleBar {
 		t.Errorf("always on top %v, title bar %v", c.AlwaysOnTop, c.ShowTitleBar)
+	}
+	if !c.HoverTitle || c.HoverTitlePlace != TitleRight {
+		t.Errorf("hover title %v at %q", c.HoverTitle, c.HoverTitlePlace)
 	}
 	// The viewer opens where the user left it.
 	if !c.RememberWindow {
@@ -30,7 +33,7 @@ func TestMissingFileGivesDefaults(t *testing.T) {
 
 func TestFileOverridesOnlyWhatItNames(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "config.yaml")
-	data := "mouse:\n  middle_click: full_screen\n  wheel_up: bogus\nkeys:\n  next: [n]\nzoom_step: 9\nfit: window\n"
+	data := "mouse:\n  middle_click: full_screen\n  wheel_up: bogus\nkeys:\n  next: [n]\nzoom_step: 9\nfit: window\nhover_title_place: middle\n"
 	if err := os.WriteFile(p, []byte(data), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -53,6 +56,9 @@ func TestFileOverridesOnlyWhatItNames(t *testing.T) {
 	if c.ZoomStep != Default().ZoomStep || c.Fit != FitWindow {
 		t.Errorf("zoom %v fit %v", c.ZoomStep, c.Fit)
 	}
+	if !c.HoverTitle || c.HoverTitlePlace != TitleRight {
+		t.Errorf("hover title %v at %q", c.HoverTitle, c.HoverTitlePlace)
+	}
 }
 
 func TestInvalidFileIsAnErrorWithDefaults(t *testing.T) {
@@ -73,6 +79,8 @@ func TestSaveThenLoadRoundTrips(t *testing.T) {
 	c.Mouse[MiddleClick] = Minimize
 	c.Keys[Delete] = []string{"shift+delete"}
 	c.Loop = false
+	c.HoverTitle = false
+	c.HoverTitlePlace = TitleLeft
 	if err := Save(p, c); err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +88,7 @@ func TestSaveThenLoadRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Mouse[MiddleClick] != Minimize || got.Keys[Delete][0] != "shift+delete" || got.Loop {
+	if got.Mouse[MiddleClick] != Minimize || got.Keys[Delete][0] != "shift+delete" || got.Loop || got.HoverTitle || got.HoverTitlePlace != TitleLeft {
 		t.Errorf("round trip = %+v", got)
 	}
 }

@@ -1,0 +1,24 @@
+# Desktop acceptance for the hover title overlay on the hidden title bar.
+# Build FreeView.exe (see docs or build_installer.py) and run from an
+# empty work folder with APPDATA pointing at a fresh profile:
+#   go run ./tools/deskrun tests/desktop/hover-title.txt <FreeView.exe> <folder>\<long-name>.png
+# Expected:
+# 1.png has no title overlay; hit prints 2 (HTCAPTION); 2.png shows the
+# full title overlay at the configured top corner/edge while hit still
+# prints 2; 3.png has the overlay gone after WM_NCMOUSELEAVE.
+# A posted WM_NCMOUSEMOVE does not move the real cursor, so Windows sends
+# WM_NCMOUSELEAVE almost at once; shot 2 sits 100 ms in, inside the
+# 300 ms hide delay.
+sleep 2500
+shot 1.png
+hit 400 10
+mouse 0xA0 2 400 10
+sleep 100
+shot 2.png
+hit 400 10
+mouse 0x2A2 0 400 10
+sleep 700
+shot 3.png
+post 0x10 0 0
+sleep 500
+alive false

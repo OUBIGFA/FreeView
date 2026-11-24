@@ -210,6 +210,11 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 	for _, s := range []float64{1, 2, 3, 5, 10, 20} {
 		intervals = append(intervals, ui.Option[float64]{Value: s, Label: strconv.FormatFloat(s, 'f', -1, 64)})
 	}
+	places := []ui.Option[settings.TitlePlace]{
+		{Value: settings.TitleLeft, Label: locales.PrefsTitlePlaceLeft(cx)},
+		{Value: settings.TitleCenter, Label: locales.PrefsTitlePlaceCenter(cx)},
+		{Value: settings.TitleRight, Label: locales.PrefsTitlePlaceRight(cx)},
+	}
 	return []ui.SettingsGroup{
 		{ID: "display", Title: locales.PrefsViewGroup(cx), Actions: []core.Node{reset}, Items: []ui.SettingsItem{
 			{ID: "fit", Title: locales.PrefsFit(cx), Description: locales.PrefsFitHint(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit },
@@ -222,6 +227,12 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, on bool) { c.AlwaysOnTop = on }, v, "always-on-top")},
 			{ID: "title-bar", Title: locales.PrefsShowTitleBar(cx), Control: toggle(func(c settings.Config) bool { return c.ShowTitleBar },
 				func(c *settings.Config, on bool) { c.ShowTitleBar = on }, v, "title-bar")},
+			{ID: "hover-title", Title: locales.PrefsHoverTitle(cx), Description: locales.PrefsHoverTitleHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.HoverTitle },
+					func(c *settings.Config, on bool) { c.HoverTitle = on }, v, "hover-title")},
+			{ID: "hover-title-place", Title: locales.PrefsHoverTitlePlace(cx),
+				Control: choice(places, func(c settings.Config) settings.TitlePlace { return c.HoverTitlePlace },
+					func(c *settings.Config, x settings.TitlePlace) { c.HoverTitlePlace = x }, v, "hover-title-place")},
 			{ID: "remember-window", Title: locales.PrefsRememberWindow(cx), Control: toggle(func(c settings.Config) bool { return c.RememberWindow },
 				func(c *settings.Config, on bool) { c.RememberWindow = on }, v, "remember-window")},
 			{ID: "open-maximized", Title: locales.PrefsOpenMaximized(cx), Control: toggle(func(c settings.Config) bool { return c.OpenMaximized },

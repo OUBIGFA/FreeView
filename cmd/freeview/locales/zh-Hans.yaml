@@ -83,6 +83,12 @@ prefsZoomStep: 缩放步长
 prefsShowInfo: 显示图片信息
 prefsAlwaysOnTop: 窗口置顶
 prefsShowTitleBar: 显示标题栏
+prefsHoverTitle: 鼠标移到顶部时显示完整标题
+prefsHoverTitleHint: 隐藏标题栏时生效
+prefsHoverTitlePlace: 顶部标题位置
+prefsTitlePlaceLeft: 左侧
+prefsTitlePlaceCenter: 居中
+prefsTitlePlaceRight: 右侧
 prefsRememberWindow: 打开时恢复上次的窗口大小和位置
 prefsSort: 排序方式
 prefsSortName: 名称

@@ -83,6 +83,12 @@ prefsZoomStep: Zoom step
 prefsShowInfo: Show image information
 prefsAlwaysOnTop: Keep the window on top
 prefsShowTitleBar: Show the title bar
+prefsHoverTitle: Show the full title when the mouse is at the top
+prefsHoverTitleHint: Works while the title bar is hidden
+prefsHoverTitlePlace: Top title position
+prefsTitlePlaceLeft: Left
+prefsTitlePlaceCenter: Center
+prefsTitlePlaceRight: Right
 prefsRememberWindow: Open at the last window size and position
 prefsSort: Sort by
 prefsSortName: Name
