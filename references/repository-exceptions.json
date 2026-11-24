@@ -18,11 +18,11 @@
     },
     {
       "path": "assets/screenshots/FreeView-preferences.png",
-      "source": "FreeView Preferences screenshot (main branch, 2026-11-22)",
+      "source": "FreeView Preferences screenshot (main branch, Solar icons, 2026-11-24)",
       "license": "GPL-3.0-only",
       "reason": "README preview of the Preferences window",
-      "bytes": 41642,
-      "sha256": "38f4e2b84db570a239d5dd7f9a39574b103b870e39fa26e70d8afa620f16d919"
+      "bytes": 43896,
+      "sha256": "51070157015c6dd24e951ac61d12af93a687c9452272561f8d421cffb2cce789"
     }
   ]
 }
