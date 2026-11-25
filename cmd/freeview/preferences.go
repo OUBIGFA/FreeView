@@ -74,9 +74,13 @@ const (
 
 type preferences struct{ v *viewer }
 
-// Render draws the sidebar and the search field itself and leaves the
-// rows of the shown page to ui.Settings: ui.Settings' own page fills its
-// pane edge to edge, and has no way to keep side margins.
+// Render draws the sidebar, the search field, the page's heading and its
+// scroll view itself and leaves the rows of the shown page to ui.Settings:
+// ui.Settings' own page fills its pane edge to edge, and has no way to keep
+// side margins. The scroll view spans the whole pane, so its bar sits at
+// the window's right edge, and the rows keep their margins inside it.
+// ui.Settings' own scroll view then holds all of its rows and never
+// scrolls.
 func (p preferences) Render(cx *core.Scope) core.Node {
 	v := p.v
 	colors := ui.ColorsOf(cx)
@@ -102,7 +106,7 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 		}
 	}
 	var nav []ui.SidebarItem
-	for _, c := range categories(cx) {
+	for _, c := range core.Untracked(cx, func() []ui.SettingsCategory { return categories(cx) }) {
 		nav = append(nav, ui.SidebarItem{ID: c.ID, Text: c.Title, TestID: "settings-nav-" + c.ID})
 	}
 	title := ui.Text(locales.PrefsTitle(cx), 13, ui.Bold, colors.Text)
@@ -118,19 +122,44 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 				OnSelect: func(id string) { category.Set(id); query.Set("") }}}},
 		}}
 	// The page: the chosen category, or every row matching the search.
+	// It is built again only for these and Restore defaults, never for a
+	// preference changing, so a switch keeps the page where it is.
 	page := core.Dynamic(func(cx *core.Scope) core.Node {
 		resets.Get()
-		all := categories(cx)
-		shown, heading := all[:1], all[0].Title
+		id, q := category.Get(), strings.TrimSpace(query.Get())
+		all := core.Untracked(cx, func() []ui.SettingsCategory { return categories(cx) })
+		shown := all[:1]
 		for i, c := range all {
-			if c.ID == category.Get() {
-				shown, heading = all[i:i+1], c.Title
+			if c.ID == id {
+				shown = all[i : i+1]
 			}
 		}
-		if q := strings.TrimSpace(query.Get()); q != "" {
-			shown, heading = matchingSettings(all, q), locales.PrefsResults(cx)
+		if q != "" {
+			shown = matchingSettings(all, q)
 		}
-		return ui.Settings{Title: heading, EmptyText: locales.PrefsEmpty(cx), Categories: shown, HideSidebar: true, HideSearch: true}
+		return ui.Settings{EmptyText: locales.PrefsEmpty(cx), Categories: shown, HideSidebar: true, HideSearch: true, HideHeading: true}
+	})
+	headingText := ui.Textf(func() string {
+		if strings.TrimSpace(query.Get()) != "" {
+			return locales.PrefsResults(cx)
+		}
+		for _, n := range nav {
+			if n.ID == category.Get() {
+				return n.Text
+			}
+		}
+		return nav[0].Text
+	}, 13, ui.Bold, colors.Text)
+	headingText.Role, headingText.MaxLines = core.RoleHeader, 1
+	heading := prefsColumn(core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, MinHeight: core.Pt(56),
+		Padding: core.Symmetric(12, 20)}, Children: []core.Node{headingText}})
+	heading.Style.FlexShrink = 0
+	// Another category or search starts at the top of its page.
+	scroll := &core.Ref{}
+	cx.Effect(func() {
+		category.Get()
+		query.Get()
+		scroll.ScrollTo(core.Point{}, false)
 	})
 	return core.View{
 		StyleFunc: func() core.Style {
@@ -139,11 +168,18 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 		Children: []core.Node{
 			sidebar,
 			core.View{Style: core.Style{Width: core.Pt(1), FlexShrink: 0}, StyleFunc: ui.Filled(colors.Border)},
-			core.View{Style: ui.FillRest.Merge(core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(0, prefsPageMargin)}),
-				Children: []core.Node{core.View{Style: ui.FillRest.Merge(core.Style{Width: core.Pct(100), MaxWidth: core.Pt(prefsPageWidth)}),
-					Children: []core.Node{page}}}},
+			core.View{Style: ui.FillRest, Children: []core.Node{
+				heading,
+				core.Scroll{Ref: scroll, TestID: "settings-page", Style: ui.FillRest, Children: []core.Node{prefsColumn(page)}},
+			}},
 		},
 	}
+}
+
+// prefsColumn centers child in the page's column, with the page's margins.
+func prefsColumn(child core.Node) core.View {
+	return core.View{Style: core.Style{AlignItems: core.AlignCenter, Padding: core.Symmetric(0, prefsPageMargin)},
+		Children: []core.Node{core.View{Style: core.Style{Width: core.Pct(100), MaxWidth: core.Pt(prefsPageWidth)}, Children: []core.Node{child}}}}
 }
 
 // searchField is the search through every row, drawn as ui.Settings
@@ -346,12 +382,13 @@ func parseKeys(text string) []string {
 
 func (p preferences) keyItems(cx *core.Scope) []ui.SettingsItem {
 	v := p.v
+	cfg := core.Untracked(cx, v.cfg.Get)
 	items := []ui.SettingsItem{{ID: "keys-hint", Content: core.Text{Content: locales.PrefsKeysHint(cx),
 		StyleFunc: func() core.Style {
 			return ui.TypeCaption.Merge(core.Style{Color: ui.ColorsOf(cx).Muted(), Padding: core.Symmetric(4, 0)})
 		}}}}
 	for _, a := range settings.Actions {
-		items = append(items, ui.SettingsItem{ID: "key-" + string(a), Title: actionLabel(cx, a), Keywords: v.cfg.Get().Keys[a],
+		items = append(items, ui.SettingsItem{ID: "key-" + string(a), Title: actionLabel(cx, a), Keywords: cfg.Keys[a],
 			Control: shortcutField{v: v, action: a}})
 	}
 	return items
@@ -366,7 +403,7 @@ type shortcutField struct {
 
 func (f shortcutField) Render(cx *core.Scope) core.Node {
 	v, a := f.v, f.action
-	draft := core.NewSignal(cx, strings.Join(v.cfg.Get().Keys[a], ", "))
+	draft := core.NewSignal(cx, strings.Join(core.Untracked(cx, v.cfg.Get).Keys[a], ", "))
 	recording := core.NewSignal(cx, false)
 	recorder := &core.Ref{}
 	commit := func(text string) {

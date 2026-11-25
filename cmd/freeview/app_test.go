@@ -237,6 +237,35 @@ func TestPreferencesNavigateAndSearch(t *testing.T) {
 	}
 }
 
+// Turning a switch keeps the page where it was scrolled to, and another
+// category starts at the top. The page's one scroll view spans the pane,
+// so its bar is at the window's right edge.
+func TestPreferencesKeepTheirScrollOnAChange(t *testing.T) {
+	t.Setenv("AppData", t.TempDir())
+	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
+		nsgotest.Size(1040, 500))
+	app.WaitFor("id:settings-view-fit", 5*time.Second)
+	page := app.Find("id:settings-page")
+	// Its frame is in the pane beside the sidebar and its border.
+	if w := page.Frame.Size.Width; w != 1040-prefsSidebarWidth-1 {
+		t.Errorf("page scroll view %v wide, want the whole pane", w)
+	}
+	app.ScrollTo("id:settings-page", core.Point{Y: 200})
+	app.Press("id:edge-clicks")
+	app.Settle()
+	if y := app.Find("id:settings-page").Offset.Y; y != 200 {
+		t.Errorf("offset after a switch = %v, want 200", y)
+	}
+	if app.Find("id:settings-view-fit") == nil {
+		t.Error("rows gone after a switch")
+	}
+	app.Press("id:settings-nav-mouse")
+	app.WaitFor("id:settings-mouse-middle_click", 5*time.Second)
+	if y := app.Find("id:settings-page").Offset.Y; y != 0 {
+		t.Errorf("offset on another category = %v, want 0", y)
+	}
+}
+
 // A maximized or full-screen window keeps the frame it had before, even
 // when the platform reports the whole screen a moment before the state,
 // so the next start does not open it over the whole screen. Being
