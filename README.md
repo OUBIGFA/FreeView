@@ -8,7 +8,7 @@
 
 简体中文 · [English](README.en.md)
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.1.3-2E7D32" alt="版本 0.1.3"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.2.0-2E7D32" alt="版本 0.2.0"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 和 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only 许可证"></a>
 
@@ -53,9 +53,9 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 3. 打开下载的文件。
 4. 按屏幕上的提示安装 FreeView。
 
-当前版本是 0.1.3。它支持 64 位 Windows 10 和 Windows 11。
+当前版本是 0.2.0。它支持 64 位 Windows 10 和 Windows 11。
 
-从 0.1.0 或 0.1.2 升级时，请手动下载并运行 `FreeView-0.1.3.exe`。安装此版本后，FreeView 使用新的 GitHub Release 自动更新方式。
+从 0.1.0 或 0.1.2 升级时，请手动下载并运行 `FreeView-0.2.0.exe`。安装 0.1.3 或更新的版本后，FreeView 使用新的 GitHub Release 自动更新方式。
 
 安装程序为当前用户安装 FreeView。你不需要管理员权限。安装后，从开始菜单打开 FreeView。你也可以在安装时创建桌面快捷方式。
 
