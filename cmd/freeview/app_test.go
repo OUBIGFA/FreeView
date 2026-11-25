@@ -239,7 +239,8 @@ func TestPreferencesNavigateAndSearch(t *testing.T) {
 
 // A maximized or full-screen window keeps the frame it had before, even
 // when the platform reports the whole screen a moment before the state,
-// so the next start does not open it over the whole screen.
+// so the next start does not open it over the whole screen. Being
+// maximized is saved beside that frame, and restoring clears it.
 func TestRemembersTheFrameBeforeMaximizing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "windows.yaml")
 	s := &frameStore{path: path, saved: settings.Windows{}}
@@ -247,12 +248,18 @@ func TestRemembersTheFrameBeforeMaximizing(t *testing.T) {
 		s.remember(cx, "main", func(err error) { t.Error(err) })
 		return core.View{}
 	}, nsgotest.Size(800, 600))
+	// Windows refuses to open the file while a save writes it: read again.
 	saved := func() settings.Frame {
-		w, err := settings.LoadWindows(path)
-		if err != nil {
-			t.Fatal(err)
+		for try := 0; ; try++ {
+			w, err := settings.LoadWindows(path)
+			if err == nil {
+				return w["main"]
+			}
+			if try == 20 {
+				t.Fatal(err)
+			}
+			time.Sleep(25 * time.Millisecond)
 		}
-		return w["main"]
 	}
 	normal := core.WindowFrame{X: 100, Y: 80, Move: true, Width: 900, Height: 640}
 	want := settings.Frame{X: 100, Y: 80, Width: 900, Height: 640}
@@ -265,13 +272,24 @@ func TestRemembersTheFrameBeforeMaximizing(t *testing.T) {
 	// The frame first, then the state, as Windows reports maximizing.
 	app.SetEnvironment(core.Environment{WindowFrame: whole})
 	app.SetEnvironment(core.Environment{WindowFrame: whole, Maximized: true})
+	maximized := want
+	maximized.Maximized = true
+	app.WaitUntil(5*time.Second, func() bool { return saved() == maximized })
 	app.SetEnvironment(core.Environment{WindowFrame: whole, Maximized: true, FullScreen: true})
 	// Past the half second a save waits, and the write it starts.
 	for end := time.Now().Add(1500 * time.Millisecond); time.Now().Before(end); time.Sleep(50 * time.Millisecond) {
 		app.Settle()
-		if got := saved(); got != want {
-			t.Fatalf("saved %+v while maximized, want the frame before, %+v", got, want)
+		if got := saved(); got != maximized {
+			t.Fatalf("saved %+v while maximized, want the frame before, %+v", got, maximized)
 		}
+	}
+	if !s.maximized("main") {
+		t.Error("the store does not say the window was maximized")
+	}
+	app.SetEnvironment(core.Environment{WindowFrame: normal})
+	app.WaitUntil(5*time.Second, func() bool { return saved() == want })
+	if got := saved(); got != want {
+		t.Fatalf("saved %+v after restoring, want %+v", got, want)
 	}
 }
 

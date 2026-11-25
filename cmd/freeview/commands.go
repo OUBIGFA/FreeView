@@ -105,6 +105,32 @@ func actionLabel(cx *core.Scope, a settings.Action) string {
 		return locales.ActionMenu(cx)
 	case settings.Preferences:
 		return locales.ActionPreferences(cx)
+	case settings.Navigator:
+		return locales.ActionNavigator(cx)
+	case settings.Filmstrip:
+		return locales.ActionFilmstrip(cx)
+	case settings.Rename:
+		return locales.ActionRename(cx)
+	case settings.CopyTo:
+		return locales.ActionCopyTo(cx)
+	case settings.MoveTo:
+		return locales.ActionMoveTo(cx)
+	case settings.OpenWith:
+		return locales.ActionOpenWith(cx)
+	case settings.Properties:
+		return locales.ActionProperties(cx)
+	case settings.ExportVideo:
+		return locales.ActionExportVideo(cx)
+	case settings.AnimPause:
+		return locales.ActionAnimPause(cx)
+	case settings.AnimPrev:
+		return locales.ActionAnimPrev(cx)
+	case settings.AnimNext:
+		return locales.ActionAnimNext(cx)
+	case settings.AnimFaster:
+		return locales.ActionAnimFaster(cx)
+	case settings.AnimSlower:
+		return locales.ActionAnimSlower(cx)
 	}
 	return locales.ActionNone(cx)
 }
@@ -169,8 +195,10 @@ func (v *viewer) menuItems() []desktop.MenuItem {
 		v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
 		v.checked(settings.FullScreen, desktop.FullScreen(v.cx)), v.checked(settings.Slideshow, v.slideshow.Get()),
 		v.checked(settings.Info, v.info.Get()), v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop),
-		v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar), separator,
-		v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Delete), separator,
+		v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar), v.checked(settings.Navigator, v.cfg.Get().Navigator),
+		v.checked(settings.Filmstrip, v.cfg.Get().Filmstrip), separator,
+		v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Rename), v.item(settings.CopyTo),
+		v.item(settings.MoveTo), v.item(settings.OpenWith), v.item(settings.Properties), v.item(settings.Delete), separator,
 		v.item(settings.Preferences), v.item(settings.Close),
 	}
 }
@@ -182,7 +210,9 @@ func (v *viewer) updateMenu() {
 	desktop.SetApplicationMenu(cx, []desktop.MenuItem{
 		{Label: locales.MenuFile(cx), Items: []desktop.MenuItem{
 			v.item(settings.Open), v.item(settings.Reveal), separator,
-			v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Delete), separator,
+			v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Rename), v.item(settings.CopyTo),
+			v.item(settings.MoveTo), v.item(settings.OpenWith), v.item(settings.Properties), v.item(settings.ExportVideo),
+			v.item(settings.Delete), separator,
 			v.item(settings.Preferences), separator, v.item(settings.Close),
 		}},
 		{Label: locales.MenuView(cx), Items: []desktop.MenuItem{
@@ -190,10 +220,13 @@ func (v *viewer) updateMenu() {
 			v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
 			v.checked(settings.FullScreen, desktop.FullScreen(cx)), v.checked(settings.Info, v.info.Get()),
 			v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop), v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar),
+			v.checked(settings.Navigator, v.cfg.Get().Navigator), v.checked(settings.Filmstrip, v.cfg.Get().Filmstrip),
 		}},
 		{Label: locales.MenuGo(cx), Items: []desktop.MenuItem{
 			v.item(settings.Next), v.item(settings.Previous), v.item(settings.First), v.item(settings.Last), separator,
-			v.checked(settings.Slideshow, v.slideshow.Get()),
+			v.checked(settings.Slideshow, v.slideshow.Get()), separator,
+			v.item(settings.AnimPause), v.item(settings.AnimPrev), v.item(settings.AnimNext),
+			v.item(settings.AnimFaster), v.item(settings.AnimSlower),
 		}},
 	})
 }

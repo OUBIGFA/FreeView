@@ -46,12 +46,25 @@ func (s *frameStore) frame(key string) (core.WindowFrame, bool) {
 		Width: core.Points(f.Width), Height: core.Points(f.Height)}, ok
 }
 
+// maximized reports whether the window saved under key was maximized when
+// last left, so it opens maximized again.
+func (s *frameStore) maximized(key string) bool {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.saved[key].Maximized
+}
+
 // remember saves the frame of cx's window under key whenever the user
 // moves or resizes it, half a second after the last change so a drag
 // writes the file once. Maximized or in full screen the window keeps the
-// frame saved before: nsgo v0.2.0 on Windows reports the maximized or
+// frame saved before: nsgo on Windows reports the maximized or
 // full-screen rectangle there (GetWindowRect), and opening with it put
-// the window over the whole screen, as if maximized.
+// the window over the whole screen, as if maximized. Being maximized is
+// saved as a flag beside that frame instead, so the window opens
+// maximized and restores to where it was.
 func (s *frameStore) remember(cx *core.Scope, key string, failed func(error)) {
 	if s == nil || s.path == "" {
 		return
@@ -65,6 +78,15 @@ func (s *frameStore) remember(cx *core.Scope, key string, failed func(error)) {
 			// The frame can change a moment before the state does, so a
 			// save already waiting may hold the whole screen: drop it.
 			seq++
+			if desktop.Maximized(cx) && !desktop.FullScreen(cx) {
+				s.mu.Lock()
+				saved, ok := s.saved[key]
+				s.mu.Unlock()
+				if ok && !saved.Maximized {
+					saved.Maximized = true
+					go s.save(key, saved, func(err error) { cx.Post(func() { failed(err) }) })
+				}
+			}
 			return
 		}
 		next := settings.Frame{X: float64(f.X), Y: float64(f.Y), Width: float64(f.Width), Height: float64(f.Height)}

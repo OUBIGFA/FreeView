@@ -143,3 +143,73 @@ updateUpToDateMessage: "FreeView {version} is the newest version"
 updateFailedTitle: Update failed
 updateFailedMessage: "Cannot check for or download the update: {error}"
 updateOk: OK
+actionNavigator: Overview
+actionFilmstrip: Thumbnail strip
+actionRename: Rename
+actionCopyTo: Copy to folder
+actionMoveTo: Move to folder
+actionOpenWith: Open in external editor
+actionProperties: File properties
+actionExportVideo: Export live photo video
+actionAnimPause: Pause or play animation
+actionAnimPrev: Previous animation frame
+actionAnimNext: Next animation frame
+actionAnimFaster: Faster animation
+actionAnimSlower: Slower animation
+animFrame: "Frame {frame} of {count}"
+animPaused: Animation paused
+animPlaying: Animation playing
+animSpeed: "Animation speed × {speed}"
+animTooLarge: The animation is too large to control frame by frame
+notAnimated: This image is not an animation
+archiveNoChange: Images inside an archive cannot be renamed or moved
+copiedTo: "Copied to {folder}"
+movedTo: "Moved to {folder}"
+copyFailed: "Cannot copy {name}: {error}"
+moveFailed: "Cannot move {name}: {error}"
+renameHint: "Type the new name (the extension {ext} stays), Enter to confirm, Esc to cancel"
+renameFailed: "Cannot rename: {error}"
+nameEmpty: The name is empty
+nameInvalid: 'The name cannot contain \ / : * ? " < > | and similar characters'
+nameReserved: Windows reserves this name
+nameExists: A file with this name exists
+openWithFailed: "Cannot open the external editor: {error}"
+propertiesFailed: "Cannot show the file properties: {error}"
+pickEditor: Choose the external editor
+pickFolder: Choose the target folder
+noMotion: This image has no live photo video
+videoSaved: "Saved the video {name}"
+videoSaveFailed: "Cannot save the video: {error}"
+loadNotFound: The file does not exist or was moved
+loadUnsupported: This format is not supported
+loadDecodeFailed: "Decoding failed ({error})"
+infoCamera: Camera
+infoLens: Lens
+infoExposure: Exposure
+infoTaken: Taken
+infoGPS: Location
+infoSoftware: Software
+infoComment: Comment
+infoPrompt: AI prompt
+infoLive: Live photo, its video can be exported
+infoCache: "Cache: {hits} hits, {reads} reads, {evictions} evictions"
+prefsEnhanceGroup: Enhancements
+prefsNavigator: Overview
+prefsNavigatorHint: When the image overflows the window, show all of it and the visible part at the bottom right; click or drag to move there
+prefsFilmstrip: Thumbnail strip
+prefsFilmstripHint: Show the folder's thumbnails when the mouse is at the bottom of the window
+prefsSmoothZoom: Smooth when shrinking
+prefsSmoothZoomHint: Resample shrunk images once the view is still, so fine lines do not alias
+prefsColorManagement: Color management
+prefsColorManagementHint: Show images with Adobe RGB, Display P3 and other color profiles in the monitor's colors
+prefsEdgeClicks: Click the window edges to move
+prefsEdgeClicksHint: A click on the left or right side shows the previous or next image; on the top left or right corner it rotates
+prefsAnimationSpeed: Animation speed
+prefsFilesGroup: File commands
+prefsExternalEditor: External editor
+prefsExternalEditorHint: The program Open in external editor runs; asked for the first time when not set
+prefsTargetFolder: Folder to copy and move to
+prefsTargetFolderHint: Asked for each time when not set
+prefsNotSet: Not set
+prefsChoose: Choose…
+prefsClear: Clear

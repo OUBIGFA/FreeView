@@ -35,6 +35,9 @@
 - 在 bash 中给测试进程指定设置目录时，要设置 `APPDATA`（大写）；设置 `AppData` 不会生效。
 - Release 只上传安装器 `FreeView-<版本>.exe`，不上传 `.sha256`、appcast 或其他文件。自动更新不用更新源：`internal/update` 读 GitHub 最新 Release 的 tag 和安装器附件，用 GitHub 接口给出的 SHA-256（`digest`）校验下载，再以 `/S /RELAUNCH` 静默安装。因此 tag 必须是 `v<版本>`，附件必须叫 `FreeView-<版本>.exe`；换名或换格式会让已安装的用户检查不到更新。
 - `tools/deskrun` 的 `mem` 打印进程内存和 CPU 时间，`omouse`、`oshot` 操作和截图设置窗口等第二个窗口。
+- `tools/deskrun` 启动后打印 `visible after <ms>`：FreeView 在打开的图片显示后才显示窗口，所以这个值就是启动到首图的时间。对比速度时先 `go build` 出 deskrun 和新旧两个 exe（旧版用 `git worktree` 放在 `_temp/` 下构建），交替各跑几次；不要用 `go run ./tools/deskrun` 计时。
+- 投递的鼠标移动消息不移动真实指针，Windows 马上发出离开消息，所以缩略图带等悬停界面在私有桌面里只能停留几十毫秒，基本无法截图；这类行为用 nsgotest 的 `HoverAt` 验证。
+- 速度底线：显示图片的路径（读文件 → `picture.Load` → nsgo 解码显示）不能加入解码像素、色彩转换、缩略图等重活。新的重功能放进 `cmd/freeview/extras.go` 的 `background`（最多 2 个低优先级线程），在图片显示后才开始，并用 `extras.seq` 丢弃过期结果；改动后用上面的方法对比启动到首图时间。
 - 从按键或菜单处理函数中打开窗口时，要通过 `Scope.Post` 在根作用域打开。否则窗口属于按键绑定的作用域，设置一变就会被关闭。
 
 ## 界面文案

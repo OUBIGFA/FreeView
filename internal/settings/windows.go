@@ -17,6 +17,9 @@ type Frame struct {
 	Y      float64 `yaml:"y"`
 	Width  float64 `yaml:"width"`
 	Height float64 `yaml:"height"`
+	// Maximized says the window was maximized when last left; X, Y, Width
+	// and Height are then its frame from before, which restoring it uses.
+	Maximized bool `yaml:"maximized,omitempty"`
 }
 
 // Windows remembers each window's last frame by its key, such as "main"

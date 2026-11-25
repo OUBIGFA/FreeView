@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"image"
 	"image/png"
+	"io/fs"
 	"math"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"time"
 
@@ -25,13 +28,9 @@ import (
 const (
 	minScale = 0.01
 	maxScale = 64
-	// cacheEntries and cacheBytes bound the images kept read ahead: the
-	// shown one and one on either side, and the one before them, which
-	// the other image view also holds decoded. Decoded pixels (BMP, TIFF
-	// and the WIC formats) take far more than file bytes: a 24 MP RAW is
-	// 96 MB of them.
-	cacheEntries = 4
-	cacheBytes   = 256 << 20
+	// cacheEntries bounds the images kept read ahead: the shown one, one
+	// on either side and the last few left, so stepping back is instant.
+	cacheEntries = 6
 	// touchpadStep is how far a touchpad scrolls for one wheel gesture.
 	touchpadStep = 120
 	// revealWait is the longest the main window stays hidden waiting for
@@ -41,6 +40,18 @@ const (
 	// drag strip edge does not make it flicker.
 	hoverHide = 300 * time.Millisecond
 )
+
+// cacheBytes bounds the bytes the read-ahead cache holds: an eighth of
+// the installed memory, between 256 MiB and 2 GiB. Decoded pixels (BMP,
+// TIFF and the WIC formats) take far more than file bytes: a 24 MP RAW is
+// 96 MB of them.
+var cacheBytes = func() int {
+	return int(min(max(physicalMemory()/8, 256<<20), 2<<30))
+}()
+
+// cacheStats counts how the read-ahead cache served images, which the
+// information overlay shows to explain a slow step.
+type cacheStats struct{ hits, reads, evictions int }
 
 // launching is whether the command line names a file to open, as nsgo
 // hands to OnOpenFiles: the main window then waits for it to show.
@@ -103,6 +114,8 @@ type viewer struct {
 	revealed   bool
 	cache      map[string]picture.Picture
 	cacheOrder []string
+	stats      cacheStats
+	extras     extras // the features off the fast path (extras.go)
 }
 
 func newViewer(cx *core.Scope) *viewer {
@@ -133,6 +146,7 @@ func newViewer(cx *core.Scope) *viewer {
 	v.slideshow = core.NewSignal(cx, false)
 	v.message = core.NewSignal(cx, "")
 	v.topHover = core.NewSignal(cx, false)
+	v.initExtras(cx)
 	if loadErr != nil {
 		v.flash(locales.PrefsLoadFailed(cx, loadErr.Error()))
 	}
@@ -169,7 +183,8 @@ func (v *viewer) reveal() {
 	v.revealed = true
 	v.cx.Post(func() {
 		// Maximized while still hidden, so it never shows at its frame first.
-		if v.cfg.Get().OpenMaximized && !desktop.Maximized(v.cx) {
+		cfg := v.cfg.Get()
+		if (cfg.OpenMaximized || cfg.RememberWindow && frames.maximized("main")) && !desktop.Maximized(v.cx) {
 			desktop.ToggleMaximize(v.cx)
 		}
 		desktop.CurrentWindow(v.cx).Focus()
@@ -245,11 +260,13 @@ func (v *viewer) show(i int) {
 	v.loadSeq++
 	seq := v.loadSeq
 	if pic, ok := v.cache[item.Path]; ok {
+		v.stats.hits++
 		v.present(item, pic, nil)
 		v.prefetch(i)
 		return
 	}
 	cat := v.cat
+	v.stats.reads++
 	go func() {
 		pic, err := readPicture(cat, item)
 		v.cx.Post(func() {
@@ -277,10 +294,14 @@ func readPicture(cat *catalog.Catalog, item catalog.Item) (picture.Picture, erro
 }
 
 // prefetch reads the images on either side of i ahead of time, so moving
-// to them skips the disk or archive.
+// to them skips the disk or archive. An image taking over half the cache
+// is not read ahead of: its neighbors would push it out.
 func (v *viewer) prefetch(i int) {
 	cfg := v.cfg.Get()
 	cat := v.cat
+	if pic, ok := v.cache[cat.Items[i].Path]; ok && pictureBytes(pic) > cacheBytes/2 {
+		return
+	}
 	for _, d := range []int{1, -1} {
 		j := cat.Step(i, d, cfg.Loop)
 		if j < 0 || j == i {
@@ -290,6 +311,7 @@ func (v *viewer) prefetch(i int) {
 		if _, ok := v.cache[item.Path]; ok {
 			continue
 		}
+		v.stats.reads++
 		go func() {
 			pic, err := readPicture(cat, item)
 			if err != nil {
@@ -305,7 +327,8 @@ func (v *viewer) prefetch(i int) {
 }
 
 // remember keeps pic in the read-ahead cache, dropping the oldest entries
-// past its bounds.
+// past its bounds. The shown image and the one the back view decodes
+// stay: the views hold them anyway, so dropping them frees nothing.
 func (v *viewer) remember(path string, pic picture.Picture) {
 	if _, ok := v.cache[path]; ok {
 		return
@@ -316,11 +339,17 @@ func (v *viewer) remember(path string, pic picture.Picture) {
 	for _, p := range v.cache {
 		total += pictureBytes(p)
 	}
-	for len(v.cacheOrder) > 1 && (len(v.cacheOrder) > cacheEntries || total > cacheBytes) {
-		old := v.cacheOrder[0]
-		v.cacheOrder = v.cacheOrder[1:]
+	keep := func(p string) bool { return p == path || p == v.img.Get().item.Path || p == v.next.item.Path }
+	for i := 0; i < len(v.cacheOrder) && (len(v.cacheOrder) > cacheEntries || total > cacheBytes); {
+		old := v.cacheOrder[i]
+		if keep(old) {
+			i++
+			continue
+		}
+		v.cacheOrder = slices.Delete(v.cacheOrder, i, i+1)
 		total -= pictureBytes(v.cache[old])
 		delete(v.cache, old)
+		v.stats.evictions++
 	}
 }
 
@@ -383,6 +412,7 @@ func (v *viewer) commit(s shown, k int) {
 		v.offset.Set(core.Point{})
 		v.fit.Set(v.cfg.Get().Fit)
 		v.scale.Set(1)
+		v.commitExtras(s)
 	})
 	v.reveal()
 	v.trimMemory()
@@ -551,7 +581,9 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 	case settings.FullScreen:
 		desktop.ToggleFullScreen(cx)
 	case settings.Escape:
-		if desktop.FullScreen(cx) {
+		if v.extras.renaming.Get() {
+			v.extras.renaming.Set(false)
+		} else if desktop.FullScreen(cx) {
 			desktop.ToggleFullScreen(cx)
 		} else {
 			winmouse.CloseQuietly()
@@ -600,6 +632,14 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 		desktop.PopupMenu(cx, v.menuItems(), v.pointer, nil)
 	case settings.Preferences:
 		openPreferences(v)
+	case settings.Navigator:
+		v.update(func(c *settings.Config) { c.Navigator = !c.Navigator })
+	case settings.Filmstrip:
+		v.update(func(c *settings.Config) { c.Filmstrip = !c.Filmstrip })
+	case settings.Rename, settings.CopyTo, settings.MoveTo, settings.OpenWith, settings.Properties, settings.ExportVideo:
+		v.runFile(action)
+	case settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimFaster, settings.AnimSlower:
+		v.runAnimation(action)
 	}
 }
 
@@ -655,20 +695,7 @@ func (v *viewer) delete() {
 				v.flash(locales.DeleteFailed(cx, item.Name, err.Error()))
 				return
 			}
-			i := v.cat.Index(item.Path)
-			if i < 0 {
-				return
-			}
-			delete(v.cache, item.Path)
-			next := v.cat.Remove(i)
-			v.count.Set(len(v.cat.Items))
-			if next < 0 {
-				v.index.Set(-1)
-				v.commit(shown{}, v.front.Get())
-				v.openErr.Set(locales.FolderEmpty(cx, v.cat.Title()))
-				return
-			}
-			v.show(next)
+			v.dropItem(item.Path)
 		})
 	}
 	if !v.cfg.Get().ConfirmDelete {
@@ -783,7 +810,7 @@ func (v *viewer) infoText() string {
 	return img.item.Name + "\n" + v.positionText() + "   " +
 		strconv.Itoa(img.pic.Width) + " × " + strconv.Itoa(img.pic.Height) + "   " +
 		locales.InfoZoom(v.cx, strconv.Itoa(int(math.Round(v.currentScale()*100)))) + "   " +
-		formatBytes(img.item.Size) + "   " + img.pic.Format
+		formatBytes(img.item.Size) + "   " + img.pic.Format + v.detailsText()
 }
 
 func formatBytes(n int64) string {
@@ -836,7 +863,8 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 			return core.Style{FlexGrow: 1, FlexShrink: 1, Overflow: core.Hidden, Background: core.RGB(viewportColor)}
 		},
 		OnLayout:      func(b core.Bounds) { v.viewport.Set(b.Size) },
-		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position; v.updateHand() },
+		OnMouseMove:   func(e core.MouseEvent) { v.pointer = e.Position; v.updateHand(); v.hoverStrip(e.Position) },
+		OnMouseLeave:  func(core.MouseEvent) { v.extras.stripOn.Set(false) },
 		OnWheel:       v.wheel,
 		OnPan:         v.pan,
 		OnPressDown:   func(e core.PressEvent) { v.downAt = e.Position },
@@ -854,6 +882,10 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 			v.keyBindings(),
 			v.imageView(0),
 			v.imageView(1),
+			v.smoothView(),
+			core.Show{When: func() bool { return v.navShown() && !v.img.Get().src.Empty() }, Then: v.navigator},
+			core.Show{When: func() bool { return v.cfg.Get().Filmstrip && v.extras.stripOn.Get() && v.cat != nil }, Then: v.filmstrip},
+			core.Show{When: func() bool { return v.extras.renaming.Get() && v.img.Get().item.Path != "" }, Then: v.renameBox},
 			// Without a title bar, a strip as tall as the hidden one moves the
 			// window: Windows drags it, maximizes it on a double click and
 			// opens the system menu on a right click. Its height is 0 in full
@@ -890,7 +922,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 				When: func() bool { return v.info.Get() && v.img.Get().item.Name != "" },
 				Then: func(cx *core.Scope) core.Node {
 					return core.Text{TestID: "info", ContentFunc: v.infoText,
-						Style: overlayText(core.Style{Position: core.Absolute, Left: core.Pt(12), Top: core.Pt(12)})}
+						Style: overlayText(core.Style{Position: core.Absolute, Left: core.Pt(12), Top: core.Pt(12), MaxWidth: core.Pct(60)})}
 				},
 			},
 			core.Show{
@@ -945,10 +977,11 @@ func (v *viewer) imageView(k int) core.Node {
 		OnError: func(err error) { v.loaded(k, err) },
 		StyleFunc: func() core.Style {
 			if v.front.Get() == k {
-				return v.imageStyle()
+				// Under the resampled view the image is hidden, so a
+				// transparent one does not show through twice.
+				return v.imageStyle().Merge(core.Style{Opacity: core.Alpha(pick[float32](v.smoothShown(), 0, 1))})
 			}
-			return core.Style{Position: core.Absolute, Left: core.Pt(0), Top: core.Pt(0), Width: core.Pt(1), Height: core.Pt(1),
-				Opacity: core.Alpha(0), PointerEvents: core.PointerEventsNone}
+			return hiddenStyle
 		}}
 }
 
@@ -1072,6 +1105,14 @@ func (v *viewer) onImage(p core.Point) bool {
 
 func (v *viewer) press(e core.PressEvent) {
 	v.pointer = e.Position
+	// Every click at an edge moves, a quick second one too, so clicking
+	// through images is not taken for a double click.
+	if v.cfg.Get().EdgeClicks {
+		if a := v.edgeAction(e.Position); a != settings.None {
+			v.run(a, nil)
+			return
+		}
+	}
 	if e.Clicks == 2 {
 		v.gesture(settings.LeftDoubleClick, &e.Position)
 	}
@@ -1084,12 +1125,18 @@ func (v *viewer) gesture(g settings.Gesture, at *core.Point) {
 	}
 }
 
-// loadError says why an image cannot be shown; for a format Windows has
+// loadError says why an image cannot be shown, by kind: the file is
+// gone, its format unknown, or decoding failed; for a format Windows has
 // no codec for, which Microsoft Store extension to install.
 func loadError(cx *core.Scope, err error) string {
 	var missing picture.MissingCodecError
-	if !errors.As(err, &missing) {
-		return err.Error()
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return locales.LoadNotFound(cx)
+	case errors.Is(err, image.ErrFormat):
+		return locales.LoadUnsupported(cx)
+	case !errors.As(err, &missing):
+		return locales.LoadDecodeFailed(cx, err.Error())
 	}
 	// HEIF and JPEG XL have fallback decoders, so only these two are missed.
 	if missing.Codec == picture.CodecAV1 {

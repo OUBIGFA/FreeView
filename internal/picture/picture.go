@@ -1,10 +1,11 @@
 // Package picture prepares an image file's bytes for display: it reads the
 // size and EXIF orientation without decoding the pixels, and decodes the
-// formats nsgo does not into pixels: BMP and TIFF through golang.org/x/image,
-// and ICO, HEIF, AVIF, JPEG XL and camera RAW through Windows' own codecs
-// (WIC), with gen2brain/heic and gen2brain/jpegxl decoding HEIF and JPEG XL
-// where Windows lacks their extensions. nsgo decodes JPEG, PNG, GIF, WebP
-// and SVG itself, animations included.
+// formats nsgo does not into pixels: BMP and TIFF through golang.org/x/image;
+// ICO, DDS, JPEG XR, HEIF, AVIF, JPEG XL and camera RAW through Windows' own
+// codecs (WIC), with gen2brain/heic and gen2brain/jpegxl decoding HEIF and
+// JPEG XL where Windows lacks their extensions; and PSD, QOI, TGA, Radiance
+// HDR and OpenEXR through pure-Go modules (formats.go). nsgo decodes JPEG,
+// PNG, GIF, WebP and SVG itself, animations included.
 package picture
 
 import (
@@ -28,6 +29,8 @@ import (
 	"github.com/gen2brain/jpegxl"
 	"github.com/nsgo-dev/nsgo/core"
 	"github.com/rwcarlsen/goexif/exif"
+
+	"github.com/OUBIGFA/FreeView/internal/livephoto"
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
 	_ "golang.org/x/image/webp"
@@ -74,15 +77,17 @@ var RawExtensions = []string{".dng", ".cr2", ".cr3", ".crw", ".nef", ".nrw", ".a
 	".rw2", ".raf", ".pef", ".srw", ".x3f", ".3fr", ".erf", ".kdc", ".mrw", ".mos", ".iiq", ".rwl"}
 
 // wicExtensions are the other formats only WIC decodes, with the codec
-// each needs; ICO needs none.
-var wicExtensions = map[string]Codec{".ico": "", ".heic": CodecHEIF, ".heif": CodecHEIF, ".hif": CodecHEIF,
-	".avif": CodecAV1, ".jxl": CodecJXL}
+// each needs. ICO, DDS and JPEG XR (.jxr, .wdp, .hdp) need none: their
+// codecs ship with Windows 10 and 11.
+var wicExtensions = map[string]Codec{".ico": "", ".dds": "", ".jxr": "", ".wdp": "", ".hdp": "",
+	".heic": CodecHEIF, ".heif": CodecHEIF, ".hif": CodecHEIF, ".avif": CodecAV1, ".jxl": CodecJXL}
 
 // Extensions are the formats Load decodes beyond the ones Go and nsgo
-// recognize by content: the WIC formats and SVG.
+// recognize by content: the WIC formats, SVG, RAW and the formats of the
+// pure-Go decoders, and iOS live photos (.livp).
 func Extensions() []string {
 	exts := slices.Sorted(maps.Keys(wicExtensions))
-	return append(append(exts, ".svg", ".svgz"), RawExtensions...)
+	return append(append(append(exts, ".svg", ".svgz", ".livp"), RawExtensions...), decoderExtensions...)
 }
 
 // Load prepares data, the bytes of the image file name; name's extension
@@ -95,7 +100,25 @@ func Load(data []byte, name string) (Picture, error) {
 	if codec, ok := wicExtensions[ext]; ok {
 		return loadWIC(data, codec, ext[1:])
 	}
-	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
+	// An iOS live photo is a ZIP of its still and its clip: show the still.
+	if livephoto.IsLIVP(name) {
+		still, stillName, _, err := livephoto.OpenLIVP(data)
+		if err != nil {
+			return Picture{}, err
+		}
+		return Load(still, stillName)
+	}
+	if slices.Contains(tgaExtensions, ext) {
+		return loadTGA(data)
+	}
+	if ext == ".exr" || bytes.HasPrefix(data, exrMagic) {
+		return loadEXR(data)
+	}
+	var format string
+	cfg, err := safeDecode(func() (c image.Config, err error) {
+		c, format, err = image.DecodeConfig(bytes.NewReader(data))
+		return c, err
+	})
 	if err != nil {
 		if p, svgErr := loadSVG(data); svgErr == nil {
 			return p, nil
@@ -111,16 +134,17 @@ func Load(data []byte, name string) (Picture, error) {
 	if codec, ok := map[string]Codec{"heic": CodecHEIF, "jxl": CodecJXL}[format]; ok {
 		return loadWIC(data, codec, format)
 	}
-	p := Picture{Width: cfg.Width, Height: cfg.Height, Format: format, Orientation: orientation(data)}
-	if nativeFormats[format] {
-		p.Data = data
-		return p, nil
+	if load := contentDecoders[format]; load != nil {
+		return load(data)
 	}
-	img, _, err := image.Decode(bytes.NewReader(data))
+	if nativeFormats[format] {
+		return Picture{Data: data, Width: cfg.Width, Height: cfg.Height, Format: format, Orientation: orientation(data)}, nil
+	}
+	p, err := decodeGeneric(data, format)
 	if err != nil {
 		return Picture{}, err
 	}
-	p.Pixels = rgbaOf(img)
+	p.Orientation = orientation(data) // TIFF carries EXIF orientation
 	return p, nil
 }
 

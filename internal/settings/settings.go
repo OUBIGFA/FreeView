@@ -46,12 +46,27 @@ const (
 	Preferences  Action = "preferences"
 	AlwaysOnTop  Action = "always_on_top" // toggles the window above all others
 	TitleBar     Action = "title_bar"     // shows or hides the window's title bar
+	Navigator    Action = "navigator"     // shows or hides the overview of the whole image
+	Filmstrip    Action = "filmstrip"     // shows or hides the strip of thumbnails
+	Rename       Action = "rename"
+	CopyTo       Action = "copy_to"      // copies the image into the target folder
+	MoveTo       Action = "move_to"      // moves the image into the target folder
+	OpenWith     Action = "open_with"    // opens the image in the external editor
+	Properties   Action = "properties"   // Explorer's properties dialog
+	ExportVideo  Action = "export_video" // saves the clip of a motion photo as it is
+	AnimPause    Action = "anim_pause"   // pauses or resumes an animation
+	AnimPrev     Action = "anim_prev"    // the animation's previous frame, pausing it
+	AnimNext     Action = "anim_next"    // the animation's next frame, pausing it
+	AnimFaster   Action = "anim_faster"
+	AnimSlower   Action = "anim_slower"
 )
 
 // Actions lists every action in the order the preferences window shows them.
 var Actions = []Action{Next, Previous, First, Last, ZoomIn, ZoomOut, ZoomFit, ZoomOriginal,
 	RotateLeft, RotateRight, FlipH, FlipV, FullScreen, Escape, Close, Minimize, Open, Reveal,
-	Delete, CopyPath, CopyImage, Slideshow, Info, AlwaysOnTop, TitleBar, Menu, Preferences}
+	Delete, CopyPath, CopyImage, Rename, CopyTo, MoveTo, OpenWith, Properties, ExportVideo,
+	Slideshow, AnimPause, AnimPrev, AnimNext, AnimFaster, AnimSlower,
+	Info, Navigator, Filmstrip, AlwaysOnTop, TitleBar, Menu, Preferences}
 
 // Gesture is a mouse input that can be bound to an action.
 type Gesture string
@@ -103,6 +118,10 @@ const (
 	TitleRight  TitlePlace = "right"
 )
 
+// AnimationSpeeds are the playback speeds offered, slowest first; the
+// faster and slower actions step through them.
+var AnimationSpeeds = []float64{0.25, 0.5, 0.75, 1, 1.5, 2, 4}
+
 // Config is the whole configuration file.
 type Config struct {
 	Fit              Fit                 `yaml:"fit"`
@@ -120,6 +139,14 @@ type Config struct {
 	RememberWindow   bool                `yaml:"remember_window"`   // open the viewer at its last size and place
 	OpenMaximized    bool                `yaml:"open_maximized"`    // maximize the viewer as it opens
 	MultipleWindows  bool                `yaml:"multiple_windows"`  // each launch opens its own window (qView's multiple instances); read as FreeView starts
+	Navigator        bool                `yaml:"navigator"`         // the overview at the bottom right while the image overflows the window
+	Filmstrip        bool                `yaml:"filmstrip"`         // the strip of thumbnails the mouse at the bottom shows
+	SmoothZoom       bool                `yaml:"smooth_zoom"`       // resample the still view at screen resolution
+	ColorManagement  bool                `yaml:"color_management"`  // convert embedded ICC profiles to the monitor's
+	EdgeClicks       bool                `yaml:"edge_clicks"`       // a click at the left or right edge moves, at a top corner turns
+	ExternalEditor   string              `yaml:"external_editor"`   // program Open with runs
+	TargetFolder     string              `yaml:"target_folder"`     // where Copy to and Move to put images; asked for when empty
+	AnimationSpeed   float64             `yaml:"animation_speed"`   // playback speed of animations, 1 is normal
 	Mouse            map[Gesture]Action  `yaml:"mouse"`
 	Keys             map[Action][]string `yaml:"keys"`
 }
@@ -131,6 +158,9 @@ func Default() Config {
 	return Config{
 		Fit: FitShrink, Sort: SortName, Loop: true, SlideshowSeconds: 3, ZoomStep: 1.25,
 		ShowInfo: false, ConfirmDelete: true, HoverTitle: true, HoverTitlePlace: TitleRight, RememberWindow: true,
+		// The overview and the thumbnails stay off until the user turns them on,
+		// keeping the window as bare as qView's.
+		Navigator: false, Filmstrip: false, SmoothZoom: true, ColorManagement: true, AnimationSpeed: 1,
 		Mouse: map[Gesture]Action{
 			WheelUp: Previous, WheelDown: Next, CtrlWheelUp: ZoomIn, CtrlWheelDown: ZoomOut,
 			ShiftWheelUp: RotateLeft, ShiftWheelDown: RotateRight, AltWheelUp: First, AltWheelDown: Last,
@@ -161,6 +191,19 @@ func Default() Config {
 			CopyImage:    {"ctrl+c"},
 			Slideshow:    {"s"},
 			Info:         {"i", "tab"},
+			Rename:       {"f2"},
+			CopyTo:       {"f7"},
+			MoveTo:       {"f8"},
+			OpenWith:     {"ctrl+shift+e"},
+			Properties:   {"alt+enter"},
+			ExportVideo:  {},
+			AnimPause:    {"k"},
+			AnimPrev:     {"j"},
+			AnimNext:     {"l"},
+			AnimFaster:   {"]"},
+			AnimSlower:   {"["},
+			Navigator:    {"n"},
+			Filmstrip:    {"t"},
 			AlwaysOnTop:  {},
 			TitleBar:     {},
 			Menu:         {},
@@ -226,6 +269,9 @@ func (c Config) normalized() Config {
 	}
 	if c.ZoomStep <= 1 || c.ZoomStep > 4 {
 		c.ZoomStep = d.ZoomStep
+	}
+	if !slices.Contains(AnimationSpeeds, c.AnimationSpeed) {
+		c.AnimationSpeed = d.AnimationSpeed
 	}
 	for g, a := range c.Mouse {
 		if !slices.Contains(Gestures, g) {

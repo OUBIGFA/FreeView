@@ -64,8 +64,6 @@ const (
 	// XL decoder before the Store extension that implements it is installed.
 	wincodecComponentInitFailure = 0x88982f8b
 	vtUI2                        = 18
-	// maxPixels refuses images whose pixels would take over 1 GiB.
-	maxPixels = 1 << 28
 )
 
 // hresult is a failed COM call.

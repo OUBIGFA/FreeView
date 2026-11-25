@@ -16,6 +16,7 @@ package winmouse
 
 import (
 	"errors"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -112,28 +113,44 @@ func DragWindow() {
 	}
 }
 
+// Window is the main window's handle once Attach found it, else 0.
+func Window() uintptr { return attached.Load() }
+
+// search is what enumWindow looks for and found; searchMu keeps one
+// search at a time.
+var (
+	searchMu               sync.Mutex
+	searchPID, searchFound uintptr
+)
+
+// enumWindow is EnumWindows' callback, made once: Go keeps only about
+// 2000 callbacks per process and never frees one, and Attach searches
+// every 20 ms until the window shows.
+var enumWindow = syscall.NewCallback(func(hwnd, _ uintptr) uintptr {
+	var owner uint32
+	procGetWindowThreadPID.Call(hwnd, uintptr(unsafe.Pointer(&owner)))
+	if uintptr(owner) != searchPID {
+		return 1
+	}
+	if v, _, _ := procIsWindowVisible.Call(hwnd); v == 0 {
+		return 1
+	}
+	var name [32]uint16
+	procGetClassName.Call(hwnd, uintptr(unsafe.Pointer(&name[0])), uintptr(len(name)))
+	if syscall.UTF16ToString(name[:]) != "NsgoWindow" {
+		return 1
+	}
+	searchFound = hwnd
+	return 0
+})
+
 func findWindow() uintptr {
-	pid, _, _ := procGetCurrentProcessID.Call()
-	var found uintptr
-	cb := syscall.NewCallback(func(hwnd, _ uintptr) uintptr {
-		var owner uint32
-		procGetWindowThreadPID.Call(hwnd, uintptr(unsafe.Pointer(&owner)))
-		if uintptr(owner) != pid {
-			return 1
-		}
-		if v, _, _ := procIsWindowVisible.Call(hwnd); v == 0 {
-			return 1
-		}
-		var name [32]uint16
-		procGetClassName.Call(hwnd, uintptr(unsafe.Pointer(&name[0])), uintptr(len(name)))
-		if syscall.UTF16ToString(name[:]) != "NsgoWindow" {
-			return 1
-		}
-		found = hwnd
-		return 0
-	})
-	procEnumWindows.Call(cb, 0)
-	return found
+	searchMu.Lock()
+	defer searchMu.Unlock()
+	searchPID, _, _ = procGetCurrentProcessID.Call()
+	searchFound = 0
+	procEnumWindows.Call(enumWindow, 0)
+	return searchFound
 }
 
 func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {

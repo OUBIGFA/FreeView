@@ -58,6 +58,20 @@ var Parameters = map[string][]string{
 	"UpdateTitle":             {"version"},
 	"UpdateUpToDateMessage":   {"version"},
 	"UpdateFailedMessage":     {"error_"},
+	"AnimFrame":               {"frame", "count"},
+	"AnimSpeed":               {"speed"},
+	"CopiedTo":                {"folder"},
+	"MovedTo":                 {"folder"},
+	"CopyFailed":              {"name", "error_"},
+	"MoveFailed":              {"name", "error_"},
+	"RenameHint":              {"ext"},
+	"RenameFailed":            {"error_"},
+	"OpenWithFailed":          {"error_"},
+	"PropertiesFailed":        {"error_"},
+	"VideoSaved":              {"name"},
+	"VideoSaveFailed":         {"error_"},
+	"LoadDecodeFailed":        {"error_"},
+	"InfoCache":               {"hits", "reads", "evictions"},
 }
 
 // Translation is a language's messages another package supplies:
@@ -81,6 +95,20 @@ type Translation struct {
 	UpdateTitle             func(version string) string
 	UpdateUpToDateMessage   func(version string) string
 	UpdateFailedMessage     func(error_ string) string
+	AnimFrame               func(frame string, count string) string
+	AnimSpeed               func(speed string) string
+	CopiedTo                func(folder string) string
+	MovedTo                 func(folder string) string
+	CopyFailed              func(name string, error_ string) string
+	MoveFailed              func(name string, error_ string) string
+	RenameHint              func(ext string) string
+	RenameFailed            func(error_ string) string
+	OpenWithFailed          func(error_ string) string
+	PropertiesFailed        func(error_ string) string
+	VideoSaved              func(name string) string
+	VideoSaveFailed         func(error_ string) string
+	LoadDecodeFailed        func(error_ string) string
+	InfoCache               func(hits string, reads string, evictions string) string
 }
 
 var supplied = map[string]Translation{}
@@ -217,6 +245,62 @@ const (
 	textUpdateUpToDateTitle
 	textUpdateFailedTitle
 	textUpdateOk
+	textActionNavigator
+	textActionFilmstrip
+	textActionRename
+	textActionCopyTo
+	textActionMoveTo
+	textActionOpenWith
+	textActionProperties
+	textActionExportVideo
+	textActionAnimPause
+	textActionAnimPrev
+	textActionAnimNext
+	textActionAnimFaster
+	textActionAnimSlower
+	textAnimPaused
+	textAnimPlaying
+	textAnimTooLarge
+	textNotAnimated
+	textArchiveNoChange
+	textNameEmpty
+	textNameInvalid
+	textNameReserved
+	textNameExists
+	textPickEditor
+	textPickFolder
+	textNoMotion
+	textLoadNotFound
+	textLoadUnsupported
+	textInfoCamera
+	textInfoLens
+	textInfoExposure
+	textInfoTaken
+	textInfoGPS
+	textInfoSoftware
+	textInfoComment
+	textInfoPrompt
+	textInfoLive
+	textPrefsEnhanceGroup
+	textPrefsNavigator
+	textPrefsNavigatorHint
+	textPrefsFilmstrip
+	textPrefsFilmstripHint
+	textPrefsSmoothZoom
+	textPrefsSmoothZoomHint
+	textPrefsColorManagement
+	textPrefsColorManagementHint
+	textPrefsEdgeClicks
+	textPrefsEdgeClicksHint
+	textPrefsAnimationSpeed
+	textPrefsFilesGroup
+	textPrefsExternalEditor
+	textPrefsExternalEditorHint
+	textPrefsTargetFolder
+	textPrefsTargetFolderHint
+	textPrefsNotSet
+	textPrefsChoose
+	textPrefsClear
 	numTexts
 )
 
@@ -353,6 +437,62 @@ var keyOfText = [numTexts]string{
 	"updateUpToDateTitle",
 	"updateFailedTitle",
 	"updateOk",
+	"actionNavigator",
+	"actionFilmstrip",
+	"actionRename",
+	"actionCopyTo",
+	"actionMoveTo",
+	"actionOpenWith",
+	"actionProperties",
+	"actionExportVideo",
+	"actionAnimPause",
+	"actionAnimPrev",
+	"actionAnimNext",
+	"actionAnimFaster",
+	"actionAnimSlower",
+	"animPaused",
+	"animPlaying",
+	"animTooLarge",
+	"notAnimated",
+	"archiveNoChange",
+	"nameEmpty",
+	"nameInvalid",
+	"nameReserved",
+	"nameExists",
+	"pickEditor",
+	"pickFolder",
+	"noMotion",
+	"loadNotFound",
+	"loadUnsupported",
+	"infoCamera",
+	"infoLens",
+	"infoExposure",
+	"infoTaken",
+	"infoGPS",
+	"infoSoftware",
+	"infoComment",
+	"infoPrompt",
+	"infoLive",
+	"prefsEnhanceGroup",
+	"prefsNavigator",
+	"prefsNavigatorHint",
+	"prefsFilmstrip",
+	"prefsFilmstripHint",
+	"prefsSmoothZoom",
+	"prefsSmoothZoomHint",
+	"prefsColorManagement",
+	"prefsColorManagementHint",
+	"prefsEdgeClicks",
+	"prefsEdgeClicksHint",
+	"prefsAnimationSpeed",
+	"prefsFilesGroup",
+	"prefsExternalEditor",
+	"prefsExternalEditorHint",
+	"prefsTargetFolder",
+	"prefsTargetFolderHint",
+	"prefsNotSet",
+	"prefsChoose",
+	"prefsClear",
 }
 
 // textsEn are the messages without arguments in en.
@@ -486,7 +626,63 @@ var textsEn = i18n.NewTexts(""+
 	"Later"+
 	"FreeView is up to date"+
 	"Update failed"+
-	"OK",
+	"OK"+
+	"Overview"+
+	"Thumbnail strip"+
+	"Rename"+
+	"Copy to folder"+
+	"Move to folder"+
+	"Open in external editor"+
+	"File properties"+
+	"Export live photo video"+
+	"Pause or play animation"+
+	"Previous animation frame"+
+	"Next animation frame"+
+	"Faster animation"+
+	"Slower animation"+
+	"Animation paused"+
+	"Animation playing"+
+	"The animation is too large to control frame by frame"+
+	"This image is not an animation"+
+	"Images inside an archive cannot be renamed or moved"+
+	"The name is empty"+
+	"The name cannot contain \\ / : * ? \" < > | and similar characters"+
+	"Windows reserves this name"+
+	"A file with this name exists"+
+	"Choose the external editor"+
+	"Choose the target folder"+
+	"This image has no live photo video"+
+	"The file does not exist or was moved"+
+	"This format is not supported"+
+	"Camera"+
+	"Lens"+
+	"Exposure"+
+	"Taken"+
+	"Location"+
+	"Software"+
+	"Comment"+
+	"AI prompt"+
+	"Live photo, its video can be exported"+
+	"Enhancements"+
+	"Overview"+
+	"When the image overflows the window, show all of it and the visible part at the bottom right; click or drag to move there"+
+	"Thumbnail strip"+
+	"Show the folder's thumbnails when the mouse is at the bottom of the window"+
+	"Smooth when shrinking"+
+	"Resample shrunk images once the view is still, so fine lines do not alias"+
+	"Color management"+
+	"Show images with Adobe RGB, Display P3 and other color profiles in the monitor's colors"+
+	"Click the window edges to move"+
+	"A click on the left or right side shows the previous or next image; on the top left or right corner it rotates"+
+	"Animation speed"+
+	"File commands"+
+	"External editor"+
+	"The program Open in external editor runs; asked for the first time when not set"+
+	"Folder to copy and move to"+
+	"Asked for each time when not set"+
+	"Not set"+
+	"Choose…"+
+	"Clear",
 	[]uint16{
 		8,
 		37,
@@ -618,6 +814,62 @@ var textsEn = i18n.NewTexts(""+
 		22,
 		13,
 		2,
+		8,
+		15,
+		6,
+		14,
+		14,
+		23,
+		15,
+		23,
+		23,
+		24,
+		20,
+		16,
+		16,
+		16,
+		17,
+		52,
+		30,
+		51,
+		17,
+		64,
+		26,
+		28,
+		26,
+		24,
+		34,
+		36,
+		28,
+		6,
+		4,
+		8,
+		5,
+		8,
+		8,
+		7,
+		9,
+		37,
+		12,
+		8,
+		121,
+		15,
+		74,
+		21,
+		73,
+		16,
+		87,
+		30,
+		110,
+		15,
+		13,
+		15,
+		79,
+		26,
+		32,
+		7,
+		9,
+		5,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -751,7 +1003,63 @@ var textsZhHans = i18n.NewTexts(""+
 	"以后再说"+
 	"已是最新版本"+
 	"更新失败"+
-	"确定",
+	"确定"+
+	"鸟瞰图"+
+	"底部缩略图带"+
+	"重命名"+
+	"复制到文件夹"+
+	"移动到文件夹"+
+	"用外部编辑器打开"+
+	"文件属性"+
+	"导出实况照片视频"+
+	"动图暂停或播放"+
+	"动图上一帧"+
+	"动图下一帧"+
+	"动图加速"+
+	"动图减速"+
+	"动图已暂停"+
+	"动图继续播放"+
+	"动图太大，无法逐帧控制"+
+	"当前图片不是动图"+
+	"压缩包内的图片不能改名或移动"+
+	"文件名不能为空"+
+	"文件名不能包含 \\ / : * ? \" < > | 等字符"+
+	"这是 Windows 保留的名称"+
+	"已有同名文件"+
+	"选择外部编辑器"+
+	"选择目标文件夹"+
+	"这张图片没有实况视频"+
+	"文件不存在或已被移走"+
+	"不支持这种格式"+
+	"相机"+
+	"镜头"+
+	"拍摄参数"+
+	"拍摄时间"+
+	"位置"+
+	"软件"+
+	"注释"+
+	"AI 提示词"+
+	"实况照片，可导出视频"+
+	"增强"+
+	"鸟瞰图"+
+	"图片超出窗口时在右下角显示整张图和当前区域，可点击或拖动定位"+
+	"底部缩略图带"+
+	"鼠标移到窗口底部时显示同一文件夹的缩略图"+
+	"缩小时平滑显示"+
+	"缩小显示的图片停稳后重新采样，细线不起锯齿"+
+	"色彩管理"+
+	"带有 Adobe RGB、Display P3 等色彩配置的图片按显示器颜色显示"+
+	"点击窗口边缘切换图片"+
+	"单击左右两侧切换上一张和下一张，单击左上角和右上角旋转"+
+	"动图播放速度"+
+	"文件操作"+
+	"外部编辑器"+
+	"“用外部编辑器打开”使用的程序；未设置时第一次使用会询问"+
+	"复制和移动的目标文件夹"+
+	"未设置时每次都询问"+
+	"未设置"+
+	"选择…"+
+	"清除",
 	[]uint16{
 		8,
 		45,
@@ -883,6 +1191,62 @@ var textsZhHans = i18n.NewTexts(""+
 		18,
 		12,
 		6,
+		9,
+		18,
+		9,
+		18,
+		18,
+		24,
+		12,
+		24,
+		21,
+		15,
+		15,
+		12,
+		12,
+		15,
+		18,
+		33,
+		24,
+		42,
+		21,
+		49,
+		30,
+		18,
+		21,
+		21,
+		30,
+		30,
+		21,
+		6,
+		6,
+		12,
+		12,
+		6,
+		6,
+		6,
+		12,
+		30,
+		6,
+		9,
+		90,
+		18,
+		60,
+		21,
+		63,
+		12,
+		78,
+		30,
+		81,
+		18,
+		12,
+		15,
+		84,
+		33,
+		27,
+		9,
+		9,
+		6,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -983,6 +1347,48 @@ func Supply(lang string, t Translation) {
 	}
 	if t.UpdateFailedMessage != nil {
 		s.UpdateFailedMessage = t.UpdateFailedMessage
+	}
+	if t.AnimFrame != nil {
+		s.AnimFrame = t.AnimFrame
+	}
+	if t.AnimSpeed != nil {
+		s.AnimSpeed = t.AnimSpeed
+	}
+	if t.CopiedTo != nil {
+		s.CopiedTo = t.CopiedTo
+	}
+	if t.MovedTo != nil {
+		s.MovedTo = t.MovedTo
+	}
+	if t.CopyFailed != nil {
+		s.CopyFailed = t.CopyFailed
+	}
+	if t.MoveFailed != nil {
+		s.MoveFailed = t.MoveFailed
+	}
+	if t.RenameHint != nil {
+		s.RenameHint = t.RenameHint
+	}
+	if t.RenameFailed != nil {
+		s.RenameFailed = t.RenameFailed
+	}
+	if t.OpenWithFailed != nil {
+		s.OpenWithFailed = t.OpenWithFailed
+	}
+	if t.PropertiesFailed != nil {
+		s.PropertiesFailed = t.PropertiesFailed
+	}
+	if t.VideoSaved != nil {
+		s.VideoSaved = t.VideoSaved
+	}
+	if t.VideoSaveFailed != nil {
+		s.VideoSaveFailed = t.VideoSaveFailed
+	}
+	if t.LoadDecodeFailed != nil {
+		s.LoadDecodeFailed = t.LoadDecodeFailed
+	}
+	if t.InfoCache != nil {
+		s.InfoCache = t.InfoCache
 	}
 	supplied[lang] = s
 	Catalog.Add(lang)
@@ -2252,3 +2658,713 @@ func UpdateOk(cx *core.Scope) string { return For(cx).UpdateOk() }
 
 // UpdateOk is the package's UpdateOk in the language of msgs.
 func (msgs Messages) UpdateOk() string { return msgs.text(textUpdateOk) }
+
+// ActionNavigator says "Overview"
+// in the language the app shows under cx.
+func ActionNavigator(cx *core.Scope) string { return For(cx).ActionNavigator() }
+
+// ActionNavigator is the package's ActionNavigator in the language of msgs.
+func (msgs Messages) ActionNavigator() string { return msgs.text(textActionNavigator) }
+
+// ActionFilmstrip says "Thumbnail strip"
+// in the language the app shows under cx.
+func ActionFilmstrip(cx *core.Scope) string { return For(cx).ActionFilmstrip() }
+
+// ActionFilmstrip is the package's ActionFilmstrip in the language of msgs.
+func (msgs Messages) ActionFilmstrip() string { return msgs.text(textActionFilmstrip) }
+
+// ActionRename says "Rename"
+// in the language the app shows under cx.
+func ActionRename(cx *core.Scope) string { return For(cx).ActionRename() }
+
+// ActionRename is the package's ActionRename in the language of msgs.
+func (msgs Messages) ActionRename() string { return msgs.text(textActionRename) }
+
+// ActionCopyTo says "Copy to folder"
+// in the language the app shows under cx.
+func ActionCopyTo(cx *core.Scope) string { return For(cx).ActionCopyTo() }
+
+// ActionCopyTo is the package's ActionCopyTo in the language of msgs.
+func (msgs Messages) ActionCopyTo() string { return msgs.text(textActionCopyTo) }
+
+// ActionMoveTo says "Move to folder"
+// in the language the app shows under cx.
+func ActionMoveTo(cx *core.Scope) string { return For(cx).ActionMoveTo() }
+
+// ActionMoveTo is the package's ActionMoveTo in the language of msgs.
+func (msgs Messages) ActionMoveTo() string { return msgs.text(textActionMoveTo) }
+
+// ActionOpenWith says "Open in external editor"
+// in the language the app shows under cx.
+func ActionOpenWith(cx *core.Scope) string { return For(cx).ActionOpenWith() }
+
+// ActionOpenWith is the package's ActionOpenWith in the language of msgs.
+func (msgs Messages) ActionOpenWith() string { return msgs.text(textActionOpenWith) }
+
+// ActionProperties says "File properties"
+// in the language the app shows under cx.
+func ActionProperties(cx *core.Scope) string { return For(cx).ActionProperties() }
+
+// ActionProperties is the package's ActionProperties in the language of msgs.
+func (msgs Messages) ActionProperties() string { return msgs.text(textActionProperties) }
+
+// ActionExportVideo says "Export live photo video"
+// in the language the app shows under cx.
+func ActionExportVideo(cx *core.Scope) string { return For(cx).ActionExportVideo() }
+
+// ActionExportVideo is the package's ActionExportVideo in the language of msgs.
+func (msgs Messages) ActionExportVideo() string { return msgs.text(textActionExportVideo) }
+
+// ActionAnimPause says "Pause or play animation"
+// in the language the app shows under cx.
+func ActionAnimPause(cx *core.Scope) string { return For(cx).ActionAnimPause() }
+
+// ActionAnimPause is the package's ActionAnimPause in the language of msgs.
+func (msgs Messages) ActionAnimPause() string { return msgs.text(textActionAnimPause) }
+
+// ActionAnimPrev says "Previous animation frame"
+// in the language the app shows under cx.
+func ActionAnimPrev(cx *core.Scope) string { return For(cx).ActionAnimPrev() }
+
+// ActionAnimPrev is the package's ActionAnimPrev in the language of msgs.
+func (msgs Messages) ActionAnimPrev() string { return msgs.text(textActionAnimPrev) }
+
+// ActionAnimNext says "Next animation frame"
+// in the language the app shows under cx.
+func ActionAnimNext(cx *core.Scope) string { return For(cx).ActionAnimNext() }
+
+// ActionAnimNext is the package's ActionAnimNext in the language of msgs.
+func (msgs Messages) ActionAnimNext() string { return msgs.text(textActionAnimNext) }
+
+// ActionAnimFaster says "Faster animation"
+// in the language the app shows under cx.
+func ActionAnimFaster(cx *core.Scope) string { return For(cx).ActionAnimFaster() }
+
+// ActionAnimFaster is the package's ActionAnimFaster in the language of msgs.
+func (msgs Messages) ActionAnimFaster() string { return msgs.text(textActionAnimFaster) }
+
+// ActionAnimSlower says "Slower animation"
+// in the language the app shows under cx.
+func ActionAnimSlower(cx *core.Scope) string { return For(cx).ActionAnimSlower() }
+
+// ActionAnimSlower is the package's ActionAnimSlower in the language of msgs.
+func (msgs Messages) ActionAnimSlower() string { return msgs.text(textActionAnimSlower) }
+
+// AnimFrame says "Frame {frame} of {count}"
+// in the language the app shows under cx.
+func AnimFrame(cx *core.Scope, frame string, count string) string {
+	return For(cx).AnimFrame(frame, count)
+}
+
+// AnimFrame is the package's AnimFrame in the language of msgs.
+func (msgs Messages) AnimFrame(frame string, count string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AnimFrame(frame, count))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].AnimFrame; f != nil {
+			return f(frame, count)
+		}
+		switch lang {
+		case "", "en":
+			return "Frame " + msgs.arg(frame) + " of " + msgs.arg(count)
+		case "zh-Hans":
+			return "第 " + frame + " / " + count + " 帧"
+		}
+	}
+}
+
+// AnimPaused says "Animation paused"
+// in the language the app shows under cx.
+func AnimPaused(cx *core.Scope) string { return For(cx).AnimPaused() }
+
+// AnimPaused is the package's AnimPaused in the language of msgs.
+func (msgs Messages) AnimPaused() string { return msgs.text(textAnimPaused) }
+
+// AnimPlaying says "Animation playing"
+// in the language the app shows under cx.
+func AnimPlaying(cx *core.Scope) string { return For(cx).AnimPlaying() }
+
+// AnimPlaying is the package's AnimPlaying in the language of msgs.
+func (msgs Messages) AnimPlaying() string { return msgs.text(textAnimPlaying) }
+
+// AnimSpeed says "Animation speed × {speed}"
+// in the language the app shows under cx.
+func AnimSpeed(cx *core.Scope, speed string) string { return For(cx).AnimSpeed(speed) }
+
+// AnimSpeed is the package's AnimSpeed in the language of msgs.
+func (msgs Messages) AnimSpeed(speed string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.AnimSpeed(speed))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].AnimSpeed; f != nil {
+			return f(speed)
+		}
+		switch lang {
+		case "", "en":
+			return "Animation speed × " + msgs.arg(speed)
+		case "zh-Hans":
+			return "动图速度 × " + speed
+		}
+	}
+}
+
+// AnimTooLarge says "The animation is too large to control frame by frame"
+// in the language the app shows under cx.
+func AnimTooLarge(cx *core.Scope) string { return For(cx).AnimTooLarge() }
+
+// AnimTooLarge is the package's AnimTooLarge in the language of msgs.
+func (msgs Messages) AnimTooLarge() string { return msgs.text(textAnimTooLarge) }
+
+// NotAnimated says "This image is not an animation"
+// in the language the app shows under cx.
+func NotAnimated(cx *core.Scope) string { return For(cx).NotAnimated() }
+
+// NotAnimated is the package's NotAnimated in the language of msgs.
+func (msgs Messages) NotAnimated() string { return msgs.text(textNotAnimated) }
+
+// ArchiveNoChange says "Images inside an archive cannot be renamed or moved"
+// in the language the app shows under cx.
+func ArchiveNoChange(cx *core.Scope) string { return For(cx).ArchiveNoChange() }
+
+// ArchiveNoChange is the package's ArchiveNoChange in the language of msgs.
+func (msgs Messages) ArchiveNoChange() string { return msgs.text(textArchiveNoChange) }
+
+// CopiedTo says "Copied to {folder}"
+// in the language the app shows under cx.
+func CopiedTo(cx *core.Scope, folder string) string { return For(cx).CopiedTo(folder) }
+
+// CopiedTo is the package's CopiedTo in the language of msgs.
+func (msgs Messages) CopiedTo(folder string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CopiedTo(folder))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].CopiedTo; f != nil {
+			return f(folder)
+		}
+		switch lang {
+		case "", "en":
+			return "Copied to " + msgs.arg(folder)
+		case "zh-Hans":
+			return "已复制到 " + folder
+		}
+	}
+}
+
+// MovedTo says "Moved to {folder}"
+// in the language the app shows under cx.
+func MovedTo(cx *core.Scope, folder string) string { return For(cx).MovedTo(folder) }
+
+// MovedTo is the package's MovedTo in the language of msgs.
+func (msgs Messages) MovedTo(folder string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.MovedTo(folder))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].MovedTo; f != nil {
+			return f(folder)
+		}
+		switch lang {
+		case "", "en":
+			return "Moved to " + msgs.arg(folder)
+		case "zh-Hans":
+			return "已移动到 " + folder
+		}
+	}
+}
+
+// CopyFailed says "Cannot copy {name}: {error}"
+// in the language the app shows under cx.
+func CopyFailed(cx *core.Scope, name string, error_ string) string {
+	return For(cx).CopyFailed(name, error_)
+}
+
+// CopyFailed is the package's CopyFailed in the language of msgs.
+func (msgs Messages) CopyFailed(name string, error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.CopyFailed(name, error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].CopyFailed; f != nil {
+			return f(name, error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot copy " + msgs.arg(name) + ": " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法复制 " + name + "：" + error_
+		}
+	}
+}
+
+// MoveFailed says "Cannot move {name}: {error}"
+// in the language the app shows under cx.
+func MoveFailed(cx *core.Scope, name string, error_ string) string {
+	return For(cx).MoveFailed(name, error_)
+}
+
+// MoveFailed is the package's MoveFailed in the language of msgs.
+func (msgs Messages) MoveFailed(name string, error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.MoveFailed(name, error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].MoveFailed; f != nil {
+			return f(name, error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot move " + msgs.arg(name) + ": " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法移动 " + name + "：" + error_
+		}
+	}
+}
+
+// RenameHint says "Type the new name (the extension {ext} stays), Enter to confirm, Esc to cancel"
+// in the language the app shows under cx.
+func RenameHint(cx *core.Scope, ext string) string { return For(cx).RenameHint(ext) }
+
+// RenameHint is the package's RenameHint in the language of msgs.
+func (msgs Messages) RenameHint(ext string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.RenameHint(ext))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].RenameHint; f != nil {
+			return f(ext)
+		}
+		switch lang {
+		case "", "en":
+			return "Type the new name (the extension " + msgs.arg(ext) + " stays), Enter to confirm, Esc to cancel"
+		case "zh-Hans":
+			return "输入新文件名（扩展名 " + ext + " 保持不变），按 Enter 确认，按 Esc 取消"
+		}
+	}
+}
+
+// RenameFailed says "Cannot rename: {error}"
+// in the language the app shows under cx.
+func RenameFailed(cx *core.Scope, error_ string) string { return For(cx).RenameFailed(error_) }
+
+// RenameFailed is the package's RenameFailed in the language of msgs.
+func (msgs Messages) RenameFailed(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.RenameFailed(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].RenameFailed; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot rename: " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法重命名：" + error_
+		}
+	}
+}
+
+// NameEmpty says "The name is empty"
+// in the language the app shows under cx.
+func NameEmpty(cx *core.Scope) string { return For(cx).NameEmpty() }
+
+// NameEmpty is the package's NameEmpty in the language of msgs.
+func (msgs Messages) NameEmpty() string { return msgs.text(textNameEmpty) }
+
+// NameInvalid says "The name cannot contain \\ / : * ? \" < > | and similar characters"
+// in the language the app shows under cx.
+func NameInvalid(cx *core.Scope) string { return For(cx).NameInvalid() }
+
+// NameInvalid is the package's NameInvalid in the language of msgs.
+func (msgs Messages) NameInvalid() string { return msgs.text(textNameInvalid) }
+
+// NameReserved says "Windows reserves this name"
+// in the language the app shows under cx.
+func NameReserved(cx *core.Scope) string { return For(cx).NameReserved() }
+
+// NameReserved is the package's NameReserved in the language of msgs.
+func (msgs Messages) NameReserved() string { return msgs.text(textNameReserved) }
+
+// NameExists says "A file with this name exists"
+// in the language the app shows under cx.
+func NameExists(cx *core.Scope) string { return For(cx).NameExists() }
+
+// NameExists is the package's NameExists in the language of msgs.
+func (msgs Messages) NameExists() string { return msgs.text(textNameExists) }
+
+// OpenWithFailed says "Cannot open the external editor: {error}"
+// in the language the app shows under cx.
+func OpenWithFailed(cx *core.Scope, error_ string) string { return For(cx).OpenWithFailed(error_) }
+
+// OpenWithFailed is the package's OpenWithFailed in the language of msgs.
+func (msgs Messages) OpenWithFailed(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.OpenWithFailed(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].OpenWithFailed; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot open the external editor: " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法打开外部编辑器：" + error_
+		}
+	}
+}
+
+// PropertiesFailed says "Cannot show the file properties: {error}"
+// in the language the app shows under cx.
+func PropertiesFailed(cx *core.Scope, error_ string) string { return For(cx).PropertiesFailed(error_) }
+
+// PropertiesFailed is the package's PropertiesFailed in the language of msgs.
+func (msgs Messages) PropertiesFailed(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.PropertiesFailed(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].PropertiesFailed; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot show the file properties: " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法显示文件属性：" + error_
+		}
+	}
+}
+
+// PickEditor says "Choose the external editor"
+// in the language the app shows under cx.
+func PickEditor(cx *core.Scope) string { return For(cx).PickEditor() }
+
+// PickEditor is the package's PickEditor in the language of msgs.
+func (msgs Messages) PickEditor() string { return msgs.text(textPickEditor) }
+
+// PickFolder says "Choose the target folder"
+// in the language the app shows under cx.
+func PickFolder(cx *core.Scope) string { return For(cx).PickFolder() }
+
+// PickFolder is the package's PickFolder in the language of msgs.
+func (msgs Messages) PickFolder() string { return msgs.text(textPickFolder) }
+
+// NoMotion says "This image has no live photo video"
+// in the language the app shows under cx.
+func NoMotion(cx *core.Scope) string { return For(cx).NoMotion() }
+
+// NoMotion is the package's NoMotion in the language of msgs.
+func (msgs Messages) NoMotion() string { return msgs.text(textNoMotion) }
+
+// VideoSaved says "Saved the video {name}"
+// in the language the app shows under cx.
+func VideoSaved(cx *core.Scope, name string) string { return For(cx).VideoSaved(name) }
+
+// VideoSaved is the package's VideoSaved in the language of msgs.
+func (msgs Messages) VideoSaved(name string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.VideoSaved(name))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].VideoSaved; f != nil {
+			return f(name)
+		}
+		switch lang {
+		case "", "en":
+			return "Saved the video " + msgs.arg(name)
+		case "zh-Hans":
+			return "已保存视频 " + name
+		}
+	}
+}
+
+// VideoSaveFailed says "Cannot save the video: {error}"
+// in the language the app shows under cx.
+func VideoSaveFailed(cx *core.Scope, error_ string) string { return For(cx).VideoSaveFailed(error_) }
+
+// VideoSaveFailed is the package's VideoSaveFailed in the language of msgs.
+func (msgs Messages) VideoSaveFailed(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.VideoSaveFailed(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].VideoSaveFailed; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Cannot save the video: " + msgs.arg(error_)
+		case "zh-Hans":
+			return "无法保存视频：" + error_
+		}
+	}
+}
+
+// LoadNotFound says "The file does not exist or was moved"
+// in the language the app shows under cx.
+func LoadNotFound(cx *core.Scope) string { return For(cx).LoadNotFound() }
+
+// LoadNotFound is the package's LoadNotFound in the language of msgs.
+func (msgs Messages) LoadNotFound() string { return msgs.text(textLoadNotFound) }
+
+// LoadUnsupported says "This format is not supported"
+// in the language the app shows under cx.
+func LoadUnsupported(cx *core.Scope) string { return For(cx).LoadUnsupported() }
+
+// LoadUnsupported is the package's LoadUnsupported in the language of msgs.
+func (msgs Messages) LoadUnsupported() string { return msgs.text(textLoadUnsupported) }
+
+// LoadDecodeFailed says "Decoding failed ({error})"
+// in the language the app shows under cx.
+func LoadDecodeFailed(cx *core.Scope, error_ string) string { return For(cx).LoadDecodeFailed(error_) }
+
+// LoadDecodeFailed is the package's LoadDecodeFailed in the language of msgs.
+func (msgs Messages) LoadDecodeFailed(error_ string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.LoadDecodeFailed(error_))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].LoadDecodeFailed; f != nil {
+			return f(error_)
+		}
+		switch lang {
+		case "", "en":
+			return "Decoding failed (" + msgs.arg(error_) + ")"
+		case "zh-Hans":
+			return "解码失败（" + error_ + "）"
+		}
+	}
+}
+
+// InfoCamera says "Camera"
+// in the language the app shows under cx.
+func InfoCamera(cx *core.Scope) string { return For(cx).InfoCamera() }
+
+// InfoCamera is the package's InfoCamera in the language of msgs.
+func (msgs Messages) InfoCamera() string { return msgs.text(textInfoCamera) }
+
+// InfoLens says "Lens"
+// in the language the app shows under cx.
+func InfoLens(cx *core.Scope) string { return For(cx).InfoLens() }
+
+// InfoLens is the package's InfoLens in the language of msgs.
+func (msgs Messages) InfoLens() string { return msgs.text(textInfoLens) }
+
+// InfoExposure says "Exposure"
+// in the language the app shows under cx.
+func InfoExposure(cx *core.Scope) string { return For(cx).InfoExposure() }
+
+// InfoExposure is the package's InfoExposure in the language of msgs.
+func (msgs Messages) InfoExposure() string { return msgs.text(textInfoExposure) }
+
+// InfoTaken says "Taken"
+// in the language the app shows under cx.
+func InfoTaken(cx *core.Scope) string { return For(cx).InfoTaken() }
+
+// InfoTaken is the package's InfoTaken in the language of msgs.
+func (msgs Messages) InfoTaken() string { return msgs.text(textInfoTaken) }
+
+// InfoGPS says "Location"
+// in the language the app shows under cx.
+func InfoGPS(cx *core.Scope) string { return For(cx).InfoGPS() }
+
+// InfoGPS is the package's InfoGPS in the language of msgs.
+func (msgs Messages) InfoGPS() string { return msgs.text(textInfoGPS) }
+
+// InfoSoftware says "Software"
+// in the language the app shows under cx.
+func InfoSoftware(cx *core.Scope) string { return For(cx).InfoSoftware() }
+
+// InfoSoftware is the package's InfoSoftware in the language of msgs.
+func (msgs Messages) InfoSoftware() string { return msgs.text(textInfoSoftware) }
+
+// InfoComment says "Comment"
+// in the language the app shows under cx.
+func InfoComment(cx *core.Scope) string { return For(cx).InfoComment() }
+
+// InfoComment is the package's InfoComment in the language of msgs.
+func (msgs Messages) InfoComment() string { return msgs.text(textInfoComment) }
+
+// InfoPrompt says "AI prompt"
+// in the language the app shows under cx.
+func InfoPrompt(cx *core.Scope) string { return For(cx).InfoPrompt() }
+
+// InfoPrompt is the package's InfoPrompt in the language of msgs.
+func (msgs Messages) InfoPrompt() string { return msgs.text(textInfoPrompt) }
+
+// InfoLive says "Live photo, its video can be exported"
+// in the language the app shows under cx.
+func InfoLive(cx *core.Scope) string { return For(cx).InfoLive() }
+
+// InfoLive is the package's InfoLive in the language of msgs.
+func (msgs Messages) InfoLive() string { return msgs.text(textInfoLive) }
+
+// InfoCache says "Cache: {hits} hits, {reads} reads, {evictions} evictions"
+// in the language the app shows under cx.
+func InfoCache(cx *core.Scope, hits string, reads string, evictions string) string {
+	return For(cx).InfoCache(hits, reads, evictions)
+}
+
+// InfoCache is the package's InfoCache in the language of msgs.
+func (msgs Messages) InfoCache(hits string, reads string, evictions string) string {
+	if i18n.IsPseudo(msgs.lang) {
+		return i18n.Pseudo(msgs.lang, Messages{lang: Source, mark: true}.InfoCache(hits, reads, evictions))
+	}
+	for lang := msgs.lang; ; lang = i18n.Parent(lang) {
+		if f := supplied[lang].InfoCache; f != nil {
+			return f(hits, reads, evictions)
+		}
+		switch lang {
+		case "", "en":
+			return "Cache: " + msgs.arg(hits) + " hits, " + msgs.arg(reads) + " reads, " + msgs.arg(evictions) + " evictions"
+		case "zh-Hans":
+			return "缓存：命中 " + hits + "，读取 " + reads + "，淘汰 " + evictions
+		}
+	}
+}
+
+// PrefsEnhanceGroup says "Enhancements"
+// in the language the app shows under cx.
+func PrefsEnhanceGroup(cx *core.Scope) string { return For(cx).PrefsEnhanceGroup() }
+
+// PrefsEnhanceGroup is the package's PrefsEnhanceGroup in the language of msgs.
+func (msgs Messages) PrefsEnhanceGroup() string { return msgs.text(textPrefsEnhanceGroup) }
+
+// PrefsNavigator says "Overview"
+// in the language the app shows under cx.
+func PrefsNavigator(cx *core.Scope) string { return For(cx).PrefsNavigator() }
+
+// PrefsNavigator is the package's PrefsNavigator in the language of msgs.
+func (msgs Messages) PrefsNavigator() string { return msgs.text(textPrefsNavigator) }
+
+// PrefsNavigatorHint says "When the image overflows the window, show all of it and the visible part at the bottom right; click or drag to move there"
+// in the language the app shows under cx.
+func PrefsNavigatorHint(cx *core.Scope) string { return For(cx).PrefsNavigatorHint() }
+
+// PrefsNavigatorHint is the package's PrefsNavigatorHint in the language of msgs.
+func (msgs Messages) PrefsNavigatorHint() string { return msgs.text(textPrefsNavigatorHint) }
+
+// PrefsFilmstrip says "Thumbnail strip"
+// in the language the app shows under cx.
+func PrefsFilmstrip(cx *core.Scope) string { return For(cx).PrefsFilmstrip() }
+
+// PrefsFilmstrip is the package's PrefsFilmstrip in the language of msgs.
+func (msgs Messages) PrefsFilmstrip() string { return msgs.text(textPrefsFilmstrip) }
+
+// PrefsFilmstripHint says "Show the folder's thumbnails when the mouse is at the bottom of the window"
+// in the language the app shows under cx.
+func PrefsFilmstripHint(cx *core.Scope) string { return For(cx).PrefsFilmstripHint() }
+
+// PrefsFilmstripHint is the package's PrefsFilmstripHint in the language of msgs.
+func (msgs Messages) PrefsFilmstripHint() string { return msgs.text(textPrefsFilmstripHint) }
+
+// PrefsSmoothZoom says "Smooth when shrinking"
+// in the language the app shows under cx.
+func PrefsSmoothZoom(cx *core.Scope) string { return For(cx).PrefsSmoothZoom() }
+
+// PrefsSmoothZoom is the package's PrefsSmoothZoom in the language of msgs.
+func (msgs Messages) PrefsSmoothZoom() string { return msgs.text(textPrefsSmoothZoom) }
+
+// PrefsSmoothZoomHint says "Resample shrunk images once the view is still, so fine lines do not alias"
+// in the language the app shows under cx.
+func PrefsSmoothZoomHint(cx *core.Scope) string { return For(cx).PrefsSmoothZoomHint() }
+
+// PrefsSmoothZoomHint is the package's PrefsSmoothZoomHint in the language of msgs.
+func (msgs Messages) PrefsSmoothZoomHint() string { return msgs.text(textPrefsSmoothZoomHint) }
+
+// PrefsColorManagement says "Color management"
+// in the language the app shows under cx.
+func PrefsColorManagement(cx *core.Scope) string { return For(cx).PrefsColorManagement() }
+
+// PrefsColorManagement is the package's PrefsColorManagement in the language of msgs.
+func (msgs Messages) PrefsColorManagement() string { return msgs.text(textPrefsColorManagement) }
+
+// PrefsColorManagementHint says "Show images with Adobe RGB, Display P3 and other color profiles in the monitor's colors"
+// in the language the app shows under cx.
+func PrefsColorManagementHint(cx *core.Scope) string { return For(cx).PrefsColorManagementHint() }
+
+// PrefsColorManagementHint is the package's PrefsColorManagementHint in the language of msgs.
+func (msgs Messages) PrefsColorManagementHint() string {
+	return msgs.text(textPrefsColorManagementHint)
+}
+
+// PrefsEdgeClicks says "Click the window edges to move"
+// in the language the app shows under cx.
+func PrefsEdgeClicks(cx *core.Scope) string { return For(cx).PrefsEdgeClicks() }
+
+// PrefsEdgeClicks is the package's PrefsEdgeClicks in the language of msgs.
+func (msgs Messages) PrefsEdgeClicks() string { return msgs.text(textPrefsEdgeClicks) }
+
+// PrefsEdgeClicksHint says "A click on the left or right side shows the previous or next image; on the top left or right corner it rotates"
+// in the language the app shows under cx.
+func PrefsEdgeClicksHint(cx *core.Scope) string { return For(cx).PrefsEdgeClicksHint() }
+
+// PrefsEdgeClicksHint is the package's PrefsEdgeClicksHint in the language of msgs.
+func (msgs Messages) PrefsEdgeClicksHint() string { return msgs.text(textPrefsEdgeClicksHint) }
+
+// PrefsAnimationSpeed says "Animation speed"
+// in the language the app shows under cx.
+func PrefsAnimationSpeed(cx *core.Scope) string { return For(cx).PrefsAnimationSpeed() }
+
+// PrefsAnimationSpeed is the package's PrefsAnimationSpeed in the language of msgs.
+func (msgs Messages) PrefsAnimationSpeed() string { return msgs.text(textPrefsAnimationSpeed) }
+
+// PrefsFilesGroup says "File commands"
+// in the language the app shows under cx.
+func PrefsFilesGroup(cx *core.Scope) string { return For(cx).PrefsFilesGroup() }
+
+// PrefsFilesGroup is the package's PrefsFilesGroup in the language of msgs.
+func (msgs Messages) PrefsFilesGroup() string { return msgs.text(textPrefsFilesGroup) }
+
+// PrefsExternalEditor says "External editor"
+// in the language the app shows under cx.
+func PrefsExternalEditor(cx *core.Scope) string { return For(cx).PrefsExternalEditor() }
+
+// PrefsExternalEditor is the package's PrefsExternalEditor in the language of msgs.
+func (msgs Messages) PrefsExternalEditor() string { return msgs.text(textPrefsExternalEditor) }
+
+// PrefsExternalEditorHint says "The program Open in external editor runs; asked for the first time when not set"
+// in the language the app shows under cx.
+func PrefsExternalEditorHint(cx *core.Scope) string { return For(cx).PrefsExternalEditorHint() }
+
+// PrefsExternalEditorHint is the package's PrefsExternalEditorHint in the language of msgs.
+func (msgs Messages) PrefsExternalEditorHint() string { return msgs.text(textPrefsExternalEditorHint) }
+
+// PrefsTargetFolder says "Folder to copy and move to"
+// in the language the app shows under cx.
+func PrefsTargetFolder(cx *core.Scope) string { return For(cx).PrefsTargetFolder() }
+
+// PrefsTargetFolder is the package's PrefsTargetFolder in the language of msgs.
+func (msgs Messages) PrefsTargetFolder() string { return msgs.text(textPrefsTargetFolder) }
+
+// PrefsTargetFolderHint says "Asked for each time when not set"
+// in the language the app shows under cx.
+func PrefsTargetFolderHint(cx *core.Scope) string { return For(cx).PrefsTargetFolderHint() }
+
+// PrefsTargetFolderHint is the package's PrefsTargetFolderHint in the language of msgs.
+func (msgs Messages) PrefsTargetFolderHint() string { return msgs.text(textPrefsTargetFolderHint) }
+
+// PrefsNotSet says "Not set"
+// in the language the app shows under cx.
+func PrefsNotSet(cx *core.Scope) string { return For(cx).PrefsNotSet() }
+
+// PrefsNotSet is the package's PrefsNotSet in the language of msgs.
+func (msgs Messages) PrefsNotSet() string { return msgs.text(textPrefsNotSet) }
+
+// PrefsChoose says "Choose…"
+// in the language the app shows under cx.
+func PrefsChoose(cx *core.Scope) string { return For(cx).PrefsChoose() }
+
+// PrefsChoose is the package's PrefsChoose in the language of msgs.
+func (msgs Messages) PrefsChoose() string { return msgs.text(textPrefsChoose) }
+
+// PrefsClear says "Clear"
+// in the language the app shows under cx.
+func PrefsClear(cx *core.Scope) string { return For(cx).PrefsClear() }
+
+// PrefsClear is the package's PrefsClear in the language of msgs.
+func (msgs Messages) PrefsClear() string { return msgs.text(textPrefsClear) }

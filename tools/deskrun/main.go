@@ -106,29 +106,33 @@ func main() {
 	}
 	cl, _ := syscall.UTF16PtrFromString(cmd)
 	var pi procInfo
+	started := time.Now()
 	r, _, err := pCreateProcess.Call(0, uintptr(unsafe.Pointer(cl)), 0, 0, 0, 0, 0, 0, uintptr(unsafe.Pointer(&si)), uintptr(unsafe.Pointer(&pi)))
 	if r == 0 {
 		panic(err)
 	}
 	defer pTerminate.Call(uintptr(pi.Process), 0)
 	var hwnd uintptr
-	for i := 0; i < 100 && hwnd == 0; i++ {
-		time.Sleep(100 * time.Millisecond)
-		cb := syscall.NewCallback(func(h, _ uintptr) uintptr {
-			var p uint32
-			pGetTid.Call(h, uintptr(unsafe.Pointer(&p)))
-			v, _, _ := pIsVisible.Call(h)
-			var cn [64]uint16
-			pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
-			if p == pi.Pid && v != 0 && syscall.UTF16ToString(cn[:]) == "NsgoWindow" {
-				hwnd = h
-				return 0
-			}
-			return 1
-		})
-		pEnumDesktopWindows.Call(hdesk, cb, 0)
+	// One callback for the whole wait: Go never frees callbacks.
+	find := syscall.NewCallback(func(h, _ uintptr) uintptr {
+		var p uint32
+		pGetTid.Call(h, uintptr(unsafe.Pointer(&p)))
+		v, _, _ := pIsVisible.Call(h)
+		var cn [64]uint16
+		pGetClassName.Call(h, uintptr(unsafe.Pointer(&cn[0])), 64)
+		if p == pi.Pid && v != 0 && syscall.UTF16ToString(cn[:]) == "NsgoWindow" {
+			hwnd = h
+			return 0
+		}
+		return 1
+	})
+	// Polled every 5 ms, so "visible after" measures the start: FreeView
+	// shows its window once the image it opens with is on screen.
+	for i := 0; i < 2000 && hwnd == 0; i++ {
+		time.Sleep(5 * time.Millisecond)
+		pEnumDesktopWindows.Call(hdesk, find, 0)
 	}
-	fmt.Println("hwnd", hwnd)
+	fmt.Println("hwnd", hwnd, "visible after", time.Since(started).Milliseconds(), "ms")
 	for _, line := range strings.Split(string(script), "\n") {
 		// other is the process's visible nsgo window besides the main one.
 		other := func() (target uintptr) {

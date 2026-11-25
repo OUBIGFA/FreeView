@@ -21,7 +21,7 @@ windows:
 
 file_types:
   - name: Image
-    extensions: [jpg, jpeg, jpe, jfif, png, gif, webp, bmp, dib, tif, tiff, avif, heic, heif, hif, ico, jxl, svg, svgz, dng, cr2, cr3, crw, nef, nrw, arw, srf, sr2, orf, rw2, raf, pef, srw, x3f, 3fr, erf, kdc, mrw, mos, iiq, rwl]
+    extensions: [jpg, jpeg, jpe, jfif, png, gif, webp, bmp, dib, tif, tiff, avif, dds, hdp, heic, heif, hif, ico, jxl, jxr, wdp, svg, svgz, livp, dng, cr2, cr3, crw, nef, nrw, arw, srf, sr2, orf, rw2, raf, pef, srw, x3f, 3fr, erf, kdc, mrw, mos, iiq, rwl, psd, psb, qoi, hdr, exr, tga, icb, vda, vst]
     role: viewer
   - name: Comic archive
     extensions: [zip, cbz, rar, cbr, 7z, cb7, tar, cbt]

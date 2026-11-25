@@ -123,3 +123,21 @@ func TestWindowsRoundTripAndDropSizelessFrames(t *testing.T) {
 		t.Error("a frame without a width was kept")
 	}
 }
+
+// The overview and the strip start off; an animation speed not offered
+// falls back to normal.
+func TestEnhancementDefaults(t *testing.T) {
+	c := Default()
+	if c.Navigator || c.Filmstrip || !c.SmoothZoom || !c.ColorManagement || c.EdgeClicks || c.AnimationSpeed != 1 {
+		t.Errorf("defaults %+v", c)
+	}
+	p := filepath.Join(t.TempDir(), "config.yaml")
+	os.WriteFile(p, []byte("animation_speed: 3\nnavigator: true\n"), 0o644)
+	got, err := Load(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.AnimationSpeed != 1 || !got.Navigator {
+		t.Errorf("loaded speed %v navigator %v", got.AnimationSpeed, got.Navigator)
+	}
+}

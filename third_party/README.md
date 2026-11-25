@@ -14,7 +14,7 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 ## 编译进应用的 Go 模块
 
-清单来自 `go version -m FreeView.exe`（nsgo v0.3.0，2026-11-24）。许可按各模块自带的许可文件判断。
+清单来自 `go version -m FreeView.exe`（nsgo v0.3.0，2026-11-25）。许可按各模块自带的许可文件判断。
 
 | 模块 | 版本 | 许可 | 引入原因 |
 | --- | --- | --- | --- |
@@ -24,7 +24,13 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/gen2brain/jpegxl | v0.6.0 | MIT；内嵌 libjxl v0.11.2（BSD-3-Clause 及专利授权）和 Highway（Apache-2.0 或 BSD-3-Clause）（[正文](licenses/jpegxl-wasm-notices.txt)） | Windows 缺少 JPEG XL 扩展时解码 JPEG XL |
 | github.com/tetratelabs/wazero | v1.12.0 | Apache-2.0 | 运行上面两个 WebAssembly 解码器 |
 | github.com/Masterminds/semver/v3 | v3.5.0 | MIT | 比较版本号，检查更新 |
-| github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向 |
+| github.com/rwcarlsen/goexif | v0.0.0-20190401172101-9e8deecbddbd | BSD-2-Clause | 读取 EXIF 方向和信息面板的拍摄参数 |
+| github.com/oov/psd | v0.0.0-20260818185439-a5d50ec0acac | MIT | PSD/PSB 合成图 |
+| github.com/xfmoulet/qoi | v0.2.0 | MIT | QOI |
+| github.com/blezek/tga | v0.0.0-20150626111426-80720cbc1017 | MIT（Copyright © 2012 Serge Zirukin，ftrvxmtrx/tga 的分支） | TGA；格式早已定型，库多年未更新 |
+| github.com/mdouchement/hdr | v0.2.5 | MIT | Radiance HDR |
+| github.com/mrjoshuak/go-openexr | v1.4.38 | Apache-2.0，带 NOTICE | OpenEXR |
+| github.com/mrjoshuak/go-jpeg2000 | v1.5.6 | Apache-2.0 | go-openexr 依赖 |
 | golang.org/x/image | v0.48.0 | BSD-3-Clause | BMP/TIFF 解码；nsgo 也使用 |
 | golang.org/x/sys | v0.50.0 | BSD-3-Clause | Windows 后台打开默认浏览器；nsgo 也使用 |
 | go.yaml.in/yaml/v3 | v3.0.6 | MIT 与 Apache-2.0 | 设置文件；nsgo 也使用 |
@@ -32,7 +38,7 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | github.com/bodgit/sevenzip | v1.6.1 | BSD-3-Clause | archives：7z |
 | github.com/bodgit/plumbing、github.com/bodgit/windows | v1.3.0、v1.0.1 | BSD-3-Clause | sevenzip 依赖 |
 | github.com/STARRY-S/zip | v0.2.3 | BSD-3-Clause | archives：ZIP |
-| github.com/klauspost/compress、github.com/klauspost/pgzip | v1.18.0、v1.2.6 | BSD-3-Clause、MIT | 压缩算法 |
+| github.com/klauspost/compress、github.com/klauspost/pgzip | v1.20.4、v1.2.6 | BSD-3-Clause、MIT | 压缩算法 |
 | github.com/ulikunitz/xz | v0.5.15 | BSD-3-Clause | 压缩算法 |
 | github.com/mikelolasagasti/xz | v1.0.1 | 0BSD | 压缩算法 |
 | github.com/dsnet/compress | v0.0.2-0.20230904184137-39efe44ab707 | BSD-3-Clause | 压缩算法 |
@@ -54,7 +60,9 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 ## 使用的系统组件
 
-ICO、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映像组件（WIC）及用户从 Microsoft Store 安装的扩展解码。FreeView 只调用系统接口，不随安装包分发这些解码器。
+ICO、DDS、JPEG XR、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映像组件（WIC）及用户从 Microsoft Store 安装的扩展解码。色彩管理用 WIC 的颜色转换（`IWICColorTransform`）和显示器的 ICC 配置文件，缩小后的平滑显示在解码时用 WIC 的 Fant 缩放；缩略图带和鸟瞰图用资源管理器的缩略图（`IShellItemImageFactory`），文件属性用 Shell 的“属性”命令。FreeView 只调用系统接口，不随安装包分发这些组件。
+
+[JarkViewer](https://github.com/jark006/JarkViewer)（GPL-3.0，参考提交 `625273890ea9cf36221d7ae954540c11b7fcbffe`）只作为功能与规则参考：停稳后重采样、缓存预算、动图计时、按失败类型提示等。没有复制或翻译它的代码。
 
 ## 随安装包分发
 

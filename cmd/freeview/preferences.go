@@ -210,6 +210,10 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 	for _, s := range []float64{1, 2, 3, 5, 10, 20} {
 		intervals = append(intervals, ui.Option[float64]{Value: s, Label: strconv.FormatFloat(s, 'f', -1, 64)})
 	}
+	var speeds []ui.Option[float64]
+	for _, s := range settings.AnimationSpeeds {
+		speeds = append(speeds, ui.Option[float64]{Value: s, Label: "× " + strconv.FormatFloat(s, 'f', -1, 64)})
+	}
 	places := []ui.Option[settings.TitlePlace]{
 		{Value: settings.TitleLeft, Label: locales.PrefsTitlePlaceLeft(cx)},
 		{Value: settings.TitleCenter, Label: locales.PrefsTitlePlaceCenter(cx)},
@@ -252,8 +256,60 @@ func (p preferences) viewGroups(cx *core.Scope, reset core.Node) []ui.SettingsGr
 				func(c *settings.Config, x float64) { c.SlideshowSeconds = x }, v, "slideshow")},
 			{ID: "confirm-delete", Title: locales.PrefsConfirmDelete(cx), Control: toggle(func(c settings.Config) bool { return c.ConfirmDelete },
 				func(c *settings.Config, on bool) { c.ConfirmDelete = on }, v, "confirm-delete")},
+			{ID: "edge-clicks", Title: locales.PrefsEdgeClicks(cx), Description: locales.PrefsEdgeClicksHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.EdgeClicks },
+					func(c *settings.Config, on bool) { c.EdgeClicks = on }, v, "edge-clicks")},
+		}},
+		{ID: "enhance", Title: locales.PrefsEnhanceGroup(cx), Items: []ui.SettingsItem{
+			{ID: "navigator", Title: locales.PrefsNavigator(cx), Description: locales.PrefsNavigatorHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.Navigator },
+					func(c *settings.Config, on bool) { c.Navigator = on }, v, "navigator")},
+			{ID: "filmstrip", Title: locales.PrefsFilmstrip(cx), Description: locales.PrefsFilmstripHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.Filmstrip },
+					func(c *settings.Config, on bool) { c.Filmstrip = on }, v, "filmstrip")},
+			{ID: "smooth-zoom", Title: locales.PrefsSmoothZoom(cx), Description: locales.PrefsSmoothZoomHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.SmoothZoom },
+					func(c *settings.Config, on bool) { c.SmoothZoom = on }, v, "smooth-zoom")},
+			{ID: "color-management", Title: locales.PrefsColorManagement(cx), Description: locales.PrefsColorManagementHint(cx),
+				Control: toggle(func(c settings.Config) bool { return c.ColorManagement },
+					func(c *settings.Config, on bool) { c.ColorManagement = on }, v, "color-management")},
+			{ID: "animation-speed", Title: locales.PrefsAnimationSpeed(cx), Control: choice(speeds,
+				func(c settings.Config) float64 { return c.AnimationSpeed }, func(c *settings.Config, x float64) { c.AnimationSpeed = x }, v, "animation-speed")},
+		}},
+		{ID: "files", Title: locales.PrefsFilesGroup(cx), Items: []ui.SettingsItem{
+			{ID: "external-editor", Title: locales.PrefsExternalEditor(cx), Description: locales.PrefsExternalEditorHint(cx),
+				Control: pathSetting(cx, v, "external-editor", func(c settings.Config) string { return c.ExternalEditor },
+					func(c *settings.Config, p string) { c.ExternalEditor = p }, v.pickEditor)},
+			{ID: "target-folder", Title: locales.PrefsTargetFolder(cx), Description: locales.PrefsTargetFolderHint(cx),
+				Control: pathSetting(cx, v, "target-folder", func(c settings.Config) string { return c.TargetFolder },
+					func(c *settings.Config, p string) { c.TargetFolder = p }, func(done func(string)) {
+						v.cx.PickDirectories(core.PickDirectoriesOptions{Title: locales.PickFolder(v.cx)}, func(dirs []core.Directory, err error) {
+							if err == nil && len(dirs) > 0 && dirs[0].Path != "" {
+								done(dirs[0].Path)
+							}
+						})
+					})},
 		}},
 	}
+}
+
+// pathSetting shows a program or folder preference with buttons to
+// choose it and to clear it.
+func pathSetting(cx *core.Scope, v *viewer, id string, get func(settings.Config) string, set func(*settings.Config, string), choose func(done func(string))) core.Node {
+	return ui.HStack{Gap: 8, Children: []core.Node{
+		core.Text{TestID: id + "-path", ContentFunc: func() string {
+			if p := get(v.cfg.Get()); p != "" {
+				return p
+			}
+			return locales.PrefsNotSet(cx)
+		}, StyleFunc: func() core.Style {
+			return ui.TypeCaption.Merge(core.Style{Color: ui.ColorsOf(cx).Muted(), MaxWidth: core.Pt(260)})
+		}},
+		ui.Button{TestID: id + "-choose", Size: ui.SizeSmall, Variant: ui.ButtonOutline, Text: locales.PrefsChoose(cx),
+			OnPress: func() { choose(func(p string) { v.update(func(c *settings.Config) { set(c, p) }) }) }},
+		ui.Button{TestID: id + "-clear", Size: ui.SizeSmall, Variant: ui.ButtonOutline, Text: locales.PrefsClear(cx),
+			OnPress: func() { v.update(func(c *settings.Config) { set(c, "") }) }},
+	}}
 }
 
 func (p preferences) mouseItems(cx *core.Scope) []ui.SettingsItem {

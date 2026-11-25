@@ -143,3 +143,73 @@ updateUpToDateMessage: "FreeView {version} 是目前最新的版本"
 updateFailedTitle: 更新失败
 updateFailedMessage: "无法检查或下载更新：{error}"
 updateOk: 确定
+actionNavigator: 鸟瞰图
+actionFilmstrip: 底部缩略图带
+actionRename: 重命名
+actionCopyTo: 复制到文件夹
+actionMoveTo: 移动到文件夹
+actionOpenWith: 用外部编辑器打开
+actionProperties: 文件属性
+actionExportVideo: 导出实况照片视频
+actionAnimPause: 动图暂停或播放
+actionAnimPrev: 动图上一帧
+actionAnimNext: 动图下一帧
+actionAnimFaster: 动图加速
+actionAnimSlower: 动图减速
+animFrame: "第 {frame} / {count} 帧"
+animPaused: 动图已暂停
+animPlaying: 动图继续播放
+animSpeed: "动图速度 × {speed}"
+animTooLarge: 动图太大，无法逐帧控制
+notAnimated: 当前图片不是动图
+archiveNoChange: 压缩包内的图片不能改名或移动
+copiedTo: "已复制到 {folder}"
+movedTo: "已移动到 {folder}"
+copyFailed: "无法复制 {name}：{error}"
+moveFailed: "无法移动 {name}：{error}"
+renameHint: "输入新文件名（扩展名 {ext} 保持不变），按 Enter 确认，按 Esc 取消"
+renameFailed: "无法重命名：{error}"
+nameEmpty: 文件名不能为空
+nameInvalid: '文件名不能包含 \ / : * ? " < > | 等字符'
+nameReserved: 这是 Windows 保留的名称
+nameExists: 已有同名文件
+openWithFailed: "无法打开外部编辑器：{error}"
+propertiesFailed: "无法显示文件属性：{error}"
+pickEditor: 选择外部编辑器
+pickFolder: 选择目标文件夹
+noMotion: 这张图片没有实况视频
+videoSaved: "已保存视频 {name}"
+videoSaveFailed: "无法保存视频：{error}"
+loadNotFound: 文件不存在或已被移走
+loadUnsupported: 不支持这种格式
+loadDecodeFailed: "解码失败（{error}）"
+infoCamera: 相机
+infoLens: 镜头
+infoExposure: 拍摄参数
+infoTaken: 拍摄时间
+infoGPS: 位置
+infoSoftware: 软件
+infoComment: 注释
+infoPrompt: AI 提示词
+infoLive: 实况照片，可导出视频
+infoCache: "缓存：命中 {hits}，读取 {reads}，淘汰 {evictions}"
+prefsEnhanceGroup: 增强
+prefsNavigator: 鸟瞰图
+prefsNavigatorHint: 图片超出窗口时在右下角显示整张图和当前区域，可点击或拖动定位
+prefsFilmstrip: 底部缩略图带
+prefsFilmstripHint: 鼠标移到窗口底部时显示同一文件夹的缩略图
+prefsSmoothZoom: 缩小时平滑显示
+prefsSmoothZoomHint: 缩小显示的图片停稳后重新采样，细线不起锯齿
+prefsColorManagement: 色彩管理
+prefsColorManagementHint: 带有 Adobe RGB、Display P3 等色彩配置的图片按显示器颜色显示
+prefsEdgeClicks: 点击窗口边缘切换图片
+prefsEdgeClicksHint: 单击左右两侧切换上一张和下一张，单击左上角和右上角旋转
+prefsAnimationSpeed: 动图播放速度
+prefsFilesGroup: 文件操作
+prefsExternalEditor: 外部编辑器
+prefsExternalEditorHint: “用外部编辑器打开”使用的程序；未设置时第一次使用会询问
+prefsTargetFolder: 复制和移动的目标文件夹
+prefsTargetFolderHint: 未设置时每次都询问
+prefsNotSet: 未设置
+prefsChoose: 选择…
+prefsClear: 清除

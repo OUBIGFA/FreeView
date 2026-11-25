@@ -22,11 +22,18 @@
 | 输入绑定 | `internal/settings` 定义动作、鼠标操作和快捷键，存为 YAML。键盘用 `Scope.OnKey`；滚轮、拖动、双击、右键用 nsgo 事件；中键和侧键由 `internal/winmouse` 子类化窗口接收 | 单元测试；私有桌面实测改过的中键和滚轮绑定 |
 | 窗口 | 置顶用 nsgo `SetWindowLevel`。隐藏标题栏用 `SetTitleBar` 和 `SetWindowControls`，顶部拖动条用 `WindowDrag`（HTCAPTION）；`hover_title`（默认开启）在隐藏标题栏时通过 `internal/winmouse` 监听顶部非客户区 `WM_NCMOUSEMOVE`/`WM_NCMOUSELEAVE` 与客户区 `WM_MOUSEMOVE`，在顶部显示完整标题浮层，并支持用 `hover_title_place` 选择左侧、居中或右侧（默认右上角）。在看图区域拖动时（图片超出窗口时在图片上拖动除外，那时平移图片），`internal/winmouse` 让窗口线程执行 `WM_SYSCOMMAND SC_DRAGMOVE`，由 Windows 移动窗口 | 单元测试检查顶部悬停状态转换与配置默认/回退值；无界面测试检查拖动条与未悬停时不显示标题；私有桌面用 `deskrun`（`tests/desktop/hover-title.txt` 及 `state`/`hit`）检查置顶、标题栏、拖动条命中、顶部悬停显示与离开隐藏，以及默认右上、左侧、居中和关闭时的截图 |
 | 强调色 | `grayTheme`（`cmd/freeview/main.go`）在应用根部给 nsgo 默认主题换上深灰强调色：浅色外观 `#3c3c3c`，深色外观 `#7a7a7a`（深灰在深色页面上看不清，所以略浅） | 私有桌面截图核对浅色外观；深色外观未验证 |
-| 记住窗口 | 用 nsgo `desktop.Frame` 跟踪窗口位置和外框尺寸，停止变化 0.5 秒后写入 `%APPDATA%\FreeView\windows.yaml`（与设置分开，“恢复默认”不影响窗口）。最大化或全屏时不保存：nsgo v0.2.0 在 Windows 上此时报告的是整屏矩形，保存后下次打开会铺满屏幕，看起来像最大化。打开时用 `nsgo.WindowFrame` 和 `WindowOptions.Frame` 恢复；看图窗口由设置项 `remember_window` 控制，默认开启。设置项 `open_maximized`（默认关闭）在窗口显示前最大化 | 单元测试检查读写和最大化时不保存；私有桌面中旧版本最大化后保存了 `-8,-8 3456×1408`，新版本保持最大化前的 `200,150 900×640`；`open_maximized` 打开后窗口以最大化显示 |
+| 记住窗口 | 用 nsgo `desktop.Frame` 跟踪窗口位置和外框尺寸，停止变化 0.5 秒后写入 `%APPDATA%\FreeView\windows.yaml`（与设置分开，“恢复默认”不影响窗口）。最大化或全屏时不保存位置：nsgo 在 Windows 上此时报告的是整屏矩形，保存后下次打开会铺满屏幕。最大化时只在原位置旁记下 `maximized: true`，下次打开在显示前最大化，还原后回到最大化前的位置。打开时用 `nsgo.WindowFrame` 和 `WindowOptions.Frame` 恢复；看图窗口由设置项 `remember_window` 控制，默认开启。设置项 `open_maximized`（默认关闭）在窗口显示前最大化 | 单元测试检查读写、最大化时只记标记、还原后清除标记；私有桌面中旧版本最大化后保存了 `-8,-8 3456×1408`，新版本保持最大化前的 `200,150 900×640`；`open_maximized` 打开后窗口以最大化显示 |
 | 多窗口 | 设置项 `multiple_windows`（默认关闭）在启动时读取。关闭时沿用 nsgo 的单实例：再次打开图片，文件交给已打开的窗口。开启时用 `nsgo.InstanceKey(进程号)` 给本次运行独立的单实例锁，每次打开图片都启动新窗口。设置改动在下次打开图片时生效 | 私有桌面用 `deskrun launch` 再次打开第二张图：关闭时第二次运行立即退出，原窗口换成第二张图；开启时第二次运行继续存在，原窗口保持第一张图 |
 | 手形指针 | Windows 没有张开/握拳手形系统指针（nsgo 的 `CursorGrab` 映射为食指手形 `IDC_HAND`），`internal/winmouse/cursor.go` 自绘 16×16 像素图，按系统指针尺寸放大，用 `CreateIconIndirect` 生成，在 `WM_SETCURSOR` 中显示；拖动中由窗口线程直接 `SetCursor` | 私有桌面中用临时插桩确认放大、拖动、松开时依次为张开、握拳、张开；指针外观只渲染像素图核对过 |
 | 设置窗口 | 默认 1040×700，分查看、鼠标、键盘、关于四页。“关于”页显示 logo（`assets/branding` 嵌入，首次显示时缩到 128 像素）、版本号（`core.App`）、GitHub、反馈、检查更新和许可链接。网页交给后台线程调用 Windows 默认浏览器，失败时提示；不在窗口线程等待浏览器。侧栏和搜索框由 FreeView 绘制（nsgo `ui.Sidebar`），页面行由 `ui.Settings` 排版；页面两侧各留 40 点边距，最宽 760 点（`ui.Settings` 自带的页面会铺满整个窗格）。图标用 Solar Linear（`assets/icons/solar/`，按需复制）：搜索框的放大镜，以及 `ui.Select` 末尾的箭头；后者在 nsgo 中固定为 `lucide.ChevronDown`，由 `cmd/freeview/icons.go` 在启动时替换为 Solar 的 `alt-arrow-down`；“关于”页署名 CC BY 4.0 | 无界面测试检查分类、搜索、链接目标、浏览器等待与失败；`tests/desktop/about-links.txt` 在私有桌面让许可和第三方组件的浏览器请求持续等待，检查窗口响应、移动、关闭和重新打开；截图核对布局；单元测试检查 Solar 图标随文字颜色、下拉框箭头已替换 |
-| 预读 | 当前图片前后各一张提前读出（BMP/TIFF/WIC 格式提前解码）。缓存最多 4 张、256 MB | 代码审查 |
+| 预读 | 当前图片前后各一张提前读出（BMP/TIFF/WIC 格式提前解码）。缓存最多 6 张，字节上限为物理内存的 1/8（256 MiB 到 2 GiB）。正在显示和正在解码的图片不淘汰；当前图片超过上限一半时不预读。命中、读取、淘汰次数显示在信息浮层 | `go tool nsgo test`；私有桌面截图核对计数 |
+| 快速路径与增强功能 | 显示图片的路径不变：读文件、交给 nsgo、显示。增强功能（`cmd/freeview/extras.go`）都在图片显示之后、在最多 2 个低优先级（`THREAD_PRIORITY_BELOW_NORMAL`）后台线程上运行，用户切到别的图片后结果作废；快速翻图时 250 ms 的停稳计时不断重启，不会开始重活 | 私有桌面 `deskrun`：10 张 6000×4000 噪点 JPEG（每张约 17 MB），旧版 0.1.3 与新版交替各 5 次，启动到窗口显示 630–746 ms 对 608–864 ms（无明显差别）；首图后私有内存 354–360 MB 对 372–395 MB（平滑显示约 +15 MB）；连续浏览后多出约 40–50 MB，主要来自缓存从 4 张增至 6 张（关闭平滑显示后仍多 35 MB）；`inittrace` 中新增包初始化均在 1 ms 以内；程序体积 36.6 MB → 38.9 MB |
+| 平滑缩小 | 缩放比例低于 95% 且画面停稳 250 ms 后重新采样整张图：JPEG/PNG/WebP 由 WIC 在解码时用 Fant 缩放到显示尺寸（JPEG 可借助 DCT 缩小解码，不在内存中展开全尺寸），已有像素的格式用 `internal/resample` 的面积平均。结果作为一层叠在原图上，缩放一变就隐藏，不重新解码。动图和 SVG 不处理；放大时仍用 Direct2D 线性插值 | 单元测试（重采样、WIC 缩放）；私有桌面截图核对细线 |
+| 色彩管理 | 图片内嵌非 sRGB 的 ICC 配置（JPEG APP2、PNG iCCP、WebP ICCP、TIFF）时，后台用 WIC `IWICColorTransform` 转到显示器的 ICC 配置（取不到时转到 sRGB），再替换显示的图片 | 单元测试（P3 → sRGB、sRGB 恒等、损坏配置） |
+| 鸟瞰图、缩略图带 | 设置项 `navigator`、`filmstrip`，默认关闭，快捷键 N、T。鸟瞰图在图片超出窗口时显示于右下角，可点击或拖动定位；缩略图带在鼠标移到窗口底部时显示。缩略图来自资源管理器的缩略图缓存（`IShellItemImageFactory`），压缩包中的图片在后台解码后缩小，最多保留 400 张 | 无界面测试（开关、显示条件、点击切图）；私有桌面截图核对鸟瞰图。缩略图带的悬停在私有桌面无法模拟（投递的鼠标消息不移动真实指针），未做界面截图 |
+| 动图控制 | 按 K、J、L、[、] 时（或 APNG、速度不为 1 时）在后台解出所有帧（`internal/anim`：GIF、APNG、动画 WebP 的处置与混合规则），之后由 FreeView 自己播放：按微秒累计时间，延迟 ≤10 ms 按 100 ms 播放。所有帧超过缓存上限一半时提示无法逐帧控制 | 单元测试（三种格式的合成、计时、循环次数）；无界面测试（逐帧、非动图提示） |
+| 信息、文件操作 | 信息浮层打开时才在后台读取 EXIF（相机、镜头、拍摄参数、时间、位置）、PNG 文本块里的 AI 提示词和实况照片标记（`internal/meta`、`internal/livephoto`）。重命名（F2）、复制/移动到文件夹（F7/F8）、外部编辑器、文件属性、导出实况照片视频（`internal/fileops`）。设置项 `edge_clicks` 打开点击边缘切图。加载失败按“文件不存在”“格式不支持”“解码失败”分别提示 | 单元测试；无界面测试（重命名、Esc 取消、边缘点击、提示词）；私有桌面截图核对重命名框 |
+| 更多格式 | DDS、JPEG XR 由 WIC 解码；PSD/PSB 合成图、QOI、TGA、Radiance HDR、OpenEXR 由纯 Go 模块解码（`internal/picture/formats.go`，HDR/EXR 用 Reinhard 色调映射）；iOS 实况照片 `.livp` 显示其中的静态图 | 单元测试 |
 | 内存 | 垃圾回收比例设为 50%（默认 100%）；切图停下 1 秒后调用 `debug.FreeOSMemory` 把解码留下的内存还给系统 | 私有桌面 `deskrun mem`，10 张 6000×4000 JPEG 逐张浏览：静止后私有内存 997 MB → 606 MB，工作集 769 MB → 378 MB，浏览中工作集峰值 776 MB → 650 MB；CPU 时间 6.6 s → 7.0 s（单次测量） |
 | 自动更新 | `internal/update` 读 `api.github.com` 的最新 Release（不含草稿和预发布），要求 tag 为 `v<版本>`，且有 `FreeView-<版本>.exe` 附件和 GitHub 给出的 SHA-256；用 `Masterminds/semver` 比较版本。每天最多检查一次（上次时间记在 `%APPDATA%\FreeView\update-check`），发现新版本时询问；确认后下载到 `%LOCALAPPDATA%\FreeView\updates`，校验后以 `/S /RELAUNCH` 运行安装器，安装器关闭 FreeView、安装并重新打开。“关于”页的“立即检查”随时检查。Release 里只有安装器，没有更新源 | 单元测试用本地假服务器检查版本比较、摘要不符、无摘要和检查间隔；尚未用真实 Release 走完更新 |
 
@@ -35,10 +42,9 @@
 - **nsgo v0.2.0 在 Windows 窗口线程同步打开网页（升级到 v0.3.0 后尚未重新评估）。** 默认浏览器交接如果阻塞，会冻结所有窗口。“关于”页通过 `cmd/freeview/browser_windows.go` 在后台调用系统的 `ShellExecuteExW`，并用 `Scope.Post` 返回失败提示；不修改依赖缓存。nsgo 正式版修复后可重新评估这个临时方案。
 - **nsgo v0.2.0 在 Windows 上不把中键和侧键交给应用（升级到 v0.3.0 后尚未重新评估）。** `internal/winmouse` 子类化主窗口作为临时方案。nsgo 支持后删除这个包。
 - **在 App 模式下 `CloseWindow` 只隐藏主窗口，进程不退出。** 因此“关闭”动作直接调用 `Scope.Quit`。点击窗口的关闭按钮可以正常退出。
-- **缩小显示的质量**：nsgo 用 Direct2D 线性插值绘制图片，缩到 50% 以下时细线可能出现锯齿。改进方案是自己用 `golang.org/x/image/draw` 预先缩小后再显示，先做对比测量再决定。
+- **放大显示的质量**：放大时仍是 Direct2D 线性插值，没有做 Lanczos 或 Catmull-Rom。
 - **预读只读取文件字节。** 解码仍在显示时由 nsgo 完成，所以大 JPEG 首次显示仍需要等待解码。
-- 动图不能暂停、逐帧查看或调速，nsgo 的 Image 没有提供这些控制。
-- APNG 动画、动态 AVIF/HEIC/JPEG XL 只显示第一帧。
+- 动态 AVIF/HEIC/JPEG XL 只显示第一帧。
 - AVIF、RAW 依赖用户安装的 Windows 扩展，没有扩展时只能显示安装提示。HEIC、JPEG XL 没有扩展时走 WebAssembly 兜底，较慢、占内存较多。
 - SVG 由 nsgo 按每点 4 像素、最长边 2048 像素栅格化，放得很大会变模糊；nsgo 的 SVG 不绘制 `<text>`。
 - 0.1.0 没有自动更新，0.1.2 用的是 WinSparkle（读 Release 里的 appcast）。这两个版本的用户需要手动安装 0.1.3，之后才用新的更新方式。校验值来自同一个 GitHub 接口，没有独立签名：它能发现下载损坏，但防不了发布账号被入侵。
