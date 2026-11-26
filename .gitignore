@@ -27,6 +27,9 @@ build/
 *.pfx
 *.jks
 *.keystore
+# Added transiently by tools/build_installer.py for nsgo's resource packaging
+/cmd/freeview/resources/LICENSE.txt
+/cmd/freeview/resources/EMBEDDED_COMPONENT_NOTICES.txt
 
 # Keep this as the final active rule, after every ! exception.
 **/_temp/

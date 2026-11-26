@@ -39,7 +39,7 @@ Go 和 nsgo 跟随官方最新稳定版。2026-11-26 核对：Go 1.27.4，nsgo v
 | `.github/workflows/` | 是 | 只读检查；不接收发布密钥 |
 | `references/`、`third_party/` | 是 | 二进制登记、来源与许可记录 |
 | `dist/` | 否 | 构建产物、安装器、派生图标、原有 logo 副本 |
-| `.local/`、`.nsgo/` | 否 | 本地工具链（如 NSIS）、上游参考检出、nsgo 缓存、更新签名私钥（`.local/secrets/`） |
+| `.local/`、`.nsgo/` | 否 | 本地工具链、上游参考检出、nsgo 缓存、更新签名私钥（`.local/secrets/`） |
 | 任意层级的 `_temp/`、`output/` | 否 | 临时文件、测试截图、日志 |
 
 `**/_temp/` 必须是 `.gitignore` 最后一条有效规则，放在所有反忽略规则之后。

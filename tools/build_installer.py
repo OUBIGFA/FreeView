@@ -1,11 +1,9 @@
-"""Build the Windows installer as dist/releases/FreeView-<version>.exe.
+"""Build and verify dist/releases/FreeView-<version>.exe with nsgo.
 
-nsgo names its installer <slug>-<version>-windows-x64-setup.exe and compiles
-it from the package directory. FreeView's convention is the brand and version
-alone, and the installer also installs the GPL text and the notices of the
-software it includes. So this runs `go tool nsgo build` with the local NSIS
-on PATH, adds the license files to the package, recompiles its NSIS script and
-renames the installer and its checksum.
+nsgo v0.3.4 builds a native Go installer, including its uninstaller and
+linked-module notices. Put FreeView's GPL and the embedded WASM code's
+additional notices in its standard resources before that build; never
+patch an installer or depend on a generated NSIS script.
 """
 
 import hashlib
@@ -14,16 +12,17 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from zipfile import ZipFile
+
+from generate_notices import embedded_notices
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "cmd" / "freeview"
 DIST = ROOT / "dist"
 RELEASES = DIST / "releases"
-NSIS = ROOT / ".local" / "tools" / "nsis-3.13" / "Bin"
-NOTICES = ROOT / "tools" / "generate_notices.py"
-LICENSE = ROOT / "LICENSE"
 LICENSE_NAME = "LICENSE.txt"
 NOTICES_NAME = "THIRD_PARTY_NOTICES.txt"
+EMBEDDED_NAME = "EMBEDDED_COMPONENT_NOTICES.txt"
 
 
 def setting(name):
@@ -33,67 +32,56 @@ def setting(name):
     return match.group(1)
 
 
-def add_licenses(package, name, version, env):
-    executable = package / f"{name}.exe"
-    script = package / f"{name}.nsi"
-    if not executable.is_file() or not script.is_file():
-        sys.exit(f"{package} has no {name}.exe or {name}.nsi")
-    command = [sys.executable, str(NOTICES), str(executable), str(package / NOTICES_NAME), "--version", version]
-    subprocess.run(command, env=env, check=True)
-    (package / LICENSE_NAME).write_bytes(LICENSE.read_bytes())
-
-    text = script.read_text(encoding="utf-8-sig")
-    output = re.search(r'^OutFile "([^"]+)"', text, re.M)
-    if not output:
-        sys.exit(f"{script} has no OutFile")
-    # The last lines of the uninstaller, after the files nsgo lists.
-    old = '  Delete "$INSTDIR\\Uninstall.exe"\n  RMDir "$INSTDIR"'
-    new = (
-        '  Delete "$INSTDIR\\Uninstall.exe"\n'
-        f'  Delete "$INSTDIR\\{LICENSE_NAME}"\n'
-        f'  Delete "$INSTDIR\\{NOTICES_NAME}"\n'
-        '  RMDir "$INSTDIR"'
-    )
-    if text.count(old) != 1:
-        sys.exit(f"{script} does not have the uninstaller block this script knows")
-    script.write_text(text.replace(old, new), encoding="utf-8-sig", newline="\n")
-    return script, package / output.group(1)
+def verify_payload(installer, name, additions):
+    # nsgo's unsigned Windows installer holds a normal ZIP payload after
+    # its PE image. zipfile reads the original archive and checks its CRCs;
+    # this verification does not execute or modify the installer.
+    with ZipFile(installer) as archive:
+        expected = {f"{name}.exe", "Uninstall.exe", NOTICES_NAME, *additions}
+        if set(archive.namelist()) != expected:
+            sys.exit(f"unexpected installer payload: {archive.namelist()}")
+        bad = archive.testzip()
+        if bad is not None:
+            sys.exit(f"installer payload checksum failed: {bad}")
+        for filename, content in additions.items():
+            if archive.read(filename) != content:
+                sys.exit(f"installer did not include the current {filename}")
+        notices = archive.read(NOTICES_NAME).decode("utf-8")
+        for required in ("github.com/nsgo-dev/nsgo", "Go runtime and standard library", "480 Design", "CC BY 4.0"):
+            if required not in notices:
+                sys.exit(f"generated notices have no {required}")
 
 
 def main():
-    version = setting("version")
-    name = setting("name")
-    package = DIST / f"{name}-{version}-windows_x64"
-    env = dict(os.environ, PATH=str(NSIS) + os.pathsep + os.environ.get("PATH", ""))
-    if not (NSIS / "makensis.exe").is_file():
-        sys.exit(f"NSIS is missing from {NSIS}")
-    subprocess.run(["go", "tool", "nsgo", "build"], cwd=APP, env=env, check=True)
+    version, name = setting("version"), setting("name")
+    resources = APP / "resources"
+    additions = {LICENSE_NAME: (ROOT / "LICENSE").read_bytes(), EMBEDDED_NAME: embedded_notices()}
+    # Refuse to replace user-authored resources. These two generated paths
+    # are ignored, and the build removes only the files it creates here.
+    for filename in additions:
+        if (resources / filename).exists():
+            sys.exit(f"build resource already exists: {resources / filename}")
+    resources.mkdir(exist_ok=True)
+    try:
+        for filename, content in additions.items():
+            (resources / filename).write_bytes(content)
+        subprocess.run(["go", "tool", "nsgo", "build"], cwd=APP, check=True)
+    finally:
+        for filename in additions:
+            (resources / filename).unlink(missing_ok=True)
+        if not any(resources.iterdir()):
+            resources.rmdir()
 
-    script, built = add_licenses(package, name, version, env)
-    result = subprocess.run(
-        [str(NSIS / "makensis.exe"), "-V4", "-INPUTCHARSET", "UTF8", script.name],
-        cwd=package, env=env, capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        sys.exit(f"makensis failed:\n{result.stdout}\n{result.stderr}")
-    missing = [file for file in (LICENSE_NAME, NOTICES_NAME) if f'File: "{file}"' not in result.stdout]
-    if missing:
-        sys.exit(f"the installer did not include {', '.join(missing)}")
-
+    slug = name.lower()
+    built = RELEASES / f"{slug}-{version}-windows-x64-setup.exe"
+    verify_payload(built, name, additions)
     target = RELEASES / f"{name}-{version}.exe"
     os.replace(built, target)
-    # nsgo also leaves its own setup and checksum in the release folder; this
-    # project releases only the FreeView-named installer.
-    for stale in (RELEASES / built.name, RELEASES / (built.name + ".sha256")):
-        stale.unlink(missing_ok=True)
+    built.with_name(built.name + ".sha256").unlink(missing_ok=True)
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
-    # The checksum names the file it covers, so it moves with a new name.
-    old_sum = built.with_name(built.name + ".sha256")
-    new_sum = target.with_name(target.name + ".sha256")
-    if old_sum.exists():
-        os.replace(old_sum, new_sum)
-    new_sum.write_text(f"{digest}  {target.name}\n", encoding="utf-8")
+    target.with_name(target.name + ".sha256").write_text(f"{digest}  {target.name}\n", encoding="utf-8")
     print(f"{target.relative_to(ROOT)}  {target.stat().st_size} bytes  sha256 {digest}")
+    print("Verified app, uninstaller, GPL, module notices and embedded component notices")
 
 
 if __name__ == "__main__":

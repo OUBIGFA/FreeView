@@ -8,7 +8,7 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | --- | --- | --- | --- |
 | [qView](https://github.com/jurplel/qView) | 功能与交互参考；没有导入代码 | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | GPL-3.0 |
 | [Pillow](https://github.com/python-pillow/Pillow) | 开发时生成图标；不随应用分发 | [固定依赖文件](../tools/requirements-icons.txt) | MIT-CMU |
-| [NSIS](https://nsis.sourceforge.io) 3.13 | 构建安装器；本地放在 `.local/tools/`，不入库 | SourceForge `nsis-3.13.zip`，SHA-1 `db14f8af2ea346b786c6ae19343f61aaf5e09b8e`（与官方文件列表一致） | zlib/libpng 等，见其 COPYING |
+| [NSIS](https://nsis.sourceforge.io) 3.13 | 旧版安装器使用；nsgo v0.3.4 后由 Go 构建原生安装器，不再需要 NSIS | SourceForge `nsis-3.13.zip`，SHA-1 `db14f8af2ea346b786c6ae19343f61aaf5e09b8e` | zlib/libpng 等，见其 COPYING |
 | [Solar Icons](https://github.com/saoudi-h/solar-icons)（Linear） | 界面图标：右键菜单、设置分类、搜索框和控件箭头；复制到 `assets/icons/solar/`，内容不改 | `ab241e1bf578dcfe45b0197aee59bd9a08b5fe68`（[来源与文件登记](../assets/icons/solar/README.md)） | 代码 MIT（Copyright (c) 2024 Hakim Saoudi）；图标 CC BY 4.0，作者 480 Design |
 | FreeView logo | 品牌源图 | [精确二进制登记](../references/repository-exceptions.json) | GPL-3.0-only；不另行授予商标权 |
 
@@ -66,8 +66,9 @@ ICO、DDS、JPEG XR、HEIF/HEIC、AVIF、JPEG XL 和相机 RAW 由 Windows 映�
 
 ## 随安装包分发
 
-- 安装器会在程序目录写入 `LICENSE.txt` 和 `THIRD_PARTY_NOTICES.txt`。
-- `THIRD_PARTY_NOTICES.txt` 由 `tools/generate_notices.py` 从构建出的 `FreeView.exe` 和 Go 模块缓存生成。它包含 FreeView、Solar 图标（MIT 正文与 CC BY 4.0 署名）、Go 运行时与标准库、上表依赖模块的许可正文和署名。
-- `THIRD_PARTY_NOTICES.txt` 是可再生成的产物，不入库。`python tools/build_installer.py` 每次构建都会重新生成它，并把它加入安装包。
-- 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试，再重新构建并核对 `THIRD_PARTY_NOTICES.txt` 的模块数。
+- 安装器会在程序目录写入 `LICENSE.txt`、`THIRD_PARTY_NOTICES.txt` 和 `EMBEDDED_COMPONENT_NOTICES.txt`
+- `THIRD_PARTY_NOTICES.txt` 由 nsgo 的正式构建流程根据实际链接的 Go 包生成，包含 FreeView、Solar 图标（MIT 正文与 CC BY 4.0 署名）、Go 运行时与标准库、依赖模块的许可正文和署名
+- `EMBEDDED_COMPONENT_NOTICES.txt` 由 `tools/generate_notices.py` 汇总已登记的 HEIC / JPEG XL 内嵌 WASM 代码许可，补足 Go 模块许可不能覆盖的 Rust / C++ 组件
+- 这些产物不入库；`python tools/build_installer.py` 将 GPL 和补充声明临时放入 nsgo 标准资源目录，构建原生 Go 安装器后清理源目录，最后读取真实安装包的 ZIP 内容并检查文件、CRC、许可证原文和必要署名，再命名为 `FreeView-<版本>.exe`
+- 更新依赖时同步本表、`go.mod`、`go.sum` 和受影响的测试，再重新构建并核对许可文件
 - 引入新的库、移植代码或外部素材时，登记名称、用途、版本、许可、署名和修改。
