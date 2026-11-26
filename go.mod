@@ -10,7 +10,7 @@ require (
 	github.com/mdouchement/hdr v0.2.5
 	github.com/mholt/archives v0.1.5
 	github.com/mrjoshuak/go-openexr v1.4.38
-	github.com/nsgo-dev/nsgo v0.3.0
+	github.com/nsgo-dev/nsgo v0.3.4
 	github.com/oov/psd v0.0.0-20260818185439-a5d50ec0acac
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/xfmoulet/qoi v0.2.0

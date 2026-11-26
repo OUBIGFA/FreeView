@@ -99,6 +99,8 @@ type viewer struct {
 	slideshow *core.Signal[bool]
 	message   *core.Signal[string]
 	topHover  *core.Signal[bool]
+	menuOpen  *core.Signal[bool]
+	menuAt    *core.Signal[core.Point]
 
 	pointer    core.Point // last pointer position in the viewport
 	downAt     core.Point // where the left button last went down
@@ -146,6 +148,8 @@ func newViewer(cx *core.Scope) *viewer {
 	v.slideshow = core.NewSignal(cx, false)
 	v.message = core.NewSignal(cx, "")
 	v.topHover = core.NewSignal(cx, false)
+	v.menuOpen = core.NewSignal(cx, false)
+	v.menuAt = core.NewSignal(cx, core.Point{})
 	v.initExtras(cx)
 	if loadErr != nil {
 		v.flash(locales.PrefsLoadFailed(cx, loadErr.Error()))
@@ -629,7 +633,8 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 	case settings.TitleBar:
 		v.update(func(c *settings.Config) { c.ShowTitleBar = !c.ShowTitleBar })
 	case settings.Menu:
-		desktop.PopupMenu(cx, v.menuItems(), v.pointer, nil)
+		v.menuAt.Set(v.pointer)
+		v.menuOpen.Set(true)
 	case settings.Preferences:
 		openPreferences(v)
 	case settings.Navigator:
@@ -880,6 +885,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 		},
 		Children: []core.Node{
 			v.keyBindings(),
+			core.Func(v.contextMenu),
 			v.imageView(0),
 			v.imageView(1),
 			v.smoothView(),

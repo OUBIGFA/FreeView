@@ -9,16 +9,16 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 | [qView](https://github.com/jurplel/qView) | 功能与交互参考；没有导入代码 | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | GPL-3.0 |
 | [Pillow](https://github.com/python-pillow/Pillow) | 开发时生成图标；不随应用分发 | [固定依赖文件](../tools/requirements-icons.txt) | MIT-CMU |
 | [NSIS](https://nsis.sourceforge.io) 3.13 | 构建安装器；本地放在 `.local/tools/`，不入库 | SourceForge `nsis-3.13.zip`，SHA-1 `db14f8af2ea346b786c6ae19343f61aaf5e09b8e`（与官方文件列表一致） | zlib/libpng 等，见其 COPYING |
-| [Solar Icons](https://github.com/saoudi-h/solar-icons)（Linear） | 界面图标：设置搜索框、下拉框箭头；复制到 `assets/icons/solar/`，内容不改 | `ab241e1bf578dcfe45b0197aee59bd9a08b5fe68`（[来源与文件登记](../assets/icons/solar/README.md)） | 代码 MIT（Copyright (c) 2024 Hakim Saoudi）；图标 CC BY 4.0，作者 480 Design |
+| [Solar Icons](https://github.com/saoudi-h/solar-icons)（Linear） | 界面图标：右键菜单、设置分类、搜索框和控件箭头；复制到 `assets/icons/solar/`，内容不改 | `ab241e1bf578dcfe45b0197aee59bd9a08b5fe68`（[来源与文件登记](../assets/icons/solar/README.md)） | 代码 MIT（Copyright (c) 2024 Hakim Saoudi）；图标 CC BY 4.0，作者 480 Design |
 | FreeView logo | 品牌源图 | [精确二进制登记](../references/repository-exceptions.json) | GPL-3.0-only；不另行授予商标权 |
 
 ## 编译进应用的 Go 模块
 
-清单来自 `go version -m FreeView.exe`（nsgo v0.3.0，2026-11-25）。许可按各模块自带的许可文件判断。
+清单来自 `go version -m FreeView.exe`（nsgo v0.3.4，2026-11-26）。许可按各模块自带的许可文件判断；本次 nsgo 升级的 LICENSE、NOTICE 与 v0.3.0 相同。
 
 | 模块 | 版本 | 许可 | 引入原因 |
 | --- | --- | --- | --- |
-| github.com/nsgo-dev/nsgo | v0.3.0 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
+| github.com/nsgo-dev/nsgo | v0.3.4 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |
 | github.com/mholt/archives | v0.1.5 | MIT | 读取压缩包 |
 | github.com/gen2brain/heic | v0.7.2 | MIT；内嵌的 HEIC 解码器（Rust crate `heic` 0.1.6）为 AGPL-3.0-only，其余 Rust 依赖为 MIT/Apache-2.0/Zlib（[清单与正文](licenses/heic-wasm-notices.txt)） | Windows 缺少 HEIF/HEVC 扩展时解码 HEIC |
 | github.com/gen2brain/jpegxl | v0.6.0 | MIT；内嵌 libjxl v0.11.2（BSD-3-Clause 及专利授权）和 Highway（Apache-2.0 或 BSD-3-Clause）（[正文](licenses/jpegxl-wasm-notices.txt)） | Windows 缺少 JPEG XL 扩展时解码 JPEG XL |

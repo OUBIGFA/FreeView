@@ -66,7 +66,7 @@ To uninstall FreeView, open Settings. Select Apps. Select Installed apps. Select
 1. Open FreeView.
 2. Drag an image, a folder, or an archive into the window. You can also press Ctrl+O and select a file.
 3. Use the wheel or the arrow keys to change images.
-4. Right-click to open the menu.
+4. Right-click to open the themed menu. Full screen, slideshow, information, always-on-top, title bar, overview, and filmstrip switches are directly accessible; zoom, transforms, animation, and file actions have their own submenus.
 
 The window has no title bar by default. To move the window, drag anywhere in it. When a zoomed image is larger than the window, dragging the image moves the image; then drag the background beside the image or the top edge of the window to move the window.
 
@@ -86,20 +86,20 @@ The window has no title bar by default. To move the window, drag anywhere in it.
 
 - **Change mouse actions.** Open Preferences. On the Mouse page, select an action for each item.
 - **Change keyboard shortcuts.** On the Keyboard page, add or remove shortcuts. Click Record. Then press a key.
-- **Change the view.** On the Viewing page, select the fit mode, sort order, looping, and slideshow interval.
-- **Change the window display.** On the Viewing page, turn on or off "Keep the window on top" and "Show the title bar".
-- **See the top title.** With the title bar hidden, move the pointer to the top of the window to see the full image title at the top right by default. On the Viewing page, turn off "Show the full title when the mouse is at the top", or set "Top title position" to Left, Center, or Right.
-- **Restore the default settings.** On the Viewing page, click Restore defaults.
-- **Stop FreeView from remembering the window.** On the Viewing page, turn off "Open at the last window size and position". When the window is maximized or in full screen, FreeView remembers the size and position from before.
-- **Maximize the window when it opens.** On the Viewing page, turn on "Maximize the window when it opens". This option is off by default.
+- **Change how images appear.** On the Display page, choose the fit mode, smooth downscaling, color management, image information, and the navigator.
+- **Change browsing and playback.** On the Browse page, choose the sort order, looping, slideshow interval, animation speed, filmstrip, and edge clicks.
+- **Change window behavior.** On the General page, adjust the title bar, always-on-top mode, saved window size, startup maximization, and multiple windows.
+- **See the top title.** With the title bar hidden, move the pointer to the top of the window to see the full image title. On the General page, turn this feature off or change the title position.
+- **Restore the default settings.** Click Restore defaults at the bottom of the sidebar and confirm.
+- **Manage file actions.** On the Files page, set the external editor, the target folder for copy and move, and deletion confirmation.
 - **See the version and check for updates.** On the About page, see the version, open the GitHub repository, report a problem, or click Check now.
 
 ## Notes
 
 - This version of the installer is not digitally signed. Windows can show an "Unknown publisher" message.
-- FreeView reuses one main window by default. If you open another image, it appears in that window. Turn on "Allow several images open at once" on the Viewing page in Preferences to open each image in a new window.
+- FreeView reuses one main window by default. If you open another image, it appears in that window. Turn on "Allow several images open at once" on the General page in Preferences to open each image in a new window.
 - You cannot delete an image inside an archive.
-- Animated images play continuously. You cannot pause them or view one frame at a time.
+- Animated GIF, WebP and APNG images support pause, frame stepping and playback speed controls (K, J, L, [ and ]).
 - AVIF and RAW photos need a Windows extension from the Microsoft Store. If the extension is missing, FreeView tells you which one to install:
   - AVIF: AV1 Video Extension.
   - RAW: Raw Image Extension. If the photo contains a full-size preview from the camera, FreeView shows the preview, because it opens faster.

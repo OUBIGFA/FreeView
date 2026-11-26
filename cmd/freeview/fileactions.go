@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 
 	"github.com/OUBIGFA/FreeView/cmd/freeview/locales"
 	"github.com/OUBIGFA/FreeView/internal/fileops"
@@ -202,20 +203,27 @@ func renameError(cx *core.Scope, err error) string {
 
 // renameBox is the field the new name is typed in, over the image.
 func (v *viewer) renameBox(cx *core.Scope) core.Node {
+	cx.SetSubtreeAppearance(core.AppearanceDark)
 	path := v.img.Get().item.Path
 	stem := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	draft := core.NewSignal(cx, stem)
 	// The field keeps Esc from the viewer's bindings, as a text input
 	// edits with it, so it is bound here, where it fires first.
 	cx.OnKeyWith("escape", core.KeyOptions{When: core.KeyAlways}, func() { v.extras.renaming.Set(false) })
 	return core.View{TestID: "rename",
-		Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(60), AlignItems: core.AlignCenter},
+		Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(24), AlignItems: core.AlignCenter},
 		Children: []core.Node{core.View{
-			Style: core.Style{Background: core.RGBA(0x000000, 0.75), Padding: core.Symmetric(10, 14), CornerRadius: 8, Gap: 6, Width: core.Pt(420)},
+			Style: core.Style{Background: core.RGBA(0x242424, 0.94), BorderWidth: 1, BorderColor: core.RGBA(0xffffff, 0.14),
+				CornerRadius: 10, BorderCurve: core.BorderCurveContinuous, Padding: core.All(16), Gap: 12, Width: core.Pct(100), MaxWidth: core.Pt(460)},
 			Children: []core.Node{
-				core.Text{Content: locales.RenameHint(cx, filepath.Ext(path)), Style: core.Style{Color: core.RGB(0xcfcfcf), FontSize: 12, LineHeight: 17}},
-				core.Input{TestID: "rename-input", DefaultValue: stem, AutoFocus: true, OnSubmit: v.rename,
-					Style: core.Style{Color: core.RGB(0xffffff), FontSize: 14, Height: core.Pt(28), Padding: core.Symmetric(0, 8),
-						Background: core.RGBA(0xffffff, 0.1), CornerRadius: 4}},
+				ui.Text(locales.ActionRename(cx), 16, ui.Medium, ui.ColorsOf(cx).Text),
+				core.Text{Content: locales.RenameHint(cx, filepath.Ext(path)), Style: core.Style{Color: core.RGB(0xcfcfcf), FontSize: 13, LineHeight: 20}},
+				ui.Input{TestID: "rename-input", Label: locales.ActionRename(cx), Value: draft.Get, OnChange: draft.Set, AutoFocus: true, OnSubmit: v.rename,
+					Style: core.Style{FontSize: 14, Height: core.Pt(36)}},
+				core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifyEnd, Gap: 8}, Children: []core.Node{
+					ui.Button{Text: locales.Cancel(cx), Variant: ui.ButtonGhost, TestID: "rename-cancel", OnPress: func() { v.extras.renaming.Set(false) }},
+					ui.Button{Text: locales.UpdateOk(cx), Variant: ui.ButtonSecondary, TestID: "rename-confirm", OnPress: func() { v.rename(draft.Get()) }},
+				}},
 			}}}}
 }
 

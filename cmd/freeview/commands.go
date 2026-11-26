@@ -19,6 +19,11 @@ var repeating = map[settings.Action]bool{settings.Next: true, settings.Previous:
 // previous bindings, goes as it runs again.
 func (v *viewer) keyBindings() core.Node {
 	return core.Dynamic(func(cx *core.Scope) core.Node {
+		if v.menuOpen.Get() {
+			// The menu owns arrows, Enter and Escape while open. Letting
+			// viewer bindings run here would turn or close the image behind it.
+			return core.Group{}
+		}
 		for action, keys := range v.cfg.Get().Keys {
 			for _, key := range keys {
 				if key == "" {
@@ -175,7 +180,7 @@ func (v *viewer) item(a settings.Action) desktop.MenuItem {
 	if keys := v.cfg.Get().Keys[a]; len(keys) > 0 {
 		shortcut = keys[0]
 	}
-	return desktop.MenuItem{Label: actionLabel(v.cx, a), Shortcut: shortcut, OnSelect: func() { v.run(a, nil) }}
+	return desktop.MenuItem{Label: actionLabel(v.cx, a), Shortcut: shortcut, Disabled: v.actionDisabled(a), OnSelect: func() { v.run(a, nil) }}
 }
 
 func (v *viewer) checked(a settings.Action, on bool) desktop.MenuItem {
@@ -186,47 +191,82 @@ func (v *viewer) checked(a settings.Action, on bool) desktop.MenuItem {
 
 var separator = desktop.MenuItem{Separator: true}
 
-// menuItems is the context menu.
-func (v *viewer) menuItems() []desktop.MenuItem {
-	return []desktop.MenuItem{
-		v.item(settings.Open), v.item(settings.Reveal), separator,
-		v.item(settings.Next), v.item(settings.Previous), v.item(settings.First), v.item(settings.Last), separator,
-		v.item(settings.ZoomIn), v.item(settings.ZoomOut), v.item(settings.ZoomFit), v.item(settings.ZoomOriginal), separator,
-		v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
-		v.checked(settings.FullScreen, desktop.FullScreen(v.cx)), v.checked(settings.Slideshow, v.slideshow.Get()),
-		v.checked(settings.Info, v.info.Get()), v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop),
-		v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar), v.checked(settings.Navigator, v.cfg.Get().Navigator),
-		v.checked(settings.Filmstrip, v.cfg.Get().Filmstrip), separator,
-		v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Rename), v.item(settings.CopyTo),
-		v.item(settings.MoveTo), v.item(settings.OpenWith), v.item(settings.Properties), v.item(settings.Delete), separator,
-		v.item(settings.Preferences), v.item(settings.Close),
+// actionDisabled is shared by the application and context menus. It
+// uses only already available state: opening a menu never decodes pixels
+// or reads metadata. Shell actions on an archive refer to the archive.
+func (v *viewer) actionDisabled(a settings.Action) bool {
+	s := v.img.Get()
+	file := v.currentFile() != ""
+	image := s.err == nil && !s.src.Empty()
+	switch a {
+	case settings.Next, settings.Previous, settings.First, settings.Last:
+		return v.count.Get() < 2
+	case settings.Slideshow:
+		return v.count.Get() < 2 && !v.slideshow.Get()
+	case settings.ZoomIn, settings.ZoomOut, settings.ZoomFit, settings.ZoomOriginal,
+		settings.RotateLeft, settings.RotateRight, settings.FlipH, settings.FlipV, settings.CopyImage:
+		return !image
+	case settings.Rename, settings.CopyTo, settings.MoveTo, settings.Delete:
+		return !file || v.cat.Archive != ""
+	case settings.Reveal, settings.CopyPath, settings.OpenWith, settings.Properties, settings.ExportVideo:
+		return !file
+	case settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimFaster, settings.AnimSlower:
+		return !v.extras.animated
 	}
+	return false
+}
+
+// menuGroups keeps navigation, image transforms, playback and window
+// controls in their own places. Both menus use this order and state.
+func (v *viewer) browseMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.item(settings.Previous), v.item(settings.Next), separator,
+		v.item(settings.First), v.item(settings.Last), separator,
+		v.checked(settings.Slideshow, v.slideshow.Get())}
+}
+
+func (v *viewer) zoomMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.item(settings.ZoomIn), v.item(settings.ZoomOut), separator,
+		v.item(settings.ZoomFit), v.item(settings.ZoomOriginal)}
+}
+
+func (v *viewer) transformMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.item(settings.RotateLeft), v.item(settings.RotateRight), separator,
+		v.item(settings.FlipH), v.item(settings.FlipV)}
+}
+
+func (v *viewer) animationMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.item(settings.AnimPause), separator,
+		v.item(settings.AnimPrev), v.item(settings.AnimNext), separator,
+		v.item(settings.AnimSlower), v.item(settings.AnimFaster)}
+}
+
+func (v *viewer) displayMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.checked(settings.FullScreen, desktop.FullScreen(v.cx)),
+		v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop), v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar), separator,
+		v.checked(settings.Info, v.info.Get()), v.checked(settings.Navigator, v.cfg.Get().Navigator),
+		v.checked(settings.Filmstrip, v.cfg.Get().Filmstrip)}
+}
+
+func (v *viewer) fileMenu() []desktop.MenuItem {
+	return []desktop.MenuItem{v.item(settings.Rename), v.item(settings.CopyTo), v.item(settings.MoveTo), separator,
+		v.item(settings.OpenWith), v.item(settings.Properties), v.item(settings.ExportVideo)}
 }
 
 // updateMenu sets the application menu, which Alt shows, again whenever
-// the shortcuts or checked states change.
+// the shortcuts, availability or checked states change.
 func (v *viewer) updateMenu() {
 	cx := v.cx
+	file := []desktop.MenuItem{v.item(settings.Open), v.item(settings.Reveal), separator,
+		v.item(settings.CopyImage), v.item(settings.CopyPath), separator}
+	file = append(file, v.fileMenu()...)
+	file = append(file, separator, v.item(settings.Delete), separator, v.item(settings.Preferences), separator, v.item(settings.Close))
+	image := append(v.zoomMenu(), separator)
+	image = append(image, v.transformMenu()...)
 	desktop.SetApplicationMenu(cx, []desktop.MenuItem{
-		{Label: locales.MenuFile(cx), Items: []desktop.MenuItem{
-			v.item(settings.Open), v.item(settings.Reveal), separator,
-			v.item(settings.CopyImage), v.item(settings.CopyPath), v.item(settings.Rename), v.item(settings.CopyTo),
-			v.item(settings.MoveTo), v.item(settings.OpenWith), v.item(settings.Properties), v.item(settings.ExportVideo),
-			v.item(settings.Delete), separator,
-			v.item(settings.Preferences), separator, v.item(settings.Close),
-		}},
-		{Label: locales.MenuView(cx), Items: []desktop.MenuItem{
-			v.item(settings.ZoomIn), v.item(settings.ZoomOut), v.item(settings.ZoomFit), v.item(settings.ZoomOriginal), separator,
-			v.item(settings.RotateLeft), v.item(settings.RotateRight), v.item(settings.FlipH), v.item(settings.FlipV), separator,
-			v.checked(settings.FullScreen, desktop.FullScreen(cx)), v.checked(settings.Info, v.info.Get()),
-			v.checked(settings.AlwaysOnTop, v.cfg.Get().AlwaysOnTop), v.checked(settings.TitleBar, v.cfg.Get().ShowTitleBar),
-			v.checked(settings.Navigator, v.cfg.Get().Navigator), v.checked(settings.Filmstrip, v.cfg.Get().Filmstrip),
-		}},
-		{Label: locales.MenuGo(cx), Items: []desktop.MenuItem{
-			v.item(settings.Next), v.item(settings.Previous), v.item(settings.First), v.item(settings.Last), separator,
-			v.checked(settings.Slideshow, v.slideshow.Get()), separator,
-			v.item(settings.AnimPause), v.item(settings.AnimPrev), v.item(settings.AnimNext),
-			v.item(settings.AnimFaster), v.item(settings.AnimSlower),
-		}},
+		{Label: locales.MenuFile(cx), Items: file},
+		{Label: locales.MenuImage(cx), Items: image},
+		{Label: locales.MenuGo(cx), Items: v.browseMenu()},
+		{Label: locales.MenuAnimation(cx), Items: v.animationMenu()},
+		{Label: locales.MenuDisplay(cx), Items: v.displayMenu()},
 	})
 }

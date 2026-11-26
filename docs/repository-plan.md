@@ -20,9 +20,9 @@
 | 来源 | 固定依据 | 用途 | 许可 |
 | --- | --- | --- | --- |
 | [qView](https://github.com/jurplel/qView) | `b8b993a5e0433ba7fa066e68d2346cc7dd1a7a8c` | 功能和交互参考 | GPL-3.0 |
-| [nsgo](https://github.com/nsgo-dev/nsgo) | 正式版 v0.3.0（`go.mod`） | 原生界面引擎 | Apache-2.0 |
+| [nsgo](https://github.com/nsgo-dev/nsgo) | 正式版 v0.3.4（`go.mod`） | 原生界面引擎 | Apache-2.0 |
 
-Go 和 nsgo 跟随官方最新稳定版。2026-11-24 核对：Go 1.27.4，nsgo v0.3.0（最新的非 draft、非 prerelease 版本）。
+Go 和 nsgo 跟随官方最新稳定版。2026-11-26 核对：Go 1.27.4，nsgo v0.3.4（最新的非 draft、非 prerelease 版本）。
 
 ## 跟踪边界
 

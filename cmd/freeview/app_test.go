@@ -51,7 +51,7 @@ func fileURI(p string) string {
 
 // start runs the viewer with its preferences in a fresh profile.
 func start(t *testing.T) *nsgotest.App {
-	t.Setenv("AppData", t.TempDir())
+	t.Setenv("APPDATA", t.TempDir())
 	return nsgotest.Start(t, Root, nsgotest.Size(800, 600))
 }
 
@@ -219,20 +219,20 @@ func TestPreferencesNavigateAndSearch(t *testing.T) {
 	t.Setenv("AppData", t.TempDir())
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
 		nsgotest.Size(1040, 700))
-	app.WaitFor("id:settings-view-fit", 5*time.Second)
+	app.WaitFor("id:settings-general-always-on-top", 5*time.Second)
 	if app.Exists("id:settings-mouse-middle_click") {
-		t.Error("mouse rows shown on the view page")
+		t.Error("mouse rows shown on the general page")
 	}
 	app.Press("id:settings-nav-mouse")
 	app.WaitFor("id:settings-mouse-middle_click", 5*time.Second)
-	if app.Exists("id:settings-view-fit") {
-		t.Error("view rows shown on the mouse page")
+	if app.Exists("id:settings-general-always-on-top") {
+		t.Error("general rows shown on the mouse page")
 	}
-	// "top" matches the view page's switch and the keyboard page's action (the tests run in English).
+	// "top" matches General's switch and the keyboard page's action.
 	app.Type("id:settings-search", "top")
-	app.WaitFor("id:settings-view-always-on-top", 5*time.Second)
+	app.WaitFor("id:settings-general-always-on-top", 5*time.Second)
 	app.WaitFor("id:settings-keyboard-key-always_on_top", 5*time.Second)
-	if app.Exists("id:settings-view-fit") || app.Exists("id:settings-mouse-middle_click") {
+	if app.Exists("id:settings-general-title-bar") || app.Exists("id:settings-mouse-middle_click") {
 		t.Error("rows that do not match shown while searching")
 	}
 }
@@ -244,19 +244,23 @@ func TestPreferencesKeepTheirScrollOnAChange(t *testing.T) {
 	t.Setenv("AppData", t.TempDir())
 	app := nsgotest.Start(t, func(cx *core.Scope) core.Node { return preferences{v: newViewer(cx)}.Render(cx) },
 		nsgotest.Size(1040, 500))
-	app.WaitFor("id:settings-view-fit", 5*time.Second)
+	app.WaitFor("id:settings-general-always-on-top", 5*time.Second)
 	page := app.Find("id:settings-page")
 	// Its frame is in the pane beside the sidebar and its border.
 	if w := page.Frame.Size.Width; w != 1040-prefsSidebarWidth-1 {
 		t.Errorf("page scroll view %v wide, want the whole pane", w)
 	}
-	app.ScrollTo("id:settings-page", core.Point{Y: 200})
-	app.Press("id:edge-clicks")
-	app.Settle()
-	if y := app.Find("id:settings-page").Offset.Y; y != 200 {
-		t.Errorf("offset after a switch = %v, want 200", y)
+	app.ScrollTo("id:settings-page", core.Point{Y: 80})
+	offset := app.Find("id:settings-page").Offset.Y
+	if offset <= 0 {
+		t.Fatal("the settings page did not scroll")
 	}
-	if app.Find("id:settings-view-fit") == nil {
+	app.Press("id:open-maximized")
+	app.Settle()
+	if y := app.Find("id:settings-page").Offset.Y; y != offset {
+		t.Errorf("offset after a switch = %v, want %v", y, offset)
+	}
+	if len(app.QueryMounted("id:settings-general-always-on-top")) == 0 {
 		t.Error("rows gone after a switch")
 	}
 	app.Press("id:settings-nav-mouse")
@@ -393,7 +397,7 @@ func TestAboutLinkDoesNotBlockSettings(t *testing.T) {
 			case <-time.After(time.Second):
 				t.Fatal("the browser handoff did not start")
 			}
-			app.Press("id:settings-nav-view")
+			app.Press("id:settings-nav-general")
 			app.WaitForGone("id:"+id, time.Second)
 			if !app.CloseWindow() {
 				t.Fatal("settings did not close while the browser was waiting")
@@ -452,9 +456,14 @@ func TestFileTypesMatchTheCatalog(t *testing.T) {
 	}
 }
 
-// Every select ends in Solar's arrow, not Lucide's chevron.
-func TestSelectsDrawSolarArrows(t *testing.T) {
-	if !reflect.DeepEqual(*lucide.ChevronDown(), *solar.AltArrowDown()) {
-		t.Fatal("lucide.ChevronDown still draws Lucide's chevron")
+// The controls embedded by nsgo use the same Solar marks as our menus.
+func TestControlsDrawSolarMarks(t *testing.T) {
+	for _, pair := range []struct{ control, solar func() *core.SVG }{
+		{lucide.ChevronDown, solar.AltArrowDown}, {lucide.ChevronRight, solar.AltArrowRight},
+		{lucide.ChevronLeft, solar.AltArrowLeft}, {lucide.Check, solar.Check},
+	} {
+		if !reflect.DeepEqual(*pair.control(), *pair.solar()) {
+			t.Error("a control still draws its original Lucide mark")
+		}
 	}
 }

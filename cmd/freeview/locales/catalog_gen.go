@@ -211,6 +211,12 @@ const (
 	textMenuFile
 	textMenuView
 	textMenuGo
+	textMenuImage
+	textMenuAnimation
+	textMenuDisplay
+	textMenuZoom
+	textMenuTransform
+	textMenuBack
 	textPrefsOpenMaximized
 	textPrefsMultipleWindows
 	textPrefsMultipleWindowsHint
@@ -301,6 +307,33 @@ const (
 	textPrefsNotSet
 	textPrefsChoose
 	textPrefsClear
+	textPrefsGeneral
+	textPrefsGeneralHint
+	textPrefsDisplay
+	textPrefsDisplayHint
+	textPrefsBrowse
+	textPrefsBrowseHint
+	textPrefsFiles
+	textPrefsAboutHint
+	textPrefsStartup
+	textPrefsOverlays
+	textPrefsTools
+	textPrefsSearchHint
+	textPrefsFilesHint
+	textPrefsMouseHint
+	textPrefsKeyboardHint
+	textPrefsGeneralGroup
+	textPrefsDisplayGroup
+	textPrefsMouseButtons
+	textPrefsMouseWheel
+	textPrefsMouseModifiedWheel
+	textPrefsKeyboardNavigation
+	textPrefsKeyboardView
+	textPrefsKeyboardWindow
+	textPrefsKeyboardFiles
+	textPrefsKeyboardAnimation
+	textPrefsResetTitle
+	textPrefsResetHint
 	numTexts
 )
 
@@ -403,6 +436,12 @@ var keyOfText = [numTexts]string{
 	"menuFile",
 	"menuView",
 	"menuGo",
+	"menuImage",
+	"menuAnimation",
+	"menuDisplay",
+	"menuZoom",
+	"menuTransform",
+	"menuBack",
 	"prefsOpenMaximized",
 	"prefsMultipleWindows",
 	"prefsMultipleWindowsHint",
@@ -493,6 +532,33 @@ var keyOfText = [numTexts]string{
 	"prefsNotSet",
 	"prefsChoose",
 	"prefsClear",
+	"prefsGeneral",
+	"prefsGeneralHint",
+	"prefsDisplay",
+	"prefsDisplayHint",
+	"prefsBrowse",
+	"prefsBrowseHint",
+	"prefsFiles",
+	"prefsAboutHint",
+	"prefsStartup",
+	"prefsOverlays",
+	"prefsTools",
+	"prefsSearchHint",
+	"prefsFilesHint",
+	"prefsMouseHint",
+	"prefsKeyboardHint",
+	"prefsGeneralGroup",
+	"prefsDisplayGroup",
+	"prefsMouseButtons",
+	"prefsMouseWheel",
+	"prefsMouseModifiedWheel",
+	"prefsKeyboardNavigation",
+	"prefsKeyboardView",
+	"prefsKeyboardWindow",
+	"prefsKeyboardFiles",
+	"prefsKeyboardAnimation",
+	"prefsResetTitle",
+	"prefsResetHint",
 }
 
 // textsEn are the messages without arguments in en.
@@ -593,6 +659,12 @@ var textsEn = i18n.NewTexts(""+
 	"File"+
 	"View"+
 	"Go"+
+	"Image"+
+	"Animation"+
+	"Display"+
+	"Zoom"+
+	"Rotate and flip"+
+	"Back"+
 	"Maximize the window when it opens"+
 	"Allow several images open at once"+
 	"On: each image you open gets a new window; off: it shows in the open window"+
@@ -682,7 +754,34 @@ var textsEn = i18n.NewTexts(""+
 	"Asked for each time when not set"+
 	"Not set"+
 	"Choose…"+
-	"Clear",
+	"Clear"+
+	"General"+
+	"Window behavior and startup options"+
+	"Display"+
+	"Zoom, image quality and information"+
+	"Browse"+
+	"Image order, navigation and playback"+
+	"Files"+
+	"Version, updates and open-source licenses"+
+	"Startup and window restoration"+
+	"Information and navigation"+
+	"Programs and folders"+
+	"Find settings and shortcuts across all categories"+
+	"Deletion confirmation, external editor and target folder"+
+	"Customize mouse buttons and wheel gestures"+
+	"Find and customize shortcuts by function"+
+	"Window"+
+	"Image display"+
+	"Mouse buttons"+
+	"Wheel"+
+	"Modifier keys and wheel"+
+	"Image navigation"+
+	"Zoom and transforms"+
+	"Window and interface"+
+	"File actions"+
+	"Animation and slideshow"+
+	"Restore all default settings?"+
+	"Custom mouse actions, shortcuts and other settings will be reset, window positions are kept",
 	[]uint16{
 		8,
 		37,
@@ -780,6 +879,12 @@ var textsEn = i18n.NewTexts(""+
 		4,
 		4,
 		2,
+		5,
+		9,
+		7,
+		4,
+		15,
+		4,
 		33,
 		33,
 		75,
@@ -870,6 +975,33 @@ var textsEn = i18n.NewTexts(""+
 		7,
 		9,
 		5,
+		7,
+		35,
+		7,
+		35,
+		6,
+		36,
+		5,
+		41,
+		30,
+		26,
+		20,
+		49,
+		56,
+		42,
+		40,
+		6,
+		13,
+		13,
+		5,
+		23,
+		16,
+		19,
+		20,
+		12,
+		23,
+		29,
+		91,
 	})
 
 // textsZhHans are the messages without arguments in zh-Hans.
@@ -970,6 +1102,12 @@ var textsZhHans = i18n.NewTexts(""+
 	"文件"+
 	"查看"+
 	"浏览"+
+	"图像"+
+	"动图"+
+	"显示"+
+	"缩放"+
+	"旋转和翻转"+
+	"返回"+
 	"打开时最大化窗口"+
 	"允许同时打开多张图片"+
 	"开启后每次打开图片都使用新窗口；关闭时在已打开的窗口中显示"+
@@ -1059,7 +1197,34 @@ var textsZhHans = i18n.NewTexts(""+
 	"未设置时每次都询问"+
 	"未设置"+
 	"选择…"+
-	"清除",
+	"清除"+
+	"常规"+
+	"窗口行为与启动选项"+
+	"显示"+
+	"缩放、画质与图片信息"+
+	"浏览"+
+	"图片顺序、翻页与播放"+
+	"文件"+
+	"版本、更新与开源许可"+
+	"启动与窗口恢复"+
+	"图片信息与定位"+
+	"程序与文件夹"+
+	"在所有分类中查找设置和快捷键"+
+	"删除确认、外部编辑器与目标文件夹"+
+	"自定义鼠标按键与滚轮操作"+
+	"按功能查找和自定义快捷键"+
+	"窗口"+
+	"图片显示"+
+	"鼠标按键"+
+	"普通滚轮"+
+	"组合键与滚轮"+
+	"图片导航"+
+	"缩放与图像"+
+	"窗口与界面"+
+	"文件操作"+
+	"动图与幻灯片"+
+	"恢复所有默认设置？"+
+	"自定义的鼠标操作、快捷键和其他设置都将恢复默认，窗口位置不受影响",
 	[]uint16{
 		8,
 		45,
@@ -1157,6 +1322,12 @@ var textsZhHans = i18n.NewTexts(""+
 		6,
 		6,
 		6,
+		6,
+		6,
+		6,
+		6,
+		15,
+		6,
 		24,
 		30,
 		87,
@@ -1247,6 +1418,33 @@ var textsZhHans = i18n.NewTexts(""+
 		9,
 		9,
 		6,
+		6,
+		27,
+		6,
+		30,
+		6,
+		30,
+		6,
+		30,
+		21,
+		21,
+		18,
+		42,
+		48,
+		36,
+		36,
+		6,
+		12,
+		12,
+		12,
+		18,
+		12,
+		15,
+		15,
+		12,
+		18,
+		27,
+		96,
 	})
 
 // texts returns the messages without arguments in lang, nil for a
@@ -2302,6 +2500,48 @@ func MenuGo(cx *core.Scope) string { return For(cx).MenuGo() }
 
 // MenuGo is the package's MenuGo in the language of msgs.
 func (msgs Messages) MenuGo() string { return msgs.text(textMenuGo) }
+
+// MenuImage says "Image"
+// in the language the app shows under cx.
+func MenuImage(cx *core.Scope) string { return For(cx).MenuImage() }
+
+// MenuImage is the package's MenuImage in the language of msgs.
+func (msgs Messages) MenuImage() string { return msgs.text(textMenuImage) }
+
+// MenuAnimation says "Animation"
+// in the language the app shows under cx.
+func MenuAnimation(cx *core.Scope) string { return For(cx).MenuAnimation() }
+
+// MenuAnimation is the package's MenuAnimation in the language of msgs.
+func (msgs Messages) MenuAnimation() string { return msgs.text(textMenuAnimation) }
+
+// MenuDisplay says "Display"
+// in the language the app shows under cx.
+func MenuDisplay(cx *core.Scope) string { return For(cx).MenuDisplay() }
+
+// MenuDisplay is the package's MenuDisplay in the language of msgs.
+func (msgs Messages) MenuDisplay() string { return msgs.text(textMenuDisplay) }
+
+// MenuZoom says "Zoom"
+// in the language the app shows under cx.
+func MenuZoom(cx *core.Scope) string { return For(cx).MenuZoom() }
+
+// MenuZoom is the package's MenuZoom in the language of msgs.
+func (msgs Messages) MenuZoom() string { return msgs.text(textMenuZoom) }
+
+// MenuTransform says "Rotate and flip"
+// in the language the app shows under cx.
+func MenuTransform(cx *core.Scope) string { return For(cx).MenuTransform() }
+
+// MenuTransform is the package's MenuTransform in the language of msgs.
+func (msgs Messages) MenuTransform() string { return msgs.text(textMenuTransform) }
+
+// MenuBack says "Back"
+// in the language the app shows under cx.
+func MenuBack(cx *core.Scope) string { return For(cx).MenuBack() }
+
+// MenuBack is the package's MenuBack in the language of msgs.
+func (msgs Messages) MenuBack() string { return msgs.text(textMenuBack) }
 
 // PrefsOpenMaximized says "Maximize the window when it opens"
 // in the language the app shows under cx.
@@ -3368,3 +3608,192 @@ func PrefsClear(cx *core.Scope) string { return For(cx).PrefsClear() }
 
 // PrefsClear is the package's PrefsClear in the language of msgs.
 func (msgs Messages) PrefsClear() string { return msgs.text(textPrefsClear) }
+
+// PrefsGeneral says "General"
+// in the language the app shows under cx.
+func PrefsGeneral(cx *core.Scope) string { return For(cx).PrefsGeneral() }
+
+// PrefsGeneral is the package's PrefsGeneral in the language of msgs.
+func (msgs Messages) PrefsGeneral() string { return msgs.text(textPrefsGeneral) }
+
+// PrefsGeneralHint says "Window behavior and startup options"
+// in the language the app shows under cx.
+func PrefsGeneralHint(cx *core.Scope) string { return For(cx).PrefsGeneralHint() }
+
+// PrefsGeneralHint is the package's PrefsGeneralHint in the language of msgs.
+func (msgs Messages) PrefsGeneralHint() string { return msgs.text(textPrefsGeneralHint) }
+
+// PrefsDisplay says "Display"
+// in the language the app shows under cx.
+func PrefsDisplay(cx *core.Scope) string { return For(cx).PrefsDisplay() }
+
+// PrefsDisplay is the package's PrefsDisplay in the language of msgs.
+func (msgs Messages) PrefsDisplay() string { return msgs.text(textPrefsDisplay) }
+
+// PrefsDisplayHint says "Zoom, image quality and information"
+// in the language the app shows under cx.
+func PrefsDisplayHint(cx *core.Scope) string { return For(cx).PrefsDisplayHint() }
+
+// PrefsDisplayHint is the package's PrefsDisplayHint in the language of msgs.
+func (msgs Messages) PrefsDisplayHint() string { return msgs.text(textPrefsDisplayHint) }
+
+// PrefsBrowse says "Browse"
+// in the language the app shows under cx.
+func PrefsBrowse(cx *core.Scope) string { return For(cx).PrefsBrowse() }
+
+// PrefsBrowse is the package's PrefsBrowse in the language of msgs.
+func (msgs Messages) PrefsBrowse() string { return msgs.text(textPrefsBrowse) }
+
+// PrefsBrowseHint says "Image order, navigation and playback"
+// in the language the app shows under cx.
+func PrefsBrowseHint(cx *core.Scope) string { return For(cx).PrefsBrowseHint() }
+
+// PrefsBrowseHint is the package's PrefsBrowseHint in the language of msgs.
+func (msgs Messages) PrefsBrowseHint() string { return msgs.text(textPrefsBrowseHint) }
+
+// PrefsFiles says "Files"
+// in the language the app shows under cx.
+func PrefsFiles(cx *core.Scope) string { return For(cx).PrefsFiles() }
+
+// PrefsFiles is the package's PrefsFiles in the language of msgs.
+func (msgs Messages) PrefsFiles() string { return msgs.text(textPrefsFiles) }
+
+// PrefsAboutHint says "Version, updates and open-source licenses"
+// in the language the app shows under cx.
+func PrefsAboutHint(cx *core.Scope) string { return For(cx).PrefsAboutHint() }
+
+// PrefsAboutHint is the package's PrefsAboutHint in the language of msgs.
+func (msgs Messages) PrefsAboutHint() string { return msgs.text(textPrefsAboutHint) }
+
+// PrefsStartup says "Startup and window restoration"
+// in the language the app shows under cx.
+func PrefsStartup(cx *core.Scope) string { return For(cx).PrefsStartup() }
+
+// PrefsStartup is the package's PrefsStartup in the language of msgs.
+func (msgs Messages) PrefsStartup() string { return msgs.text(textPrefsStartup) }
+
+// PrefsOverlays says "Information and navigation"
+// in the language the app shows under cx.
+func PrefsOverlays(cx *core.Scope) string { return For(cx).PrefsOverlays() }
+
+// PrefsOverlays is the package's PrefsOverlays in the language of msgs.
+func (msgs Messages) PrefsOverlays() string { return msgs.text(textPrefsOverlays) }
+
+// PrefsTools says "Programs and folders"
+// in the language the app shows under cx.
+func PrefsTools(cx *core.Scope) string { return For(cx).PrefsTools() }
+
+// PrefsTools is the package's PrefsTools in the language of msgs.
+func (msgs Messages) PrefsTools() string { return msgs.text(textPrefsTools) }
+
+// PrefsSearchHint says "Find settings and shortcuts across all categories"
+// in the language the app shows under cx.
+func PrefsSearchHint(cx *core.Scope) string { return For(cx).PrefsSearchHint() }
+
+// PrefsSearchHint is the package's PrefsSearchHint in the language of msgs.
+func (msgs Messages) PrefsSearchHint() string { return msgs.text(textPrefsSearchHint) }
+
+// PrefsFilesHint says "Deletion confirmation, external editor and target folder"
+// in the language the app shows under cx.
+func PrefsFilesHint(cx *core.Scope) string { return For(cx).PrefsFilesHint() }
+
+// PrefsFilesHint is the package's PrefsFilesHint in the language of msgs.
+func (msgs Messages) PrefsFilesHint() string { return msgs.text(textPrefsFilesHint) }
+
+// PrefsMouseHint says "Customize mouse buttons and wheel gestures"
+// in the language the app shows under cx.
+func PrefsMouseHint(cx *core.Scope) string { return For(cx).PrefsMouseHint() }
+
+// PrefsMouseHint is the package's PrefsMouseHint in the language of msgs.
+func (msgs Messages) PrefsMouseHint() string { return msgs.text(textPrefsMouseHint) }
+
+// PrefsKeyboardHint says "Find and customize shortcuts by function"
+// in the language the app shows under cx.
+func PrefsKeyboardHint(cx *core.Scope) string { return For(cx).PrefsKeyboardHint() }
+
+// PrefsKeyboardHint is the package's PrefsKeyboardHint in the language of msgs.
+func (msgs Messages) PrefsKeyboardHint() string { return msgs.text(textPrefsKeyboardHint) }
+
+// PrefsGeneralGroup says "Window"
+// in the language the app shows under cx.
+func PrefsGeneralGroup(cx *core.Scope) string { return For(cx).PrefsGeneralGroup() }
+
+// PrefsGeneralGroup is the package's PrefsGeneralGroup in the language of msgs.
+func (msgs Messages) PrefsGeneralGroup() string { return msgs.text(textPrefsGeneralGroup) }
+
+// PrefsDisplayGroup says "Image display"
+// in the language the app shows under cx.
+func PrefsDisplayGroup(cx *core.Scope) string { return For(cx).PrefsDisplayGroup() }
+
+// PrefsDisplayGroup is the package's PrefsDisplayGroup in the language of msgs.
+func (msgs Messages) PrefsDisplayGroup() string { return msgs.text(textPrefsDisplayGroup) }
+
+// PrefsMouseButtons says "Mouse buttons"
+// in the language the app shows under cx.
+func PrefsMouseButtons(cx *core.Scope) string { return For(cx).PrefsMouseButtons() }
+
+// PrefsMouseButtons is the package's PrefsMouseButtons in the language of msgs.
+func (msgs Messages) PrefsMouseButtons() string { return msgs.text(textPrefsMouseButtons) }
+
+// PrefsMouseWheel says "Wheel"
+// in the language the app shows under cx.
+func PrefsMouseWheel(cx *core.Scope) string { return For(cx).PrefsMouseWheel() }
+
+// PrefsMouseWheel is the package's PrefsMouseWheel in the language of msgs.
+func (msgs Messages) PrefsMouseWheel() string { return msgs.text(textPrefsMouseWheel) }
+
+// PrefsMouseModifiedWheel says "Modifier keys and wheel"
+// in the language the app shows under cx.
+func PrefsMouseModifiedWheel(cx *core.Scope) string { return For(cx).PrefsMouseModifiedWheel() }
+
+// PrefsMouseModifiedWheel is the package's PrefsMouseModifiedWheel in the language of msgs.
+func (msgs Messages) PrefsMouseModifiedWheel() string { return msgs.text(textPrefsMouseModifiedWheel) }
+
+// PrefsKeyboardNavigation says "Image navigation"
+// in the language the app shows under cx.
+func PrefsKeyboardNavigation(cx *core.Scope) string { return For(cx).PrefsKeyboardNavigation() }
+
+// PrefsKeyboardNavigation is the package's PrefsKeyboardNavigation in the language of msgs.
+func (msgs Messages) PrefsKeyboardNavigation() string { return msgs.text(textPrefsKeyboardNavigation) }
+
+// PrefsKeyboardView says "Zoom and transforms"
+// in the language the app shows under cx.
+func PrefsKeyboardView(cx *core.Scope) string { return For(cx).PrefsKeyboardView() }
+
+// PrefsKeyboardView is the package's PrefsKeyboardView in the language of msgs.
+func (msgs Messages) PrefsKeyboardView() string { return msgs.text(textPrefsKeyboardView) }
+
+// PrefsKeyboardWindow says "Window and interface"
+// in the language the app shows under cx.
+func PrefsKeyboardWindow(cx *core.Scope) string { return For(cx).PrefsKeyboardWindow() }
+
+// PrefsKeyboardWindow is the package's PrefsKeyboardWindow in the language of msgs.
+func (msgs Messages) PrefsKeyboardWindow() string { return msgs.text(textPrefsKeyboardWindow) }
+
+// PrefsKeyboardFiles says "File actions"
+// in the language the app shows under cx.
+func PrefsKeyboardFiles(cx *core.Scope) string { return For(cx).PrefsKeyboardFiles() }
+
+// PrefsKeyboardFiles is the package's PrefsKeyboardFiles in the language of msgs.
+func (msgs Messages) PrefsKeyboardFiles() string { return msgs.text(textPrefsKeyboardFiles) }
+
+// PrefsKeyboardAnimation says "Animation and slideshow"
+// in the language the app shows under cx.
+func PrefsKeyboardAnimation(cx *core.Scope) string { return For(cx).PrefsKeyboardAnimation() }
+
+// PrefsKeyboardAnimation is the package's PrefsKeyboardAnimation in the language of msgs.
+func (msgs Messages) PrefsKeyboardAnimation() string { return msgs.text(textPrefsKeyboardAnimation) }
+
+// PrefsResetTitle says "Restore all default settings?"
+// in the language the app shows under cx.
+func PrefsResetTitle(cx *core.Scope) string { return For(cx).PrefsResetTitle() }
+
+// PrefsResetTitle is the package's PrefsResetTitle in the language of msgs.
+func (msgs Messages) PrefsResetTitle() string { return msgs.text(textPrefsResetTitle) }
+
+// PrefsResetHint says "Custom mouse actions, shortcuts and other settings will be reset, window positions are kept"
+// in the language the app shows under cx.
+func PrefsResetHint(cx *core.Scope) string { return For(cx).PrefsResetHint() }
+
+// PrefsResetHint is the package's PrefsResetHint in the language of msgs.
+func (msgs Messages) PrefsResetHint() string { return msgs.text(textPrefsResetHint) }

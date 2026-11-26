@@ -18,11 +18,11 @@
     },
     {
       "path": "assets/screenshots/FreeView-preferences.png",
-      "source": "FreeView Preferences screenshot (main branch, Solar icons, 2026-11-24)",
+      "source": "FreeView Preferences screenshot (main branch UI redesign, private Windows desktop, 2026-11-26)",
       "license": "GPL-3.0-only",
       "reason": "README preview of the Preferences window",
-      "bytes": 43896,
-      "sha256": "51070157015c6dd24e951ac61d12af93a687c9452272561f8d421cffb2cce789"
+      "bytes": 46073,
+      "sha256": "8ff8efd7f7f4e9b9de8fbacaf0f1480c7bd3f9176f2d0ee99de34eec1b99373b"
     }
   ]
 }

@@ -33,7 +33,7 @@ func folder(t *testing.T, sizes map[string][2]int) string {
 // defaults.
 func startWith(t *testing.T, change func(*settings.Config)) *nsgotest.App {
 	appData := t.TempDir()
-	t.Setenv("AppData", appData)
+	t.Setenv("APPDATA", appData)
 	c := settings.Default()
 	change(&c)
 	if err := settings.Save(filepath.Join(appData, "FreeView", "config.yaml"), c); err != nil {
