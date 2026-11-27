@@ -22,12 +22,13 @@
 
 1. 检查与测试：根目录 `python tools/check.py` 和 `go test -tags nodynamic ./internal/...`；在 `cmd/freeview/` 中运行 `go tool nsgo check` 和 `go tool nsgo test`。改动界面或输入时，用 `go run ./tools/deskrun` 在私有桌面中做界面验收（示例 `tests/desktop/smoke.txt`）。不在用户当前桌面上做界面测试。
 2. 提交并推送到 origin/main。
-3. 每次代码改动后都重新构建测试安装器：根目录运行 `python tools/build_installer.py`，生成 `dist/releases/FreeView-<版本>.exe`（如 `FreeView-0.1.0.exe`，目录被忽略）。测试安装器只供本地试用，不等于正式发布。
+3. 每次代码改动后都重新构建测试安装器：根目录运行 `python tools/build_installer.py`，生成 `dist/releases/FreeView-<版本>.exe`（目录被忽略）。测试安装器只供本地试用，不等于正式发布。
 
 ## 版本号
 
 - 版本号只写在 `cmd/freeview/nsgo.yaml` 的 `version`。日常改代码、加功能都不改版本号，测试安装器沿用当前版本号命名。
-- 只在正式发布打 tag 时更新版本号：把 `version` 改成 tag 的号码（tag `v0.2.0` 对应 `0.2.0`），同步 README 的“当前版本”，再打 tag。创建 tag 或 Release 需要用户另行授权。
+- 仅在用户授权准备正式发布时更新版本号，tag 必须为 `v<版本>`，与 `version` 一致。创建 tag 或 Release 需要用户另行授权。
+- 中英文 README 不写死 FreeView 的当前版本号或具体版本的安装包文件名，下载链接指向最新正式版，版本徽章自动读取 GitHub Release；发布时不再同步 README 版本号。第三方依赖版本与历史验证记录保留准确版本，供来源追溯。
 
 ## 开发注意
 

@@ -8,7 +8,7 @@
 
 简体中文 · [English](README.en.md)
 
-<a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/version-0.2.0-2E7D32" alt="版本 0.2.0"></a>
+<a href="https://github.com/OUBIGFA/FreeView/releases/latest"><img src="https://img.shields.io/github/v/release/OUBIGFA/FreeView?color=2E7D32" alt="最新正式版"></a>
 <a href="https://github.com/OUBIGFA/FreeView/releases"><img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-2E7D32?logo=windows&amp;logoColor=white" alt="Windows 10 和 11"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2E7D32" alt="GPL-3.0-only 许可证"></a>
 
@@ -48,14 +48,14 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 
 ### 安装 FreeView
 
-1. 打开 [FreeView 下载页](https://github.com/OUBIGFA/FreeView/releases)。
-2. 下载 Windows 安装文件。
+1. 打开 [FreeView 最新版下载页](https://github.com/OUBIGFA/FreeView/releases/latest)。
+2. 下载页面附件中的 Windows 安装文件。
 3. 打开下载的文件。
 4. 按屏幕上的提示安装 FreeView。
 
-当前版本是 0.2.0。它支持 64 位 Windows 10 和 Windows 11。
+FreeView 支持 64 位 Windows 10 和 Windows 11。版本号和更新说明以下载页为准。
 
-从 0.1.0 或 0.1.2 升级时，请手动下载并运行 `FreeView-0.2.0.exe`。安装 0.1.3 或更新的版本后，FreeView 使用新的 GitHub Release 自动更新方式。
+FreeView 通过 GitHub Release 检查更新。如果旧版没有检查更新功能，或仍使用旧的更新方式，请从下载页手动下载并运行最新安装器。
 
 安装程序为当前用户安装 FreeView。你不需要管理员权限。安装后，从开始菜单打开 FreeView。你也可以在安装时创建桌面快捷方式。
 
@@ -103,7 +103,7 @@ FreeView 是一个查看图片的电脑应用。它打开电脑上的图片、�
 ## 注意
 
 - 这个版本的安装程序没有数字签名。Windows 可能显示“未知发布者”提示。
-- FreeView 默认复用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。可在设置的“查看”页开启“允许同时打开多张图片”，之后每次打开图片都使用新窗口。
+- FreeView 默认复用一个主窗口。如果你再次打开图片，图片会显示在这个窗口中。可在设置的“常规”页开启“允许同时打开多张图片”，之后每次打开图片都使用新窗口。
 - 压缩包中的图片不能删除、重命名或移动。
 - 动画图片太大时（所有帧超过可用缓存的一半），不能逐帧控制，只能自动播放。
 - AVIF 和 RAW 照片需要从 Microsoft Store 安装对应的 Windows 扩展。缺少扩展时，FreeView 会提示要安装哪一个：
