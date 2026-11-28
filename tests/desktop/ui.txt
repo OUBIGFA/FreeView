@@ -19,34 +19,34 @@ other true
 responsive other
 # The isolated test starts with multiple_windows: true; switch it back off
 # and verify that changing a preference does not close its owning window
-omouse 0x201 1 976 536
-omouse 0x202 0 976 536
+omouse 0x201 1 976 606
+omouse 0x202 0 976 606
 sleep 200
 other true
 responsive other
 oshot settings-general.png
-omouse 0x201 1 75 154
-omouse 0x202 0 75 154
+omouse 0x201 1 75 194
+omouse 0x202 0 75 194
 sleep 200
 oshot settings-display.png
-omouse 0x201 1 75 188
-omouse 0x202 0 75 188
+omouse 0x201 1 75 236
+omouse 0x202 0 75 236
 sleep 200
 oshot settings-browse.png
-omouse 0x201 1 75 222
-omouse 0x202 0 75 222
+omouse 0x201 1 75 278
+omouse 0x202 0 75 278
 sleep 200
 oshot settings-files.png
-omouse 0x201 1 75 256
-omouse 0x202 0 75 256
+omouse 0x201 1 75 320
+omouse 0x202 0 75 320
 sleep 200
 oshot settings-mouse.png
-omouse 0x201 1 75 290
-omouse 0x202 0 75 290
+omouse 0x201 1 75 362
+omouse 0x202 0 75 362
 sleep 200
 oshot settings-keyboard.png
-omouse 0x201 1 75 324
-omouse 0x202 0 75 324
+omouse 0x201 1 75 404
+omouse 0x202 0 75 404
 sleep 200
 oshot settings-about.png
 responsive main

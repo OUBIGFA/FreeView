@@ -10,23 +10,25 @@ post 0x100 0x50 0x00190001
 post 0x101 0x50 0xC0190001
 sleep 600
 other true
-omouse 0x201 1 55 324
-omouse 0x202 0 55 324
+omouse 0x201 1 55 404
+omouse 0x202 0 55 404
 sleep 300
-omouse 0x201 1 975 554
-omouse 0x202 0 975 554
+frame other 250 50 1056 900
+sleep 200
+omouse 0x201 1 975 622
+omouse 0x202 0 975 622
 sleep 300
 responsive main
 responsive other
 # Switch away and back while the license link is still waiting
-omouse 0x201 1 55 120
-omouse 0x202 0 55 120
+omouse 0x201 1 55 152
+omouse 0x202 0 55 152
 sleep 300
-omouse 0x201 1 55 324
-omouse 0x202 0 55 324
+omouse 0x201 1 55 404
+omouse 0x202 0 55 404
 sleep 300
-omouse 0x201 1 975 611
-omouse 0x202 0 975 611
+omouse 0x201 1 975 686
+omouse 0x202 0 975 686
 sleep 300
 responsive main
 responsive other

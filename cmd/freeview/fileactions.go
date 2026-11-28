@@ -241,18 +241,20 @@ func (v *viewer) renameBox(cx *core.Scope) core.Node {
 	// edits with it, so it is bound here, where it fires first.
 	cx.OnKeyWith("escape", core.KeyOptions{When: core.KeyAlways}, func() { v.extras.renaming.Set(false) })
 	return core.View{TestID: "rename",
-		Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(24), AlignItems: core.AlignCenter},
+		StyleFunc: func() core.Style {
+			return core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(v.bottomOverlayInset()), AlignItems: core.AlignCenter}
+		},
 		Children: []core.Node{core.View{
-			Style: core.Style{Background: core.RGBA(0x242424, 0.94), BorderWidth: 1, BorderColor: core.RGBA(0xffffff, 0.14),
-				CornerRadius: 10, BorderCurve: core.BorderCurveContinuous, Padding: core.All(16), Gap: 12, Width: core.Pct(100), MaxWidth: core.Pt(460)},
+			Style: core.Style{Background: core.RGBA(overlayColor, 0.98), BorderWidth: 1, BorderColor: core.RGB(0x666666),
+				CornerRadius: 16, BorderCurve: core.BorderCurveContinuous, Padding: core.All(24), Gap: 12, Width: core.Pct(100), MaxWidth: core.Pt(460)},
 			Children: []core.Node{
-				ui.Text(locales.ActionRename(cx), 16, ui.Medium, ui.ColorsOf(cx).Text),
-				core.Text{Content: locales.RenameHint(cx, filepath.Ext(path)), Style: core.Style{Color: core.RGB(0xcfcfcf), FontSize: 13, LineHeight: 20}},
+				ui.Text(locales.ActionRename(cx), textTitle, ui.Semibold, ui.ColorsOf(cx).Text),
+				core.Text{Content: locales.RenameHint(cx, filepath.Ext(path)), Style: core.Style{Color: core.RGB(overlayMutedColor), FontSize: textSmall, LineHeight: 20}},
 				ui.Input{TestID: "rename-input", Label: locales.ActionRename(cx), Value: draft.Get, OnChange: draft.Set, AutoFocus: true, OnSubmit: v.rename,
-					Style: core.Style{FontSize: 14, Height: core.Pt(36)}},
+					Style: core.Style{FontSize: textBody, Height: core.Pt(controlHeight), CornerRadius: radiusControl}},
 				core.View{Style: core.Style{Direction: core.Row, JustifyContent: core.JustifyEnd, Gap: 8}, Children: []core.Node{
-					ui.Button{Text: locales.Cancel(cx), Variant: ui.ButtonGhost, TestID: "rename-cancel", OnPress: func() { v.extras.renaming.Set(false) }},
-					ui.Button{Text: locales.UpdateOk(cx), Variant: ui.ButtonSecondary, TestID: "rename-confirm", OnPress: func() { v.rename(draft.Get()) }},
+					ui.Button{Text: locales.Cancel(cx), Variant: ui.ButtonGhost, Style: buttonStyle(), TextStyle: core.Style{FontSize: textBody}, TestID: "rename-cancel", OnPress: func() { v.extras.renaming.Set(false) }},
+					ui.Button{Text: locales.UpdateOk(cx), Variant: ui.ButtonPrimary, Style: buttonStyle(), TextStyle: core.Style{FontSize: textBody}, TestID: "rename-confirm", OnPress: func() { v.rename(draft.Get()) }},
 				}},
 			}}}}
 }

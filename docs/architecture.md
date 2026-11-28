@@ -7,6 +7,7 @@ FreeView 是一个 Go/nsgo Windows 应用。界面线程持有可变状态，后
 | 改动主题 | 主要入口 | 边界与验证 |
 | --- | --- | --- |
 | 应用与窗口 | `cmd/freeview/main.go`、`windows.go`、`viewer.go` | 启动、窗口状态、主界面组合；窗口验收必须使用私有桌面 |
+| 界面规范 | `cmd/freeview/design.go`、`docs/ui-design.md` | 共同配色、排版、控件与浮层尺寸；界面变化先对齐规范 |
 | 加载与缓存 | `cmd/freeview/loading.go` | 打开目录、合并读取、缓存淘汰、双显示层交接；`lifecycle_test.go`、`app_test.go` |
 | 输入与命令 | `commands.go`、`actions.go`、`menus.go` | 快捷键、动作分派、菜单共用同一动作定义；`menus_test.go` |
 | 几何与画质 | `geometry.go`、`quality.go` | 缩放、坐标、色彩转换、平滑显示；像素运算交给内部模块 |

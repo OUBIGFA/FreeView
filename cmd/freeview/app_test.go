@@ -246,8 +246,8 @@ func TestPreferencesKeepTheirScrollOnAChange(t *testing.T) {
 		nsgotest.Size(1040, 500))
 	app.WaitFor("id:settings-general-always-on-top", 5*time.Second)
 	page := app.Find("id:settings-page")
-	// Its frame is in the pane beside the sidebar and its border.
-	if w := page.Frame.Size.Width; w != 1040-prefsSidebarWidth-1 {
+	// Its frame spans the pane beside the sidebar, without a divider gutter.
+	if w := page.Frame.Size.Width; w != 1040-prefsSidebarWidth {
 		t.Errorf("page scroll view %v wide, want the whole pane", w)
 	}
 	app.ScrollTo("id:settings-page", core.Point{Y: 80})

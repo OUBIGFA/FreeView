@@ -3,6 +3,7 @@ package main
 import (
 	"path/filepath"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,6 +12,82 @@ import (
 
 	"github.com/OUBIGFA/FreeView/internal/settings"
 )
+
+// Passing across a submenu must not open it immediately or close its
+// neighbor immediately. Clicks and keyboard navigation stay immediate.
+func TestContextMenuHoverWaitsForIntent(t *testing.T) {
+	app := start(t)
+	app.RightClick("id:viewport")
+	app.WaitFor("id:context-browse", time.Second)
+	app.Hover("id:context-browse")
+	app.Advance(80 * time.Millisecond)
+	if app.Find("id:context-browse").Props.Expanded {
+		t.Fatal("submenu opened while pointer was only passing across it")
+	}
+	app.Advance(200 * time.Millisecond)
+	if !app.Find("id:context-browse").Props.Expanded {
+		t.Fatal("submenu did not open after dwelling")
+	}
+	app.Hover("id:context-open")
+	app.Advance(80 * time.Millisecond)
+	if !app.Find("id:context-browse").Props.Expanded {
+		t.Fatal("submenu closed without a leave delay")
+	}
+	app.Advance(200 * time.Millisecond)
+	if app.Find("id:context-browse").Props.Expanded {
+		t.Fatal("submenu stayed open after moving to another item")
+	}
+}
+
+func TestMenuTriangleUsesTheNearEdgeOnBothSides(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		point, apex core.Point
+		panel       core.Bounds
+		want        bool
+	}{
+		{"right diagonal", core.Point{X: 170, Y: 170}, core.Point{X: 100, Y: 100}, core.Bounds{Origin: core.Point{X: 200, Y: 80}, Size: core.Size{Width: 120, Height: 180}}, true},
+		{"right away", core.Point{X: 110, Y: 180}, core.Point{X: 100, Y: 100}, core.Bounds{Origin: core.Point{X: 200, Y: 80}, Size: core.Size{Width: 120, Height: 180}}, false},
+		{"left diagonal", core.Point{X: 130, Y: 170}, core.Point{X: 200, Y: 100}, core.Bounds{Origin: core.Point{X: 0, Y: 80}, Size: core.Size{Width: 100, Height: 180}}, true},
+		{"unmounted", core.Point{}, core.Point{}, core.Bounds{}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := menuTriangle(tc.point, tc.apex, tc.panel); got != tc.want {
+				t.Fatalf("inside=%v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestContextMenuKeepsSubmenuDuringDiagonalCrossing(t *testing.T) {
+	for _, width := range []core.Points{800, 1200} {
+		t.Run(strconv.Itoa(int(width)), func(t *testing.T) {
+			app := start(t)
+			app.Resize(width, 800)
+			app.RightClick("id:viewport")
+			row := app.Find("id:context-browse")
+			startX, endX := core.Points(8), row.Frame.Size.Width-4
+			if width == 800 {
+				startX, endX = row.Frame.Size.Width-8, 4
+			}
+			app.HoverAt("id:context-browse", core.Point{X: startX, Y: 16})
+			app.Advance(200 * time.Millisecond)
+			if !app.Find("id:context-browse").Props.Expanded {
+				t.Fatal("browse submenu did not open")
+			}
+			app.HoverAt("id:context-zoom", core.Point{X: endX, Y: 8})
+			app.Advance(280 * time.Millisecond)
+			if !app.Find("id:context-browse").Props.Expanded {
+				t.Fatal("diagonal movement switched submenu")
+			}
+			app.Hover("label:Next image")
+			app.Advance(time.Second)
+			if !app.Find("id:context-browse").Props.Expanded {
+				t.Fatal("entering submenu did not cancel pending switch")
+			}
+		})
+	}
+}
 
 // Empty windows still offer Open and Settings, but image commands must
 // not pretend to work. Escape dismisses the popup rather than the app.

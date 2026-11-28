@@ -12,6 +12,7 @@ import (
 	"github.com/nsgo-dev/nsgo/desktop"
 	"github.com/nsgo-dev/nsgo/ui"
 
+	"github.com/OUBIGFA/FreeView/assets/icons/solar"
 	"github.com/OUBIGFA/FreeView/cmd/freeview/locales"
 	"github.com/OUBIGFA/FreeView/internal/catalog"
 	"github.com/OUBIGFA/FreeView/internal/picture"
@@ -298,9 +299,6 @@ func (v *viewer) hoverTop(over bool) {
 	})
 }
 
-// viewportColor is the dark gray behind the image, as Honeyview's.
-const viewportColor = 0x1e1e1e
-
 // infoText describes the shown image for the information overlay.
 func (v *viewer) infoText() string {
 	img := v.img.Get()
@@ -354,8 +352,7 @@ func (v *viewer) imageBox() (x, y, w, h float64) {
 
 func (v *viewer) render(cx *core.Scope) core.Node {
 	overlayText := func(extra core.Style) core.Style {
-		return core.Style{Color: core.RGB(0xffffff), Background: core.RGBA(0x000000, 0.55), Padding: core.Symmetric(6, 10),
-			CornerRadius: 6, FontSize: 13, LineHeight: 19, PointerEvents: core.PointerEventsNone}.Merge(extra)
+		return overlayStyle().Merge(core.Style{PointerEvents: core.PointerEventsNone}).Merge(extra)
 	}
 	return core.View{
 		TestID: "viewport",
@@ -409,8 +406,8 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 				When: func() bool { return v.img.Get().err != nil || v.openErr.Get() != "" },
 				Then: func(cx *core.Scope) core.Node {
 					return core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0),
-						AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, PointerEvents: core.PointerEventsNone},
-						Children: []core.Node{core.Text{TestID: "error", Style: overlayText(core.Style{}), ContentFunc: func() string {
+						Padding: core.All(32), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, PointerEvents: core.PointerEventsNone},
+						Children: []core.Node{core.Text{TestID: "error", Style: overlayText(core.Style{MaxWidth: core.Pct(100)}), ContentFunc: func() string {
 							if e := v.openErr.Get(); e != "" {
 								return e
 							}
@@ -422,8 +419,9 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 			core.Show{
 				When: func() bool { return v.info.Get() && v.img.Get().item.Name != "" },
 				Then: func(cx *core.Scope) core.Node {
-					return core.Text{TestID: "info", ContentFunc: v.infoText,
-						Style: overlayText(core.Style{Position: core.Absolute, Left: core.Pt(12), Top: core.Pt(12), MaxWidth: core.Pct(60)})}
+					return core.Scroll{TestID: "info-panel", Style: core.Style{Position: core.Absolute, Left: core.Pt(16), Top: core.Pt(48),
+						MaxWidth: core.Pct(72), MaxHeight: core.Pct(64), CornerRadius: radiusPanel},
+						Children: []core.Node{core.Text{TestID: "info", ContentFunc: v.infoText, Style: overlayText(core.Style{MaxWidth: core.Pct(100)})}}}
 				},
 			},
 			core.Show{
@@ -442,7 +440,7 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 								align = core.AlignCenter
 							}
 							return core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0),
-								MinHeight: core.Pt(desktop.TitleBar(cx).Top), Padding: core.Symmetric(4, 8),
+								MinHeight: core.Pt(desktop.TitleBar(cx).Top), Padding: core.Symmetric(4, 16),
 								AlignItems: align, JustifyContent: core.JustifyCenter, PointerEvents: core.PointerEventsNone}
 						},
 						Children: []core.Node{core.Text{TestID: "hover-title-text", ContentFunc: v.titleText,
@@ -454,15 +452,17 @@ func (v *viewer) render(cx *core.Scope) core.Node {
 								case settings.TitleCenter:
 									align = core.TextAlignCenter
 								}
-								return overlayText(core.Style{MaxWidth: core.Pct(100), TextAlign: align})
+								return overlayText(core.Style{MaxWidth: core.Pct(100), TextAlign: align, Padding: core.Symmetric(4, 12), FontSize: textSmall})
 							}}}}
 				},
 			},
 			core.Show{
 				When: func() bool { return v.message.Get() != "" },
 				Then: func(cx *core.Scope) core.Node {
-					return core.View{Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(24), AlignItems: core.AlignCenter, PointerEvents: core.PointerEventsNone},
-						Children: []core.Node{core.Text{TestID: "message", ContentFunc: v.message.Get, Style: overlayText(core.Style{})}}}
+					return core.View{StyleFunc: func() core.Style {
+						return core.Style{Position: core.Absolute, Left: core.Pt(16), Right: core.Pt(16), Bottom: core.Pt(v.bottomOverlayInset()), AlignItems: core.AlignCenter, PointerEvents: core.PointerEventsNone}
+					},
+						Children: []core.Node{core.Text{TestID: "message", ContentFunc: v.message.Get, Style: overlayText(core.Style{MaxWidth: core.Pct(100)})}}}
 				},
 			},
 		},
@@ -487,13 +487,20 @@ func (v *viewer) imageView(k int) core.Node {
 }
 
 func (v *viewer) renderEmpty(cx *core.Scope) core.Node {
-	return core.View{
+	cx.SetSubtreeAppearance(core.AppearanceDark)
+	return core.View{TestID: "empty",
 		Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Top: core.Pt(0), Bottom: core.Pt(0),
-			AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 14},
+			Padding: core.All(32), AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Gap: 24},
 		Children: []core.Node{
-			core.Text{Content: locales.EmptyTitle(cx), Style: core.Style{Color: core.RGB(0xe5e5e5), FontSize: 20, LineHeight: 28}},
-			core.Text{Content: locales.EmptyHint(cx), Style: core.Style{Color: core.RGB(0x9a9a9a), FontSize: 13, LineHeight: 18}},
-			ui.Button{Text: locales.OpenButton(cx), TestID: "open", OnPress: v.pick},
+			ui.Icon(solar.Gallery, 48, ui.Fixed(core.RGB(overlayMutedColor))),
+			core.Text{Content: locales.EmptyTitle(cx), Style: core.Style{Color: core.RGB(overlayTextColor),
+				FontSize: textHeading, FontWeight: ui.Semibold, LineHeight: 32, TextAlign: core.TextAlignCenter, MaxWidth: core.Pct(100)}},
+			core.View{Style: core.Style{Direction: core.Row, Gap: 12}, Children: []core.Node{
+				ui.Button{Text: locales.OpenButton(cx), TestID: "open", OnPress: v.pick, Icon: solar.FolderOpen,
+					TextStyle: core.Style{FontSize: textBody}, Style: buttonStyle().Merge(core.Style{MinWidth: core.Pt(120)})},
+				ui.Button{Text: locales.PrefsTitle(cx), TestID: "empty-settings", Variant: ui.ButtonGhost,
+					TextStyle: core.Style{FontSize: textBody}, Style: buttonStyle(), OnPress: func() { openPreferences(v) }},
+			}},
 		},
 	}
 }

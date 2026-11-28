@@ -16,6 +16,8 @@ FreeView 没有复制或翻译 qView 源码，只参考它的功能和交互。�
 
 清单来自 `go version -m FreeView.exe`（nsgo v0.3.4，2026-11-26）。许可按各模块自带的许可文件判断；本次 nsgo 升级的 LICENSE、NOTICE 与 v0.3.0 相同。
 
+2026-11-28 核对到正式版 nsgo v0.4.0，但私有桌面实测触发 Windows 绘制层崩溃，暂时保留 v0.3.4，复现与原因见[界面设计规范](../docs/ui-design.md#2026-11-28-验证与依赖记录)。
+
 | 模块 | 版本 | 许可 | 引入原因 |
 | --- | --- | --- | --- |
 | github.com/nsgo-dev/nsgo | v0.3.4 | Apache-2.0（[正文](licenses/nsgo-Apache-2.0.txt)、[NOTICE](notices/nsgo-NOTICE.txt)） | 原生界面引擎 |

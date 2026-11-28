@@ -107,8 +107,8 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 	})
 	category, query := core.NewSignal(cx, "general"), core.NewSignal(cx, "")
 	resets := core.NewSignal(cx, 0)
-	reset := ui.Button{Text: locales.PrefsReset(cx), Variant: ui.ButtonOutline, TestID: "reset",
-		Style: core.Style{Width: core.Pct(100), Height: core.Pt(34)}, OnPress: func() {
+	reset := ui.Button{Text: locales.PrefsReset(cx), Variant: ui.ButtonGhost, TestID: "reset", TextStyle: core.Style{FontSize: textBody},
+		Style: buttonStyle().Merge(core.Style{Width: core.Pct(100)}), OnPress: func() {
 			cx.ShowAlert(core.AlertConfig{Title: locales.PrefsResetTitle(cx), Message: locales.PrefsResetHint(cx), Cancelable: true,
 				Actions: []core.AlertAction{{Label: locales.PrefsReset(cx), Role: core.AlertDestructive}, {Label: locales.Cancel(cx), Role: core.AlertCancel}}}, func(i int) {
 				if i == 0 {
@@ -122,7 +122,9 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 	catalog := core.Untracked(cx, func() []ui.SettingsCategory { return p.categories(cx) })
 	var nav []ui.SidebarItem
 	for _, c := range catalog {
-		nav = append(nav, ui.SidebarItem{ID: c.ID, Text: c.Title, Icon: c.Icon, TestID: "settings-nav-" + c.ID})
+		nav = append(nav, ui.SidebarItem{ID: c.ID, Text: c.Title, TestID: "settings-nav-" + c.ID,
+			Content: core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, MinHeight: core.Pt(40)},
+				Children: []core.Node{ui.Icon(c.Icon, 20, colors.Muted), ui.Text(c.Title, textBody, ui.Regular, colors.Text)}}})
 	}
 	current := func() ui.SettingsCategory {
 		for _, c := range catalog {
@@ -137,17 +139,10 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 			return locales.PrefsResults(cx)
 		}
 		return current().Title
-	}, 22, ui.Medium, colors.Text)
+	}, textHeading, ui.Semibold, colors.Text)
 	headingText.Role, headingText.MaxLines = core.RoleHeader, 1
-	heading := prefsColumn(core.View{Style: core.Style{Gap: 6, Padding: core.Edges{Top: 26, Bottom: 22}}, Children: []core.Node{
-		headingText,
-		core.Text{ContentFunc: func() string {
-			if strings.TrimSpace(query.Get()) != "" {
-				return locales.PrefsSearchHint(cx)
-			}
-			return current().Description
-		}, StyleFunc: func() core.Style { return core.Style{FontSize: 13, LineHeight: 20, Color: colors.Muted()} }},
-	}})
+	headingText.Style.LineHeight = 32
+	heading := prefsColumn(core.View{Style: core.Style{Padding: core.Edges{Top: 32, Bottom: 24}}, Children: []core.Node{headingText}})
 	heading.Style.FlexShrink = 0
 	page := core.Dynamic(func(cx *core.Scope) core.Node {
 		resets.Get()
@@ -175,15 +170,14 @@ func (p preferences) Render(cx *core.Scope) core.Node {
 		return core.Style{FlexGrow: 1, FlexShrink: 1, Direction: core.Row, Background: cx.Palette().Background, Color: colors.Text()}
 	}, Children: []core.Node{
 		core.View{TestID: "settings-sidebar", Style: core.Style{Width: core.Pt(prefsSidebarWidth), FlexShrink: 0},
-			StyleFunc: func() core.Style { return core.Style{Background: ui.Alpha(colors.Text(), 0.035)} }, Children: []core.Node{
-				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 10, Height: core.Pt(56), Padding: core.Symmetric(12, 18)},
-					Children: []core.Node{ui.Icon(solar.Gallery, 20, colors.Muted), ui.Text("FreeView", 16, ui.Medium, colors.Text)}},
-				core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 16, Left: 12}}, Children: []core.Node{searchField(cx, query)}},
+			StyleFunc: func() core.Style { return core.Style{Background: cx.Palette().Colors["sidebar"]} }, Children: []core.Node{
+				core.View{Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 12, Height: core.Pt(72), Padding: core.Symmetric(16, 20)},
+					Children: []core.Node{ui.Icon(solar.Gallery, 24, colors.Text), ui.Text("FreeView", textTitle, ui.Semibold, colors.Text)}},
+				core.View{Style: core.Style{Padding: core.Edges{Right: 12, Bottom: 24, Left: 12}}, Children: []core.Node{searchField(cx, query)}},
 				core.View{Style: ui.FillRest, Children: []core.Node{ui.Sidebar{Sections: []ui.SidebarSection{{Items: nav}}, Selected: category.Get,
 					OnSelect: func(id string) { category.Set(id); query.Set("") }}}},
 				core.View{Style: core.Style{Padding: core.Edges{Top: 12, Right: 12, Bottom: 16, Left: 12}}, Children: []core.Node{reset}},
 			}},
-		core.View{Style: core.Style{Width: core.Pt(1), FlexShrink: 0}, StyleFunc: ui.Filled(colors.Border)},
 		core.View{Style: ui.FillRest, Children: []core.Node{heading,
 			core.Scroll{Ref: scroll, TestID: "settings-page", Style: ui.FillRest, Children: []core.Node{prefsColumn(page)}},
 		}},
@@ -195,57 +189,101 @@ func prefsColumn(child core.Node) core.View {
 		Children: []core.Node{core.View{Style: core.Style{Width: core.Pct(100), MaxWidth: core.Pt(prefsPageWidth)}, Children: []core.Node{child}}}}
 }
 
-// prefsRows keeps related controls on one native form surface, with
-// readable row heights. Wide controls are below their label and detail.
+// prefsRows uses open sections rather than cards. Controls keep a stable
+// right edge; wide inputs get their own row so translated labels can wrap.
 func prefsRows(cx *core.Scope, categories []ui.SettingsCategory, searching bool) core.Node {
 	colors := ui.ColorsOf(cx)
 	var sections []core.Node
 	for _, c := range categories {
 		if searching {
-			title := ui.Text(c.Title, 16, ui.Medium, colors.Text)
+			title := ui.Text(c.Title, textTitle, ui.Semibold, colors.Text)
 			title.Role = core.RoleHeader
 			sections = append(sections, title)
 		}
 		for _, g := range c.Groups {
 			var rows []core.Node
+			if g.Title != "" {
+				rows = append(rows, core.Text{Content: g.Title, Role: core.RoleHeader,
+					Style:     core.Style{FontSize: textTitle, LineHeight: 24, FontWeight: ui.Semibold, Margin: core.Edges{Bottom: 8}},
+					StyleFunc: ui.Colored(colors.Text)})
+			}
 			for _, item := range g.Items {
 				id := "settings-" + c.ID + "-" + item.ID
-				switch {
-				case item.Content != nil:
-					rows = append(rows, core.View{TestID: id, Style: core.Style{Padding: core.All(14)}, Children: []core.Node{item.Content}})
-				case item.Stacked:
-					rows = append(rows, core.View{TestID: id, Style: core.Style{Padding: core.All(14), Gap: 8}, Children: []core.Node{
-						ui.Text(item.Title, 13, ui.Medium, colors.Text),
-						core.Text{Content: item.Description, StyleFunc: func() core.Style { return core.Style{FontSize: 12.5, LineHeight: 19, Color: colors.Muted()} }},
-						item.Control,
-					}})
-				default:
-					row := ui.FormRow{TestID: id, Title: item.Title, Detail: item.Description, Leading: item.Leading,
-						LeadingWidth: logoPoints, MinHeight: 56, DetailStyle: core.Style{FontSize: 12.5, LineHeight: 19}, Control: item.Control}
-					if item.Leading != nil {
-						row.MinHeight, row.TitleStyle = 88, core.Style{FontSize: 16, FontWeight: ui.Medium}
-					}
-					rows = append(rows, row)
+				item.Control = namedSettingControl(item.Control, item.Title)
+				if item.Content != nil {
+					rows = append(rows, core.View{TestID: id, Style: core.Style{Padding: core.Symmetric(12, 0)}, Children: []core.Node{item.Content}})
+					continue
 				}
+				title := ui.Text(item.Title, textBody, ui.Regular, colors.Text)
+				title.Style.LineHeight = 20
+				if item.Leading != nil {
+					title.Style.FontSize, title.Style.FontWeight = textHeading, ui.Semibold
+				}
+				labels := []core.Node{title}
+				if item.Description != "" {
+					labels = append(labels, core.Text{Content: item.Description,
+						Style: core.Style{FontSize: textSmall, LineHeight: 20}, StyleFunc: ui.Colored(colors.Muted)})
+				}
+				var children []core.Node
+				if item.Leading != nil {
+					children = append(children, item.Leading)
+				}
+				children = append(children, core.View{Style: core.Style{Gap: 4, MinWidth: core.Pt(0), FlexGrow: 1, FlexShrink: 1}, Children: labels})
+				if item.Control != nil && !item.Stacked {
+					children = append(children, core.View{Style: core.Style{FlexShrink: 0}, Children: []core.Node{item.Control}})
+				}
+				row := core.View{TestID: id, Style: core.Style{Direction: core.Row, AlignItems: core.AlignCenter,
+					Gap: 24, MinHeight: core.Pt(64), Padding: core.Symmetric(12, 0)}, Children: children}
+				if item.Stacked {
+					row.Style.Direction, row.Style.AlignItems, row.Style.Gap = core.Column, core.AlignStretch, 12
+					row.Children = append(row.Children, item.Control)
+				}
+				rows = append(rows, row)
 			}
-			sections = append(sections, ui.FormSection{Title: g.Title, Children: rows})
+			sections = append(sections, core.View{Children: rows})
 		}
 	}
 	if len(sections) == 0 {
-		sections = append(sections, ui.Text(locales.PrefsEmpty(cx), 14, ui.Regular, colors.Muted))
+		sections = append(sections, ui.Text(locales.PrefsEmpty(cx), textBody, ui.Regular, colors.Muted))
 	}
-	return core.View{Style: core.Style{Gap: 22, Padding: core.Edges{Bottom: 28}}, Children: sections}
+	return core.View{Style: core.Style{Gap: 32, Padding: core.Edges{Bottom: 32}}, Children: sections}
+}
+
+// The visible row label must also name its independent input for screen
+// readers; layout containers alone do not label native form controls.
+func namedSettingControl(node core.Node, label string) core.Node {
+	switch n := node.(type) {
+	case ui.Switch:
+		n.Label = label
+		return n
+	case ui.Select[settings.Fit]:
+		n.Label = label
+		return n
+	case ui.Select[settings.Sort]:
+		n.Label = label
+		return n
+	case ui.Select[settings.TitlePlace]:
+		n.Label = label
+		return n
+	case ui.Select[settings.Action]:
+		n.Label = label
+		return n
+	case ui.Select[float64]:
+		n.Label = label
+		return n
+	}
+	return node
 }
 
 func searchField(cx *core.Scope, query *core.Signal[string]) core.Node {
 	colors := ui.ColorsOf(cx)
 	return core.View{StyleFunc: func() core.Style {
-		return ui.FinOf(cx).Field().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(32),
-			Padding: core.Symmetric(0, 10), CornerRadius: 8, BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
+		return ui.FinOf(cx).Field().Over(core.Style{Direction: core.Row, AlignItems: core.AlignCenter, Gap: 8, Height: core.Pt(controlHeight),
+			Padding: core.Symmetric(0, 12), CornerRadius: 8, BorderWidth: 1, BorderColor: colors.FieldBorder(), Background: colors.Field()})
 	}, Children: []core.Node{
-		ui.Icon(solar.Magnifier, 14, colors.Muted),
+		ui.Icon(solar.Magnifier, 16, colors.Muted),
 		base.Input{Value: query.Get, OnChange: query.Set, Placeholder: locales.PrefsSearch(cx), Label: locales.PrefsSearch(cx), TestID: "settings-search",
-			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: 13},
+			Style: core.Style{FlexGrow: 1, FlexShrink: 1, MinWidth: core.Pt(0), FontSize: textBody},
 			StyleFunc: func() core.Style {
 				return core.Style{Color: colors.Text(), PlaceholderColor: colors.Muted(), SelectionColor: cx.Palette().Selection}
 			}},
@@ -273,7 +311,7 @@ func matchingSettings(categories []ui.SettingsCategory, query string) []ui.Setti
 }
 
 func choice[T comparable](options []ui.Option[T], get func(settings.Config) T, set func(*settings.Config, T), v *viewer, id string) core.Node {
-	return ui.Select[T]{Options: options, TestID: id, Style: core.Style{Width: core.Pt(200)}, Value: func() T { return get(v.cfg.Get()) },
+	return ui.Select[T]{Options: options, TestID: id, Style: fieldStyle(200), Value: func() T { return get(v.cfg.Get()) },
 		OnChange: func(x T) { v.update(func(c *settings.Config) { set(c, x) }) }}
 }
 
@@ -318,10 +356,10 @@ func (p preferences) categories(cx *core.Scope) []ui.SettingsCategory {
 		}},
 		{ID: "display", Title: locales.PrefsDisplay(cx), Description: locales.PrefsDisplayHint(cx), Icon: solar.Gallery, Groups: []ui.SettingsGroup{
 			{ID: "image", Title: locales.PrefsDisplayGroup(cx), Items: []ui.SettingsItem{
-				{ID: "fit", Title: locales.PrefsFit(cx), Description: locales.PrefsFitHint(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit }, func(c *settings.Config, x settings.Fit) { c.Fit = x }, v, "fit")},
+				{ID: "fit", Title: locales.PrefsFit(cx), Control: choice(fits, func(c settings.Config) settings.Fit { return c.Fit }, func(c *settings.Config, x settings.Fit) { c.Fit = x }, v, "fit")},
 				{ID: "zoom-step", Title: locales.PrefsZoomStep(cx), Control: choice(steps, func(c settings.Config) float64 { return c.ZoomStep }, func(c *settings.Config, x float64) { c.ZoomStep = x }, v, "zoom-step")},
-				{ID: "smooth-zoom", Title: locales.PrefsSmoothZoom(cx), Description: locales.PrefsSmoothZoomHint(cx), Control: toggle(func(c settings.Config) bool { return c.SmoothZoom }, func(c *settings.Config, on bool) { c.SmoothZoom = on }, v, "smooth-zoom")},
-				{ID: "color-management", Title: locales.PrefsColorManagement(cx), Description: locales.PrefsColorManagementHint(cx), Control: toggle(func(c settings.Config) bool { return c.ColorManagement }, func(c *settings.Config, on bool) { c.ColorManagement = on }, v, "color-management")},
+				{ID: "smooth-zoom", Title: locales.PrefsSmoothZoom(cx), Control: toggle(func(c settings.Config) bool { return c.SmoothZoom }, func(c *settings.Config, on bool) { c.SmoothZoom = on }, v, "smooth-zoom")},
+				{ID: "color-management", Title: locales.PrefsColorManagement(cx), Control: toggle(func(c settings.Config) bool { return c.ColorManagement }, func(c *settings.Config, on bool) { c.ColorManagement = on }, v, "color-management")},
 			}},
 			{ID: "overlays", Title: locales.PrefsOverlays(cx), Items: []ui.SettingsItem{
 				{ID: "show-info", Title: locales.PrefsShowInfo(cx), Control: toggle(func(c settings.Config) bool { return c.ShowInfo }, func(c *settings.Config, on bool) { c.ShowInfo = on }, v, "show-info")},
@@ -367,18 +405,18 @@ func (p preferences) categories(cx *core.Scope) []ui.SettingsCategory {
 // Long paths get a whole row and one-line truncation; buttons keep their
 // own row so neither the title nor the path can squeeze them out.
 func pathSetting(cx *core.Scope, v *viewer, id string, get func(settings.Config) string, set func(*settings.Config, string), choose func(done func(string))) core.Node {
-	return core.View{Style: core.Style{Gap: 10, MinWidth: core.Pt(0)}, Children: []core.Node{
+	return core.View{Style: core.Style{Gap: 12, MinWidth: core.Pt(0)}, Children: []core.Node{
 		core.Text{TestID: id + "-path", MaxLines: 1, ContentFunc: func() string {
 			if path := get(v.cfg.Get()); path != "" {
 				return path
 			}
 			return locales.PrefsNotSet(cx)
 		}, StyleFunc: func() core.Style {
-			return core.Style{FontSize: 13, LineHeight: 20, Color: ui.ColorsOf(cx).Muted(), MinWidth: core.Pt(0), FlexShrink: 1}
+			return core.Style{FontSize: textSmall, LineHeight: 20, Color: ui.ColorsOf(cx).Muted(), MinWidth: core.Pt(0), FlexShrink: 1}
 		}},
 		ui.HStack{Gap: 8, Children: []core.Node{
-			ui.Button{TestID: id + "-choose", Variant: ui.ButtonOutline, Text: locales.PrefsChoose(cx), OnPress: func() { choose(func(path string) { v.update(func(c *settings.Config) { set(c, path) }) }) }},
-			ui.Button{TestID: id + "-clear", Variant: ui.ButtonGhost, Text: locales.PrefsClear(cx), Disabled: func() bool { return get(v.cfg.Get()) == "" }, OnPress: func() { v.update(func(c *settings.Config) { set(c, "") }) }},
+			ui.Button{TestID: id + "-choose", Variant: ui.ButtonOutline, Style: buttonStyle(), TextStyle: core.Style{FontSize: textBody}, Text: locales.PrefsChoose(cx), OnPress: func() { choose(func(path string) { v.update(func(c *settings.Config) { set(c, path) }) }) }},
+			ui.Button{TestID: id + "-clear", Variant: ui.ButtonGhost, Style: buttonStyle(), TextStyle: core.Style{FontSize: textBody}, Text: locales.PrefsClear(cx), Disabled: func() bool { return get(v.cfg.Get()) == "" }, OnPress: func() { v.update(func(c *settings.Config) { set(c, "") }) }},
 		}},
 	}}
 }
@@ -402,7 +440,7 @@ func (p preferences) mouseGroups(cx *core.Scope) []ui.SettingsGroup {
 		group := ui.SettingsGroup{ID: g.id, Title: g.title}
 		for _, gesture := range g.gestures {
 			group.Items = append(group.Items, ui.SettingsItem{ID: string(gesture), Title: gestureLabel(cx, gesture),
-				Control: ui.Select[settings.Action]{Options: options, TestID: "mouse-" + string(gesture), Searchable: true, Style: core.Style{Width: core.Pt(230)},
+				Control: ui.Select[settings.Action]{Options: options, TestID: "mouse-" + string(gesture), Searchable: true, Style: fieldStyle(232),
 					Value: func() settings.Action {
 						if a := v.cfg.Get().Mouse[gesture]; a != "" {
 							return a
@@ -429,11 +467,13 @@ func (p preferences) keyboardGroups(cx *core.Scope) []ui.SettingsGroup {
 		{"animation", locales.PrefsKeyboardAnimation(cx), []settings.Action{settings.Slideshow, settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimSlower, settings.AnimFaster}},
 	}
 	out := []ui.SettingsGroup{{ID: "hint", Items: []ui.SettingsItem{{ID: "keys-hint", Content: core.Text{Content: locales.PrefsKeysHint(cx),
-		StyleFunc: func() core.Style { return core.Style{FontSize: 13, LineHeight: 20, Color: ui.ColorsOf(cx).Muted()} }}}}}}
+		StyleFunc: func() core.Style {
+			return core.Style{FontSize: textSmall, LineHeight: 20, Color: ui.ColorsOf(cx).Muted()}
+		}}}}}}
 	for _, g := range groups {
 		group := ui.SettingsGroup{ID: g.id, Title: g.title}
 		for _, action := range g.actions {
-			group.Items = append(group.Items, ui.SettingsItem{ID: "key-" + string(action), Title: actionLabel(cx, action), Keywords: cfg.Keys[action], Control: shortcutField{v: p.v, action: action}})
+			group.Items = append(group.Items, ui.SettingsItem{ID: "key-" + string(action), Title: actionLabel(cx, action), Keywords: cfg.Keys[action], Stacked: true, Control: shortcutField{v: p.v, action: action}})
 		}
 		out = append(out, group)
 	}
@@ -464,7 +504,7 @@ func (f shortcutField) Render(cx *core.Scope) core.Node {
 	recorder := &core.Ref{}
 	commit := func(text string) { draft.Set(text); v.update(func(c *settings.Config) { c.Keys[a] = parseKeys(text) }) }
 	return ui.HStack{Gap: 8, Children: []core.Node{
-		ui.Input{TestID: "keys-" + string(a), Value: draft.Get, OnChange: commit, Label: actionLabel(cx, a), Style: core.Style{Width: core.Pt(200)}},
+		ui.Input{TestID: "keys-" + string(a), Value: draft.Get, OnChange: commit, Label: actionLabel(cx, a), Style: fieldStyle(200)},
 		core.View{Ref: recorder, Focusable: func() bool { return true }, TestID: "record-" + string(a), OnBlur: func() { recording.Set(false) },
 			OnKeyDown: func(e core.KeyEvent) bool {
 				if !recording.Get() {
@@ -477,7 +517,7 @@ func (f shortcutField) Render(cx *core.Scope) core.Node {
 				commit(strings.Join(append(parseKeys(draft.Get()), key), ", "))
 				recording.Set(false)
 				return true
-			}, Children: []core.Node{ui.Button{Variant: ui.ButtonOutline, Style: core.Style{Width: core.Pt(100)}, TextFunc: func() string {
+			}, Children: []core.Node{ui.Button{Variant: ui.ButtonOutline, TextStyle: core.Style{FontSize: textBody}, Style: buttonStyle().Merge(core.Style{Width: core.Pt(112)}), TextFunc: func() string {
 				if recording.Get() {
 					return locales.PrefsRecording(cx)
 				}

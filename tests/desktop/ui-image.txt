@@ -6,9 +6,12 @@ mouse 0x204 2 500 100
 mouse 0x205 0 500 100
 sleep 250
 shot context-image.png
-# The Info switch is a direct row; clicking closes the menu and shows the overlay
-mouse 0x201 1 550 376
-mouse 0x202 0 550 376
+# Dismiss the menu and use the image-info binding so changing menu position
+# does not accidentally activate an unrelated command
+post 0x100 0x1B 0x00010001
+post 0x101 0x1B 0xC0010001
+post 0x100 0x49 0x00170001
+post 0x101 0x49 0xC0170001
 sleep 250
 shot image-info.png
 mouse 0x204 2 500 100
@@ -28,5 +31,5 @@ responsive main
 alive true
 mem
 post 0x10 0 0
-sleep 500
+sleep 1500
 alive false

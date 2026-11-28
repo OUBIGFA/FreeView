@@ -98,9 +98,9 @@ func (v *viewer) navigator(cx *core.Scope) core.Node {
 	return core.View{TestID: "navigator",
 		StyleFunc: func() core.Style {
 			nw, nh, _, _, _, _, _ := v.navGeometry()
-			return core.Style{Position: core.Absolute, Right: core.Pt(12), Bottom: core.Pt(12),
+			return core.Style{Position: core.Absolute, Right: core.Pt(16), Bottom: core.Pt(v.bottomOverlayInset()),
 				Width: core.Pt(core.Points(nw)), Height: core.Pt(core.Points(nh)), Overflow: core.Hidden,
-				Background: core.RGBA(0x000000, 0.55), BorderWidth: 1, BorderColor: core.RGBA(0xffffff, 0.35)}
+				Background: core.RGBA(overlayColor, 0.96), CornerRadius: radiusControl, BorderWidth: 1, BorderColor: core.RGB(0x666666)}
 		},
 		OnPressDown: func(ev core.PressEvent) { v.navigate(ev.Position) },
 		OnPan:       func(ev core.PanEvent) { v.navigate(ev.Position) },

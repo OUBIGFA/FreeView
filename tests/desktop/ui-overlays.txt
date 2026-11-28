@@ -1,0 +1,27 @@
+# Private-desktop acceptance of overlapping image controls
+# Use a fresh APPDATA with multiple_windows: true and keys.zoom_original: [u]
+# Pass img1.png in a disposable folder with at least two images
+# Expected: thumbnails visible; rename and navigator clear the thumbnail strip
+sleep 800
+post 0x100 0x54 0x00140001
+post 0x101 0x54 0xC0140001
+sleep 200
+shot thumbnails.png
+post 0x100 0x71 0x003C0001
+post 0x101 0x71 0xC03C0001
+sleep 200
+shot rename-above-strip.png
+post 0x100 0x1B 0x00010001
+post 0x101 0x1B 0xC0010001
+sleep 200
+post 0x100 0x4E 0x00310001
+post 0x101 0x4E 0xC0310001
+sleep 200
+post 0x100 0x55 0x00160001
+post 0x101 0x55 0xC0160001
+sleep 500
+shot navigator.png
+responsive main
+post 0x10 0 0
+sleep 300
+alive false

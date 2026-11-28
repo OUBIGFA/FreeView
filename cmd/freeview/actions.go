@@ -125,6 +125,8 @@ func (v *viewer) run(action settings.Action, anchor *core.Point) {
 		v.update(func(c *settings.Config) { c.Navigator = !c.Navigator })
 	case settings.Filmstrip:
 		v.update(func(c *settings.Config) { c.Filmstrip = !c.Filmstrip })
+		// Revealing from a command must also work without a pointer hover.
+		v.extras.stripOn.Set(v.cfg.Get().Filmstrip)
 	case settings.Rename, settings.CopyTo, settings.MoveTo, settings.OpenWith, settings.Properties, settings.ExportVideo:
 		v.runFile(action)
 	case settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimFaster, settings.AnimSlower:

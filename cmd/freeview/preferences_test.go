@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,6 +10,41 @@ import (
 
 	"github.com/OUBIGFA/FreeView/internal/settings"
 )
+
+// Actual controls must fit the minimum window in both languages and
+// appearances; search and shortcut recording must still operate there.
+func TestPreferencesLayoutMatrix(t *testing.T) {
+	for _, locale := range []string{"en", "zh-Hans"} {
+		for _, dark := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dark=%v", locale, dark), func(t *testing.T) {
+				t.Setenv("APPDATA", t.TempDir())
+				app := nsgotest.Start(t, func(cx *core.Scope) core.Node {
+					cx.SetTheme(grayTheme())
+					return preferences{v: newViewer(cx)}.Render(cx)
+				}, nsgotest.Size(820, 560), nsgotest.Environment(core.Environment{OS: core.OSWindows, Idiom: core.IdiomDesktop, Locale: locale, Dark: dark}))
+				for _, id := range []string{"general", "display", "browse", "files", "mouse", "keyboard", "about"} {
+					app.Press("id:settings-nav-" + id)
+					pane := app.Find("id:settings-page")
+					if pane.Content.Width > pane.Frame.Size.Width+1 {
+						t.Errorf("%s content overflows: %v > %v", id, pane.Content.Width, pane.Frame.Size.Width)
+					}
+				}
+				app.Press("id:settings-nav-keyboard")
+				field := app.Find("id:keys-previous")
+				record := app.Find("id:record-previous")
+				if record.Frame.Origin.X < field.Frame.Origin.X+field.Frame.Size.Width {
+					t.Fatal("recording button overlaps input")
+				}
+				app.Focus("id:keys-previous")
+				app.Key("tab")
+				app.Type("id:settings-search", "FreeView")
+				if !app.Exists("id:settings-about-app") {
+					t.Fatal("search lost the About result")
+				}
+			})
+		}
+	}
+}
 
 // Every existing preference remains reachable in a focused category,
 // including the quality controls that previously shared the View page.

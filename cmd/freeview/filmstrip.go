@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/ui"
 
 	"github.com/OUBIGFA/FreeView/internal/catalog"
 	"github.com/OUBIGFA/FreeView/internal/thumbs"
@@ -37,7 +38,7 @@ func (v *viewer) filmstrip(cx *core.Scope) core.Node {
 	return core.View{TestID: "filmstrip",
 		Style: core.Style{Position: core.Absolute, Left: core.Pt(0), Right: core.Pt(0), Bottom: core.Pt(0), Height: core.Pt(stripHeight),
 			Direction: core.Row, JustifyContent: core.JustifyCenter, AlignItems: core.AlignCenter, Gap: 8,
-			Background: core.RGBA(0x000000, 0.6)},
+			Background: core.RGBA(overlayColor, 0.96)},
 		Children: []core.Node{core.Dynamic(func(cx *core.Scope) core.Node {
 			from, to := v.stripRange()
 			cat := v.cat
@@ -45,14 +46,23 @@ func (v *viewer) filmstrip(cx *core.Scope) core.Node {
 			for j := from; j < to && cat != nil && j < len(cat.Items); j++ {
 				item := cat.Items[j]
 				v.wantThumb(cat, item)
-				cells = append(cells, core.View{TestID: "strip-" + strconv.Itoa(j), OnPress: func(core.PressEvent) { v.show(j) },
+				cells = append(cells, core.View{TestID: "strip-" + strconv.Itoa(j), Role: core.RoleButton, Label: item.Name,
+					Focusable: func() bool { return true }, OnPress: func(core.PressEvent) { v.show(j) },
+					OnKeyDown: func(ev core.KeyEvent) bool {
+						if ev.Shortcut() == "enter" || ev.Shortcut() == "space" {
+							v.show(j)
+							return true
+						}
+						return false
+					},
 					StyleFunc: func() core.Style {
 						border := core.RGBA(0xffffff, 0.15)
 						if v.index.Get() == j {
 							border = core.RGB(0xffffff)
 						}
-						return core.Style{Width: core.Pt(stripCell - 8), Height: core.Pt(stripCell - 8), BorderWidth: 2, BorderColor: border,
-							AlignItems: core.AlignCenter, JustifyContent: core.JustifyCenter, Overflow: core.Hidden}
+						return core.Style{Width: core.Pt(stripCell - 8), Height: core.Pt(stripCell - 8), CornerRadius: radiusControl, BorderWidth: 2, BorderColor: border,
+							FocusVisible: ui.FocusRing(cx, -4),
+							AlignItems:   core.AlignCenter, JustifyContent: core.JustifyCenter, Overflow: core.Hidden}
 					},
 					Children: []core.Node{core.Image{ResizeMode: core.Contain, SourceFunc: func() core.ImageSource {
 						e.thumbsAdded.Get()

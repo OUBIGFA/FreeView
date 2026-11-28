@@ -87,6 +87,22 @@ func TestOverviewAndStripAreOptIn(t *testing.T) {
 	app.WaitForGone("id:filmstrip", 5*time.Second)
 }
 
+// A keyboard user can reveal thumbnails and activate a named thumbnail
+// without first moving the mouse to the bottom edge.
+func TestFilmstripKeyboardAccess(t *testing.T) {
+	dir := folder(t, map[string][2]int{"key1.png": {80, 60}, "key2.png": {80, 60}})
+	app := start(t)
+	app.SetEnvironment(core.Environment{OS: core.OSWindows, Idiom: core.IdiomDesktop})
+	app.DropFiles("id:viewport", fileURI(filepath.Join(dir, "key1.png")))
+	app.Key("i")
+	waitInfo(t, app, "key1.png\n1 / 2")
+	app.Key("t")
+	app.WaitFor("id:strip-1", time.Second)
+	app.Focus("id:strip-1")
+	app.Key("enter")
+	waitInfo(t, app, "key2.png\n2 / 2")
+}
+
 // F2 renames the shown image in place, keeping its extension.
 func TestRenameKeepsThePlace(t *testing.T) {
 	dir := folder(t, map[string][2]int{"d1.png": {40, 30}, "d2.png": {40, 30}})
