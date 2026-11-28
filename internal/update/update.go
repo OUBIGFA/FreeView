@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -93,7 +94,11 @@ func (c Client) Latest(ctx context.Context, current string) (Release, bool, erro
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
 		return Release{}, false, err
 	}
-	version, err := semver.StrictNewVersion(strings.TrimPrefix(rel.Tag, "v"))
+	tag, hasPrefix := strings.CutPrefix(rel.Tag, "v")
+	if !hasPrefix {
+		return Release{}, false, nil
+	}
+	version, err := semver.StrictNewVersion(tag)
 	if err != nil || version.Prerelease() != "" || version.Metadata() != "" {
 		return Release{}, false, nil
 	}
@@ -103,16 +108,21 @@ func (c Client) Latest(ctx context.Context, current string) (Release, bool, erro
 	name := "FreeView-" + version.String() + ".exe"
 	for _, a := range rel.Assets {
 		digest, ok := strings.CutPrefix(a.Digest, "sha256:")
-		if a.Name == name && ok && len(digest) == 64 && a.Size > 0 {
+		decoded, digestErr := hex.DecodeString(digest)
+		if a.Name == name && ok && digestErr == nil && len(decoded) == sha256.Size && a.Size > 0 {
 			return Release{Version: version.String(), Notes: rel.Body, URL: a.URL, SHA256: digest, Size: a.Size}, true, nil
 		}
 	}
 	return Release{}, false, nil
 }
 
-// Download saves the installer of r in dir and returns its path. A file
-// whose SHA-256 differs from r's is removed and reported.
+// Download saves and verifies a private temporary file before replacing
+// the installer. Concurrent windows and failed downloads cannot truncate
+// a previously verified installer.
 func (c Client) Download(ctx context.Context, r Release, dir string) (string, error) {
+	if r.Size <= 0 || r.Size == math.MaxInt64 {
+		return "", errors.New("invalid installer size")
+	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}
@@ -129,20 +139,26 @@ func (c Client) Download(ctx context.Context, r Release, dir string) (string, er
 		return "", fmt.Errorf("GitHub answered %s", resp.Status)
 	}
 	path := filepath.Join(dir, "FreeView-"+r.Version+".exe")
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o700)
+	file, err := os.CreateTemp(dir, ".freeview-download-*.tmp")
 	if err != nil {
 		return "", err
 	}
 	sum := sha256.New()
-	_, err = io.Copy(io.MultiWriter(file, sum), resp.Body)
+	defer os.Remove(file.Name())
+	n, err := io.Copy(io.MultiWriter(file, sum), io.LimitReader(resp.Body, r.Size+1))
 	if closeErr := file.Close(); err == nil {
 		err = closeErr
+	}
+	if err == nil && n != r.Size {
+		err = errors.New("the installer's size does not match the release")
 	}
 	if err == nil && !strings.EqualFold(hex.EncodeToString(sum.Sum(nil)), r.SHA256) {
 		err = errors.New("the installer's SHA-256 does not match the release")
 	}
 	if err != nil {
-		os.Remove(path)
+		return "", err
+	}
+	if err := os.Rename(file.Name(), path); err != nil {
 		return "", err
 	}
 	return path, nil

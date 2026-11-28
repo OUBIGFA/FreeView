@@ -207,7 +207,7 @@ func (v *viewer) actionDisabled(a settings.Action) bool {
 		settings.RotateLeft, settings.RotateRight, settings.FlipH, settings.FlipV, settings.CopyImage:
 		return !image
 	case settings.Rename, settings.CopyTo, settings.MoveTo, settings.Delete:
-		return !file || v.cat.Archive != ""
+		return !file || s.cat.Archive != ""
 	case settings.Reveal, settings.CopyPath, settings.OpenWith, settings.Properties, settings.ExportVideo:
 		return !file
 	case settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimFaster, settings.AnimSlower:

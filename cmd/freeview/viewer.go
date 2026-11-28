@@ -1,16 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"errors"
 	"image"
-	"image/png"
 	"io/fs"
 	"math"
-	"path/filepath"
-	"runtime/debug"
-	"slices"
 	"strconv"
 	"time"
 
@@ -59,6 +53,8 @@ var launching bool
 
 // shown is the image on screen, or the error loading it.
 type shown struct {
+	cat  *catalog.Catalog // catalog that owns the displayed file, even while a new folder loads
+	seq  uint64           // selection that requested this decode
 	item catalog.Item
 	pic  picture.Picture
 	src  core.ImageSource
@@ -68,9 +64,10 @@ type shown struct {
 // viewer owns FreeView's state. Its fields are used on the engine's
 // goroutine only; loads run on goroutines and come back through Post.
 type viewer struct {
-	cx      *core.Scope
-	cfgPath string
-	cfg     *core.Signal[settings.Config]
+	cx          *core.Scope
+	cfgPath     string
+	cfg         *core.Signal[settings.Config]
+	configSaved <-chan struct{} // completion of the last ordered settings write
 
 	cat   *catalog.Catalog
 	index *core.Signal[int]
@@ -109,6 +106,10 @@ type viewer struct {
 	panning    bool // the current drag moves the image
 	touchpad   core.Points
 	loadSeq    uint64
+	openSeq    uint64
+	reads      map[string]*pictureRead
+	readSlots  chan struct{}
+	ready      [2]bool
 	messageSeq uint64
 	hoverSeq   uint64
 	slideSeq   uint64
@@ -121,7 +122,8 @@ type viewer struct {
 }
 
 func newViewer(cx *core.Scope) *viewer {
-	v := &viewer{cx: cx, cache: map[string]picture.Picture{}}
+	v := &viewer{cx: cx, cache: map[string]picture.Picture{}, reads: map[string]*pictureRead{}, readSlots: make(chan struct{}, 2)}
+	cx.Cleanup(func() { v.cancelReads(); v.cancelExtras(); v.extras.thumbCancel() })
 	cfg := settings.Default()
 	var loadErr error
 	if path, err := settings.Path(); err == nil {
@@ -217,437 +219,6 @@ func (v *viewer) applyWindow() {
 
 func never[T any](T, T) bool { return false }
 
-// open shows target: an image in its folder, a folder or an archive.
-func (v *viewer) open(target string) {
-	cfg := v.cfg.Get()
-	order := catalog.Order{By: string(cfg.Sort), Descending: cfg.SortDescending}
-	go func() {
-		cat, i, err := catalog.Open(context.Background(), target, order)
-		v.cx.Post(func() {
-			if err != nil {
-				v.openErr.Set(locales.OpenFailed(v.cx, filepath.Base(target), err.Error()))
-				v.reveal()
-				return
-			}
-			v.setCatalog(cat, i)
-		})
-	}()
-}
-
-func (v *viewer) setCatalog(cat *catalog.Catalog, i int) {
-	v.cat = cat
-	v.cache, v.cacheOrder = map[string]picture.Picture{}, nil
-	v.cx.Batch(func() {
-		v.count.Set(len(cat.Items))
-		v.openErr.Set("")
-		if len(cat.Items) == 0 {
-			v.openErr.Set(locales.FolderEmpty(v.cx, cat.Title()))
-			v.index.Set(-1)
-			v.commit(shown{}, v.front.Get())
-			return
-		}
-		if cat.Archive != "" {
-			desktop.AddRecentFile(v.cx, cat.Archive)
-		}
-		v.show(i)
-	})
-}
-
-// show loads the item at i and shows it once it is ready; a later show
-// supersedes a load still running.
-func (v *viewer) show(i int) {
-	if v.cat == nil || i < 0 || i >= len(v.cat.Items) {
-		return
-	}
-	v.index.Set(i)
-	item := v.cat.Items[i]
-	v.loadSeq++
-	seq := v.loadSeq
-	if pic, ok := v.cache[item.Path]; ok {
-		v.stats.hits++
-		v.present(item, pic, nil)
-		v.prefetch(i)
-		return
-	}
-	cat := v.cat
-	v.stats.reads++
-	go func() {
-		pic, err := readPicture(cat, item)
-		v.cx.Post(func() {
-			if seq != v.loadSeq {
-				if err == nil && cat == v.cat {
-					v.remember(item.Path, pic)
-				}
-				return
-			}
-			if err == nil {
-				v.remember(item.Path, pic)
-			}
-			v.present(item, pic, err)
-			v.prefetch(i)
-		})
-	}()
-}
-
-func readPicture(cat *catalog.Catalog, item catalog.Item) (picture.Picture, error) {
-	data, err := cat.Read(item)
-	if err != nil {
-		return picture.Picture{}, err
-	}
-	return picture.Load(data, item.Name)
-}
-
-// prefetch reads the images on either side of i ahead of time, so moving
-// to them skips the disk or archive. An image taking over half the cache
-// is not read ahead of: its neighbors would push it out.
-func (v *viewer) prefetch(i int) {
-	cfg := v.cfg.Get()
-	cat := v.cat
-	if pic, ok := v.cache[cat.Items[i].Path]; ok && pictureBytes(pic) > cacheBytes/2 {
-		return
-	}
-	for _, d := range []int{1, -1} {
-		j := cat.Step(i, d, cfg.Loop)
-		if j < 0 || j == i {
-			continue
-		}
-		item := cat.Items[j]
-		if _, ok := v.cache[item.Path]; ok {
-			continue
-		}
-		v.stats.reads++
-		go func() {
-			pic, err := readPicture(cat, item)
-			if err != nil {
-				return
-			}
-			v.cx.Post(func() {
-				if cat == v.cat {
-					v.remember(item.Path, pic)
-				}
-			})
-		}()
-	}
-}
-
-// remember keeps pic in the read-ahead cache, dropping the oldest entries
-// past its bounds. The shown image and the one the back view decodes
-// stay: the views hold them anyway, so dropping them frees nothing.
-func (v *viewer) remember(path string, pic picture.Picture) {
-	if _, ok := v.cache[path]; ok {
-		return
-	}
-	v.cache[path] = pic
-	v.cacheOrder = append(v.cacheOrder, path)
-	total := 0
-	for _, p := range v.cache {
-		total += pictureBytes(p)
-	}
-	keep := func(p string) bool { return p == path || p == v.img.Get().item.Path || p == v.next.item.Path }
-	for i := 0; i < len(v.cacheOrder) && (len(v.cacheOrder) > cacheEntries || total > cacheBytes); {
-		old := v.cacheOrder[i]
-		if keep(old) {
-			i++
-			continue
-		}
-		v.cacheOrder = slices.Delete(v.cacheOrder, i, i+1)
-		total -= pictureBytes(v.cache[old])
-		delete(v.cache, old)
-		v.stats.evictions++
-	}
-}
-
-func pictureBytes(p picture.Picture) int {
-	if p.Pixels != nil {
-		return len(p.Pixels.Pix)
-	}
-	return len(p.Data)
-}
-
-// present puts a read image on screen: at once when there is nothing to
-// decode or a view holds it decoded, else once the back view decoded it
-// (loaded), the current image staying until then.
-func (v *viewer) present(item catalog.Item, pic picture.Picture, err error) {
-	s := shown{item: item, pic: pic, err: err, src: core.ImageSource{Data: pic.Data, Pixels: pic.Pixels}}
-	front := v.front.Get()
-	back := 1 - front
-	switch {
-	case err == nil && pic.Pixels == nil && sameData(s.src, v.slots[front].Get()):
-		v.commit(s, front)
-	case err != nil || pic.Pixels != nil || sameData(s.src, v.slots[back].Get()):
-		// nsgo shows pixels without a blank, as an error shows nothing.
-		v.commit(s, back)
-	default:
-		v.next = s
-		v.slots[back].Set(s.src)
-	}
-}
-
-// sameData reports whether a and b hold the same encoded bytes, which an
-// image view then keeps decoded.
-func sameData(a, b core.ImageSource) bool {
-	return len(a.Data) > 0 && len(a.Data) == len(b.Data) && &a.Data[0] == &b.Data[0]
-}
-
-// loaded follows image view k decoding its source, or failing to: when
-// it is the back view's next image, that image replaces the shown one.
-func (v *viewer) loaded(k int, err error) {
-	if k == v.front.Get() || v.next.src.Empty() {
-		return
-	}
-	s := v.next
-	if s.err == nil {
-		s.err = err
-	}
-	v.commit(s, k)
-}
-
-// commit shows s in image view k with a fresh view: upright as its EXIF
-// says and fitted as the preferences say.
-func (v *viewer) commit(s shown, k int) {
-	v.next = shown{}
-	rot, mir := picture.OrientationTransform(s.pic.Orientation)
-	v.cx.Batch(func() {
-		v.slots[k].Set(s.src)
-		v.front.Set(k)
-		v.img.Set(s)
-		v.rotate.Set(rot)
-		v.mirror.Set(mir)
-		v.offset.Set(core.Point{})
-		v.fit.Set(v.cfg.Get().Fit)
-		v.scale.Set(1)
-		v.commitExtras(s)
-	})
-	v.reveal()
-	v.trimMemory()
-}
-
-// trimMemory hands the memory decoding left behind back to Windows once
-// browsing pauses for a second. Decoding a photo leaves garbage several
-// times its pixels, which the Go runtime would otherwise keep reserved
-// for the next decode: measured with 24 MP JPEGs, after browsing ten of
-// them the process kept about 1 GB.
-func (v *viewer) trimMemory() {
-	v.trimSeq++
-	seq := v.trimSeq
-	time.AfterFunc(time.Second, func() {
-		v.cx.Post(func() {
-			if seq == v.trimSeq {
-				go debug.FreeOSMemory()
-			}
-		})
-	})
-}
-
-// displaySize is the image's size in device pixels as shown, after its
-// rotation, at scale 1.
-func (v *viewer) displaySize() (w, h float64) {
-	p := v.img.Get().pic
-	w, h = float64(p.Width), float64(p.Height)
-	if v.rotate.Get()%180 != 0 {
-		w, h = h, w
-	}
-	return w, h
-}
-
-// ratio is the screen's device pixels per point.
-func (v *viewer) ratio() float64 {
-	if r := float64(v.cx.Env().PixelRatio()); r > 0 {
-		return r
-	}
-	return 1
-}
-
-// fitScale is the scale that fits the image in the viewport under mode.
-func (v *viewer) fitScale(mode settings.Fit) float64 {
-	w, h := v.displaySize()
-	vp := v.viewport.Get()
-	if w == 0 || h == 0 || vp.Width == 0 || vp.Height == 0 {
-		return 1
-	}
-	r := v.ratio()
-	s := math.Min(float64(vp.Width)*r/w, float64(vp.Height)*r/h)
-	switch mode {
-	case settings.FitShrink:
-		return math.Min(s, 1)
-	case settings.FitOriginal:
-		return 1
-	}
-	return s
-}
-
-// currentScale is the scale on screen.
-func (v *viewer) currentScale() float64 {
-	if mode := v.fit.Get(); mode != "" {
-		return v.fitScale(mode)
-	}
-	return v.scale.Get()
-}
-
-// clampOffset keeps the image's center where the image covers the
-// viewport: centered along an axis it fits in, never pulled past its
-// edges along one it overflows.
-func (v *viewer) clampOffset(o core.Point, scale float64) core.Point {
-	w, h := v.displaySize()
-	r := v.ratio()
-	vp := v.viewport.Get()
-	limit := func(o core.Points, size float64, view core.Points) core.Points {
-		over := (size*scale/r - float64(view)) / 2
-		if over <= 0 {
-			return 0
-		}
-		return core.Points(math.Max(-over, math.Min(over, float64(o))))
-	}
-	return core.Point{X: limit(o.X, w, vp.Width), Y: limit(o.Y, h, vp.Height)}
-}
-
-// zoomTo sets the scale, keeping the image point under anchor (viewport
-// coordinates) in place.
-func (v *viewer) zoomTo(scale float64, anchor core.Point) {
-	if v.img.Get().pic.Width == 0 {
-		return
-	}
-	old := v.currentScale()
-	scale = math.Max(minScale, math.Min(maxScale, scale))
-	vp := v.viewport.Get()
-	// The anchor relative to the viewport's center, and the image's
-	// center relative to it, scale together.
-	ax, ay := float64(anchor.X-vp.Width/2), float64(anchor.Y-vp.Height/2)
-	o := v.clampOffset(v.offset.Get(), old)
-	k := scale / old
-	next := core.Point{X: core.Points(ax - (ax-float64(o.X))*k), Y: core.Points(ay - (ay-float64(o.Y))*k)}
-	v.cx.Batch(func() {
-		v.fit.Set("")
-		v.scale.Set(scale)
-		v.offset.Set(v.clampOffset(next, scale))
-	})
-}
-
-func (v *viewer) center() core.Point {
-	vp := v.viewport.Get()
-	return core.Point{X: vp.Width / 2, Y: vp.Height / 2}
-}
-
-// step moves delta images, as next and previous do.
-func (v *viewer) step(delta int) {
-	if v.cat == nil || len(v.cat.Items) == 0 {
-		return
-	}
-	j := v.cat.Step(v.index.Get(), delta, v.cfg.Get().Loop)
-	if j != v.index.Get() {
-		v.show(j)
-	}
-}
-
-// run carries out action; anchor is where the pointer was for zooms, nil
-// for the viewport's center.
-func (v *viewer) run(action settings.Action, anchor *core.Point) {
-	cx := v.cx
-	at := v.center()
-	if anchor != nil {
-		at = *anchor
-	}
-	step := v.cfg.Get().ZoomStep
-	switch action {
-	case settings.Next:
-		v.step(1)
-	case settings.Previous:
-		v.step(-1)
-	case settings.First:
-		v.show(0)
-	case settings.Last:
-		if v.cat != nil {
-			v.show(len(v.cat.Items) - 1)
-		}
-	case settings.ZoomIn:
-		v.zoomTo(v.currentScale()*step, at)
-	case settings.ZoomOut:
-		v.zoomTo(v.currentScale()/step, at)
-	case settings.ZoomFit:
-		mode := v.cfg.Get().Fit
-		if mode == settings.FitOriginal {
-			mode = settings.FitShrink
-		}
-		cx.Batch(func() { v.fit.Set(mode); v.offset.Set(core.Point{}) })
-	case settings.ZoomOriginal:
-		v.zoomTo(1, at)
-	case settings.RotateLeft, settings.RotateRight:
-		d := 90
-		if action == settings.RotateLeft {
-			d = 270
-		}
-		v.transform(func(rot int, mir bool) (int, bool) { return rot + d, mir })
-	case settings.FlipH:
-		// Mirroring the screen after a rotation turns the rotation back.
-		v.transform(func(rot int, mir bool) (int, bool) { return 360 - rot, !mir })
-	case settings.FlipV:
-		v.transform(func(rot int, mir bool) (int, bool) { return 540 - rot, !mir })
-	case settings.FullScreen:
-		desktop.ToggleFullScreen(cx)
-	case settings.Escape:
-		if v.extras.renaming.Get() {
-			v.extras.renaming.Set(false)
-		} else if desktop.FullScreen(cx) {
-			desktop.ToggleFullScreen(cx)
-		} else {
-			winmouse.CloseQuietly()
-			cx.Quit()
-		}
-	case settings.Close:
-		// Quit rather than close the main window: nsgo v0.2.0 on Windows
-		// hides the main window of an App without ending the process.
-		winmouse.CloseQuietly()
-		cx.Quit()
-	case settings.Minimize:
-		desktop.MinimizeWindow(cx)
-	case settings.Open:
-		v.pick()
-	case settings.Reveal:
-		if p := v.currentFile(); p != "" {
-			desktop.RevealFile(cx, p, func(error) {})
-		}
-	case settings.Delete:
-		v.delete()
-	case settings.CopyPath:
-		if p := v.currentFile(); p != "" {
-			if v.cat.Archive != "" {
-				p = filepath.Join(p, filepath.FromSlash(v.img.Get().item.Path))
-			}
-			cx.SetClipboard(p)
-			v.flash(locales.CopiedPath(cx))
-		}
-	case settings.CopyImage:
-		v.copyImage()
-	case settings.Slideshow:
-		on := !v.slideshow.Get()
-		v.slideshow.Set(on)
-		if on {
-			v.flash(locales.SlideshowOn(cx))
-		} else {
-			v.flash(locales.SlideshowOff(cx))
-		}
-	case settings.Info:
-		v.info.Set(!v.info.Get())
-	case settings.AlwaysOnTop:
-		v.update(func(c *settings.Config) { c.AlwaysOnTop = !c.AlwaysOnTop })
-	case settings.TitleBar:
-		v.update(func(c *settings.Config) { c.ShowTitleBar = !c.ShowTitleBar })
-	case settings.Menu:
-		v.menuAt.Set(v.pointer)
-		v.menuOpen.Set(true)
-	case settings.Preferences:
-		openPreferences(v)
-	case settings.Navigator:
-		v.update(func(c *settings.Config) { c.Navigator = !c.Navigator })
-	case settings.Filmstrip:
-		v.update(func(c *settings.Config) { c.Filmstrip = !c.Filmstrip })
-	case settings.Rename, settings.CopyTo, settings.MoveTo, settings.OpenWith, settings.Properties, settings.ExportVideo:
-		v.runFile(action)
-	case settings.AnimPause, settings.AnimPrev, settings.AnimNext, settings.AnimFaster, settings.AnimSlower:
-		v.runAnimation(action)
-	}
-}
-
 // transform changes the rotation and mirroring, keeping the fit.
 func (v *viewer) transform(fn func(rot int, mir bool) (int, bool)) {
 	rot, mir := fn(v.rotate.Get(), v.mirror.Get())
@@ -656,82 +227,6 @@ func (v *viewer) transform(fn func(rot int, mir bool) (int, bool)) {
 		v.mirror.Set(mir)
 		v.offset.Set(v.clampOffset(v.offset.Get(), v.currentScale()))
 	})
-}
-
-// currentFile is the file on disk the shown image is in: the image or its
-// archive; "" with nothing shown.
-func (v *viewer) currentFile() string {
-	if v.cat == nil || v.index.Get() < 0 {
-		return ""
-	}
-	if v.cat.Archive != "" {
-		return v.cat.Archive
-	}
-	return v.img.Get().item.Path
-}
-
-func (v *viewer) pick() {
-	types := append(catalog.ImageExtensions(), catalog.ArchiveExtensions()...)
-	start := ""
-	if v.cat != nil {
-		start = v.cat.Dir
-	}
-	v.cx.PickFiles(core.PickFilesOptions{Types: types, TypesName: locales.PickImages(v.cx), Start: start},
-		func(files []core.File, err error) {
-			if err == nil && len(files) > 0 && files[0].Path != "" {
-				v.open(files[0].Path)
-			}
-		})
-}
-
-func (v *viewer) delete() {
-	cx := v.cx
-	if v.cat == nil || v.index.Get() < 0 {
-		return
-	}
-	if v.cat.Archive != "" {
-		v.flash(locales.ArchiveReadOnly(cx))
-		return
-	}
-	item := v.img.Get().item
-	trash := func() {
-		desktop.TrashFile(cx, item.Path, func(_ string, err error) {
-			if err != nil {
-				v.flash(locales.DeleteFailed(cx, item.Name, err.Error()))
-				return
-			}
-			v.dropItem(item.Path)
-		})
-	}
-	if !v.cfg.Get().ConfirmDelete {
-		trash()
-		return
-	}
-	cx.ShowAlert(core.AlertConfig{
-		Title: locales.DeleteTitle(cx), Message: locales.DeleteMessage(cx, item.Name), Cancelable: true,
-		Actions: []core.AlertAction{{Label: locales.DeleteConfirm(cx), Role: core.AlertDestructive}, {Label: locales.Cancel(cx), Role: core.AlertCancel}},
-	}, func(i int) {
-		if i == 0 {
-			trash()
-		}
-	})
-}
-
-func (v *viewer) copyImage() {
-	p := v.img.Get().pic
-	data := p.Data
-	if p.Pixels != nil {
-		var buf bytes.Buffer
-		if png.Encode(&buf, p.Pixels) != nil {
-			return
-		}
-		data = buf.Bytes()
-	}
-	if len(data) == 0 {
-		return
-	}
-	v.cx.SetClipboardImage(data)
-	v.flash(locales.CopiedImage(v.cx))
 }
 
 // flash shows text over the image for a moment.

@@ -47,6 +47,7 @@
 
 ## 文件职责与检查
 
+- [架构与改动边界](docs/architecture.md)记录职责、依赖和异步状态归属；修改加载、缓存或后台工作前先核对，保持图片任务与目录缩略图任务的生命周期分离
 - [仓库规划](docs/repository-plan.md)记录跟踪边界；[开发路线](docs/roadmap.md)区分计划与已实现能力。随实际实现更新，不保留陈旧阶段说明。
 - 品牌源图放在 assets/branding/FreeView_logo.png。保留用户原有 dist/FreeView_logo.png；派生图标由 tools/generate_icons.py 写入被忽略的 dist/icons/。
 - Git 只跟踪可发布输入、可复现测试、依赖锁文件、构建/CI、许可和长期文档。不跟踪下载、工具链、缓存、日志、测试截图、安装包和生成物。README 预览图放在 assets/screenshots/，按二进制登记来源、许可和 SHA-256。

@@ -184,6 +184,9 @@ func pngTexts(data []byte) map[string]string {
 		if typ == "IEND" {
 			break
 		}
+		if typ != "tEXt" && typ != "zTXt" && typ != "iTXt" {
+			continue
+		}
 		key, rest, ok := bytes.Cut(body, []byte{0})
 		if !ok {
 			continue
@@ -227,6 +230,7 @@ func inflate(b []byte) ([]byte, bool) {
 	if err != nil {
 		return nil, false
 	}
+	defer z.Close()
 	out, err := io.ReadAll(io.LimitReader(z, maxText))
 	return out, err == nil
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
+	"errors"
 	"image"
 	"image/color"
 	"image/color/palette"
@@ -16,6 +17,36 @@ import (
 	"testing"
 	"time"
 )
+
+func TestFrameBudgetCannotOverflow(t *testing.T) {
+	// APNG dimensions and frame counts are unsigned 32-bit values.
+	if err := checkBudget(1<<30, 1<<30, 4, 1<<30); !errors.Is(err, ErrTooLarge) {
+		t.Fatalf("oversized animation budget = %v, want ErrTooLarge", err)
+	}
+}
+
+func TestGIFBudgetIsCheckedBeforePixelDecode(t *testing.T) {
+	g := &gif.GIF{Image: []*image.Paletted{paletted(image.Rect(0, 0, 4, 4), red), paletted(image.Rect(0, 0, 4, 4), blue)}, Delay: []int{10, 10}}
+	var buf bytes.Buffer
+	if err := gif.EncodeAll(&buf, g); err != nil {
+		t.Fatal(err)
+	}
+	data := buf.Bytes()
+	// Keep the block structure, but damage the first frame's LZW code.
+	for p := 13 + 3<<(data[10]&7+1); p+10 < len(data); p++ {
+		if data[p] == 0x2c {
+			at := p + 10
+			if data[p+9]&0x80 != 0 {
+				at += 3 << (data[p+9]&7 + 1)
+			}
+			data[at] = 0
+			break
+		}
+	}
+	if _, err := Decode(data, 1); !errors.Is(err, ErrTooLarge) {
+		t.Fatalf("decoded pixels before checking budget: %v", err)
+	}
+}
 
 var (
 	red   = color.RGBA{255, 0, 0, 255}

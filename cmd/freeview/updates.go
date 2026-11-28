@@ -44,10 +44,9 @@ func checkDaily(cx *core.Scope) {
 	if !canUpdate() {
 		return
 	}
-	dir, checked := updateDir()
-	if dir != "" {
-		os.RemoveAll(dir) // the installer of an update that has been installed
-	}
+	_, checked := updateDir()
+	// Another window may currently download or run the installer. Never
+	// remove the shared update directory from a timed UI callback.
 	if checked == "" || !update.Due(checked, time.Now()) {
 		return
 	}

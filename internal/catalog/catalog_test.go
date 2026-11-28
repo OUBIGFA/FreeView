@@ -168,3 +168,14 @@ func TestRemoveReturnsTheNextItem(t *testing.T) {
 		t.Errorf("Remove only = %d", got)
 	}
 }
+
+func TestArchivePathsKeepTheirCase(t *testing.T) {
+	c := &Catalog{Archive: "book.zip", Items: []Item{{Path: "A.png"}, {Path: "a.png"}}}
+	if i := c.Index("a.png"); i != 1 {
+		t.Fatalf("archive index = %d, want 1", i)
+	}
+	c.Archive = ""
+	if i := c.Index("a.png"); i != 0 {
+		t.Fatalf("Windows folder index = %d, want 0", i)
+	}
+}

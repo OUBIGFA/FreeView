@@ -1,6 +1,7 @@
 package picture
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -15,6 +16,35 @@ import (
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/tiff"
 )
+
+func TestLIVPStillDoesNotReadDamagedVideo(t *testing.T) {
+	var pngData, archive bytes.Buffer
+	if err := png.Encode(&pngData, image.NewRGBA(image.Rect(0, 0, 4, 3))); err != nil {
+		t.Fatal(err)
+	}
+	zw := zip.NewWriter(&archive)
+	for _, file := range []struct {
+		name string
+		data []byte
+	}{{"photo.jpg", pngData.Bytes()}, {"clip.mov", []byte("video payload")}} {
+		w, err := zw.CreateHeader(&zip.FileHeader{Name: file.name, Method: zip.Store})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := w.Write(file.data); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	data := archive.Bytes()
+	data[bytes.Index(data, []byte("video payload"))] ^= 0xff
+	p, err := Load(data, "photo.livp")
+	if err != nil || p.Width != 4 || p.Height != 3 {
+		t.Fatalf("still image depends on video decode: %dx%d %v", p.Width, p.Height, err)
+	}
+}
 
 func sample() *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, 4, 3))

@@ -190,7 +190,12 @@ func cmpInt(a, b int64) int {
 
 // Index returns the position of the item at path, or -1.
 func (c *Catalog) Index(p string) int {
-	return slices.IndexFunc(c.Items, func(it Item) bool { return strings.EqualFold(it.Path, p) })
+	return slices.IndexFunc(c.Items, func(it Item) bool {
+		if c.Archive != "" {
+			return it.Path == p
+		}
+		return strings.EqualFold(it.Path, p)
+	})
 }
 
 // Title names the catalog for the window: the folder or archive name.

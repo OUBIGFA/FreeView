@@ -386,6 +386,17 @@ var (
 // extension) and the clip. clip is zero when the archive holds no clip,
 // as the still alone can still be shown.
 func OpenLIVP(data []byte) (still []byte, stillName string, clip Video, err error) {
+	return openLIVP(data, true)
+}
+
+// OpenStill reads only a LIVP's image. Viewing it must not decompress,
+// checksum or retain a possibly much larger video that is not displayed.
+func OpenStill(data []byte) ([]byte, string, error) {
+	still, name, _, err := openLIVP(data, false)
+	return still, name, err
+}
+
+func openLIVP(data []byte, includeVideo bool) (still []byte, stillName string, clip Video, err error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, "", Video{}, fmt.Errorf("livp: %w", err)
@@ -413,7 +424,12 @@ func OpenLIVP(data []byte) (still []byte, stillName string, clip Video, err erro
 		return nil, "", Video{}, fmt.Errorf("livp: %s: %w", stillFile.Name, err)
 	}
 	stillName = path.Base(entryName(stillFile))
-	if clipFile != nil {
+	if !includeVideo && stillFile.Method == zip.Store {
+		// A stored entry aliases the whole archive. Detach the still so
+		// the picture cache does not retain a much larger embedded video.
+		still = bytes.Clone(still)
+	}
+	if includeVideo && clipFile != nil {
 		b, err := entryBytes(data, clipFile)
 		if err != nil {
 			return nil, "", Video{}, fmt.Errorf("livp: %s: %w", clipFile.Name, err)

@@ -3,6 +3,7 @@ package settings
 import (
 	"errors"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -50,8 +51,12 @@ func LoadWindows(path string) (Windows, error) {
 	if err := yaml.Unmarshal(data, &w); err != nil {
 		return Windows{}, err
 	}
+	if w == nil {
+		return Windows{}, nil
+	}
 	for k, f := range w {
-		if f.Width <= 0 || f.Height <= 0 {
+		finite := func(n float64) bool { return !math.IsNaN(n) && !math.IsInf(n, 0) }
+		if !finite(f.X) || !finite(f.Y) || !finite(f.Width) || !finite(f.Height) || f.Width <= 0 || f.Height <= 0 {
 			delete(w, k)
 		}
 	}

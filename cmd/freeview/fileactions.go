@@ -5,14 +5,19 @@ package main
 // touches the disk on a goroutine and reports back through Post.
 
 import (
+	"bytes"
+	"context"
 	"errors"
+	"image/png"
 	"path/filepath"
 	"strings"
 
 	"github.com/nsgo-dev/nsgo/core"
+	"github.com/nsgo-dev/nsgo/desktop"
 	"github.com/nsgo-dev/nsgo/ui"
 
 	"github.com/OUBIGFA/FreeView/cmd/freeview/locales"
+	"github.com/OUBIGFA/FreeView/internal/catalog"
 	"github.com/OUBIGFA/FreeView/internal/fileops"
 	"github.com/OUBIGFA/FreeView/internal/livephoto"
 	"github.com/OUBIGFA/FreeView/internal/settings"
@@ -21,14 +26,15 @@ import (
 // fileOnDisk is the shown image's file when it is one on disk, not an
 // archive entry; with ok false it says why not.
 func (v *viewer) fileOnDisk() (path string, ok bool) {
-	if v.cat == nil || v.index.Get() < 0 || v.img.Get().item.Path == "" {
+	s := v.img.Get()
+	if s.cat == nil || s.item.Path == "" {
 		return "", false
 	}
-	if v.cat.Archive != "" {
+	if s.cat.Archive != "" {
 		v.flash(locales.ArchiveNoChange(v.cx))
 		return "", false
 	}
-	return v.img.Get().item.Path, true
+	return s.item.Path, true
 }
 
 // runFile carries out the file actions.
@@ -106,12 +112,13 @@ func (v *viewer) pickEditor(fn func(program string)) {
 
 func (v *viewer) copyOrMove(path, dir string, move bool) {
 	cx, name := v.cx, filepath.Base(path)
+	cat := v.img.Get().cat
 	go func() {
 		op := fileops.CopyTo
 		if move {
 			op = fileops.MoveTo
 		}
-		_, err := op(path, dir)
+		target, err := op(path, dir)
 		cx.Post(func() {
 			switch {
 			case err != nil && move:
@@ -120,7 +127,9 @@ func (v *viewer) copyOrMove(path, dir string, move bool) {
 				v.flash(locales.CopyFailed(cx, name, err.Error()))
 			case move:
 				v.flash(locales.MovedTo(cx, dir))
-				v.dropItem(path)
+				if target != path && v.cat == cat {
+					v.dropItem(path)
+				}
 			default:
 				v.flash(locales.CopiedTo(cx, dir))
 			}
@@ -131,18 +140,36 @@ func (v *viewer) copyOrMove(path, dir string, move bool) {
 // dropItem takes the image at path out of the catalog after it left the
 // folder, showing the one that took its place.
 func (v *viewer) dropItem(path string) {
+	if v.cat == nil {
+		return
+	}
 	i := v.cat.Index(path)
 	if i < 0 {
 		return
 	}
-	delete(v.cache, path)
+	v.forget(path)
+	current := v.img.Get().item.Path
+	selected := ""
+	if j := v.index.Get(); j >= 0 && j < len(v.cat.Items) {
+		selected = v.cat.Items[j].Path
+	}
 	next := v.cat.Remove(i)
 	v.count.Set(len(v.cat.Items))
 	if next < 0 {
+		v.loadSeq++
 		v.index.Set(-1)
 		v.commit(shown{}, v.front.Get())
 		v.openErr.Set(locales.FolderEmpty(v.cx, v.cat.Title()))
 		return
+	}
+	if selected != path {
+		if j := v.cat.Index(selected); j >= 0 {
+			next = j
+		}
+		if selected == current {
+			v.index.Set(next)
+			return
+		}
 	}
 	v.show(next)
 }
@@ -157,11 +184,15 @@ func (v *viewer) rename(base string) {
 	if !ok || base == stem {
 		return
 	}
+	cat := v.img.Get().cat
 	go func() {
 		next, err := fileops.Rename(path, base)
 		cx.Post(func() {
 			if err != nil {
 				v.flash(locales.RenameFailed(cx, renameError(cx, err)))
+				return
+			}
+			if v.cat != cat {
 				return
 			}
 			i := v.cat.Index(path)
@@ -171,17 +202,16 @@ func (v *viewer) rename(base string) {
 			it := &v.cat.Items[i]
 			it.Path, it.Name = next, filepath.Base(next)
 			if pic, ok := v.cache[path]; ok {
-				delete(v.cache, path)
+				v.forget(path)
 				v.cache[next] = pic
-				for k, p := range v.cacheOrder {
-					if p == path {
-						v.cacheOrder[k] = next
-					}
-				}
+				v.cacheOrder = append(v.cacheOrder, next)
 			}
 			if s := v.img.Get(); s.item.Path == path {
 				s.item = *it
 				v.img.Set(s)
+			}
+			if v.next.item.Path == path {
+				v.next.item = *it
 			}
 		})
 	}()
@@ -234,7 +264,11 @@ func (v *viewer) exportVideo() {
 	if v.cat == nil || v.index.Get() < 0 {
 		return
 	}
-	cat, item := v.cat, v.img.Get().item
+	s := v.img.Get()
+	cat, item := s.cat, s.item
+	if cat == nil {
+		return
+	}
 	go func() {
 		data, err := cat.Read(item)
 		var clip livephoto.Video
@@ -263,4 +297,88 @@ func (v *viewer) exportVideo() {
 			})
 		})
 	}()
+}
+
+// currentFile is the file on disk the shown image is in: the image or its
+// archive; "" with nothing shown.
+func (v *viewer) currentFile() string {
+	s := v.img.Get()
+	if s.cat == nil || s.item.Path == "" {
+		return ""
+	}
+	if s.cat.Archive != "" {
+		return s.cat.Archive
+	}
+	return s.item.Path
+}
+
+func (v *viewer) pick() {
+	types := append(catalog.ImageExtensions(), catalog.ArchiveExtensions()...)
+	start := ""
+	if v.cat != nil {
+		start = v.cat.Dir
+	}
+	v.cx.PickFiles(core.PickFilesOptions{Types: types, TypesName: locales.PickImages(v.cx), Start: start},
+		func(files []core.File, err error) {
+			if err == nil && len(files) > 0 && files[0].Path != "" {
+				v.open(files[0].Path)
+			}
+		})
+}
+
+func (v *viewer) delete() {
+	cx := v.cx
+	s := v.img.Get()
+	if s.cat == nil || s.item.Path == "" {
+		return
+	}
+	if s.cat.Archive != "" {
+		v.flash(locales.ArchiveReadOnly(cx))
+		return
+	}
+	item, cat := s.item, s.cat
+	trash := func() {
+		desktop.TrashFile(cx, item.Path, func(_ string, err error) {
+			if err != nil {
+				v.flash(locales.DeleteFailed(cx, item.Name, err.Error()))
+				return
+			}
+			if v.cat == cat {
+				v.dropItem(item.Path)
+			}
+		})
+	}
+	if !v.cfg.Get().ConfirmDelete {
+		trash()
+		return
+	}
+	cx.ShowAlert(core.AlertConfig{
+		Title: locales.DeleteTitle(cx), Message: locales.DeleteMessage(cx, item.Name), Cancelable: true,
+		Actions: []core.AlertAction{{Label: locales.DeleteConfirm(cx), Role: core.AlertDestructive}, {Label: locales.Cancel(cx), Role: core.AlertCancel}},
+	}, func(i int) {
+		if i == 0 {
+			trash()
+		}
+	})
+}
+
+func (v *viewer) copyImage() {
+	p := v.img.Get().pic
+	if p.Pixels != nil {
+		// Encoding a large decoded image can take hundreds of milliseconds.
+		// A user-requested copy retains its source even if the view changes.
+		background(context.Background(), func() {
+			var buf bytes.Buffer
+			if err := png.Encode(&buf, p.Pixels); err != nil {
+				return
+			}
+			v.cx.Post(func() { v.cx.SetClipboardImage(buf.Bytes()); v.flash(locales.CopiedImage(v.cx)) })
+		})
+		return
+	}
+	if len(p.Data) == 0 {
+		return
+	}
+	v.cx.SetClipboardImage(p.Data)
+	v.flash(locales.CopiedImage(v.cx))
 }

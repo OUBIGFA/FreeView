@@ -1,10 +1,56 @@
 package settings
 
 import (
+	"math"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 )
+
+func TestConcurrentSavesUseIndependentFiles(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	start := make(chan struct{})
+	errs := make(chan error, 16)
+	var workers sync.WaitGroup
+	for i := range 16 {
+		workers.Go(func() {
+			c := Default()
+			c.SlideshowSeconds = float64(i + 1)
+			<-start
+			errs <- Save(path, c)
+		})
+	}
+	close(start)
+	workers.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Errorf("concurrent save failed: %v", err)
+		}
+	}
+	if _, err := Load(path); err != nil {
+		t.Fatalf("saved configuration is incomplete: %v", err)
+	}
+}
+
+func TestNonFiniteNumbersUseDefaults(t *testing.T) {
+	for _, value := range []string{".nan", ".inf", "-.inf", "1e100"} {
+		t.Run(value, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte("zoom_step: "+value+"\nslideshow_seconds: "+value+"\n"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			got, err := Load(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if math.IsNaN(got.ZoomStep) || got.ZoomStep != Default().ZoomStep || got.SlideshowSeconds != Default().SlideshowSeconds {
+				t.Fatalf("invalid numbers escaped normalization: zoom=%v slideshow=%v", got.ZoomStep, got.SlideshowSeconds)
+			}
+		})
+	}
+}
 
 func TestMissingFileGivesDefaults(t *testing.T) {
 	c, err := Load(filepath.Join(t.TempDir(), "none.yaml"))
@@ -121,6 +167,19 @@ func TestWindowsRoundTripAndDropSizelessFrames(t *testing.T) {
 	}
 	if _, ok := got["preferences"]; ok {
 		t.Error("a frame without a width was kept")
+	}
+}
+
+func TestWindowsRejectsNonFiniteFramesAndHandlesNull(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "windows.yaml")
+	for _, data := range []string{"null\n", "main: {x: .nan, y: 0, width: 800, height: 600}\n", "main: {x: 0, y: 0, width: .inf, height: 600}\n"} {
+		if err := os.WriteFile(p, []byte(data), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		got, err := LoadWindows(p)
+		if err != nil || got == nil || len(got) != 0 {
+			t.Fatalf("invalid window configuration %q: %#v %v", data, got, err)
+		}
 	}
 }
 

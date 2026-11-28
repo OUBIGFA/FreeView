@@ -1,6 +1,7 @@
 package update
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -9,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -50,15 +52,26 @@ func TestFindsANewerRelease(t *testing.T) {
 func TestIgnoresReleasesThatAreNotNewerOrNotInstallable(t *testing.T) {
 	good := "sha256:" + digestOf(installer)
 	for name, c := range map[string]Client{
-		"same version":    server(t, "v0.1.2", "FreeView-0.1.2.exe", good, installer),
-		"older version":   server(t, "v0.1.0", "FreeView-0.1.0.exe", good, installer),
-		"pre-release tag": server(t, "v0.2.0-rc1", "FreeView-0.2.0-rc1.exe", good, installer),
-		"other asset":     server(t, "v0.2.0", "appcast.xml", good, installer),
-		"no digest":       server(t, "v0.2.0", "FreeView-0.2.0.exe", "", installer),
+		"same version":       server(t, "v0.1.2", "FreeView-0.1.2.exe", good, installer),
+		"older version":      server(t, "v0.1.0", "FreeView-0.1.0.exe", good, installer),
+		"pre-release tag":    server(t, "v0.2.0-rc1", "FreeView-0.2.0-rc1.exe", good, installer),
+		"other asset":        server(t, "v0.2.0", "appcast.xml", good, installer),
+		"no digest":          server(t, "v0.2.0", "FreeView-0.2.0.exe", "", installer),
+		"missing tag prefix": server(t, "0.2.0", "FreeView-0.2.0.exe", good, installer),
+		"invalid digest":     server(t, "v0.2.0", "FreeView-0.2.0.exe", "sha256:"+strings.Repeat("z", 64), installer),
 	} {
 		if rel, ok, err := c.Latest(context.Background(), "0.1.2"); ok || err != nil {
 			t.Errorf("%s: Latest = %+v, %v, %v", name, rel, ok, err)
 		}
+	}
+}
+
+func TestDownloadEnforcesReleaseSize(t *testing.T) {
+	c := server(t, "v0.2.0", "FreeView-0.2.0.exe", "sha256:"+digestOf(installer), installer)
+	rel, _, _ := c.Latest(context.Background(), "0.1.2")
+	rel.Size--
+	if _, err := c.Download(context.Background(), rel, t.TempDir()); err == nil {
+		t.Fatal("accepted an installer larger than the release size")
 	}
 }
 
@@ -86,8 +99,8 @@ func TestDownloadChecksTheDigest(t *testing.T) {
 	if _, err := c.Download(context.Background(), rel, dir); err == nil {
 		t.Error("a download that does not match its digest was accepted")
 	}
-	if _, err := os.Stat(filepath.Join(dir, "FreeView-0.2.0.exe")); err == nil {
-		t.Error("the mismatching installer was kept")
+	if got, err := os.ReadFile(filepath.Join(dir, "FreeView-0.2.0.exe")); err != nil || !bytes.Equal(got, installer) {
+		t.Error("a failed download destroyed the previously verified installer")
 	}
 }
 

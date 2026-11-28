@@ -55,7 +55,7 @@ var (
 func IsAnimated(data []byte) bool {
 	switch {
 	case bytes.HasPrefix(data, gifSignature):
-		return gifFrames(data) > 1
+		return gifFrames(data, 2) > 1
 	case bytes.HasPrefix(data, pngSignature):
 		n, _ := apngFrames(data)
 		return n > 1
@@ -104,7 +104,9 @@ func checkBudget(w, h, frames, maxBytes int) error {
 	if frames < 2 {
 		return ErrNotAnimated
 	}
-	if int64(w)*int64(h)*4*int64(frames) > int64(maxBytes) {
+	// Divide the budget before comparing; multiplying file-supplied
+	// dimensions and frame counts can overflow even a signed 64-bit int.
+	if maxBytes <= 0 || int64(w) > int64(maxBytes)/4/int64(h)/int64(frames) {
 		return ErrTooLarge
 	}
 	return nil
@@ -123,7 +125,7 @@ func clearRect(canvas *image.RGBA, r image.Rectangle) {
 }
 
 // gifFrames counts a GIF's image descriptors by walking its blocks.
-func gifFrames(data []byte) int {
+func gifFrames(data []byte, stopAt int) int {
 	if len(data) < 13 {
 		return 0
 	}
@@ -151,7 +153,7 @@ func gifFrames(data []byte) int {
 			}
 		case 0x2c: // image descriptor
 			n++
-			if n > 1 || p+10 > len(data) {
+			if (stopAt > 0 && n >= stopAt) || p+10 > len(data) {
 				return n
 			}
 			flags := data[p+9]
@@ -171,6 +173,13 @@ func gifFrames(data []byte) int {
 }
 
 func decodeGIF(data []byte, maxBytes int) (*Animation, error) {
+	config, err := gif.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	if err := checkBudget(config.Width, config.Height, gifFrames(data, 0), maxBytes); err != nil {
+		return nil, err
+	}
 	g, err := gif.DecodeAll(bytes.NewReader(data))
 	if err != nil {
 		return nil, err

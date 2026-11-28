@@ -6,9 +6,11 @@ package settings
 import (
 	"errors"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
+	"sync"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -264,10 +266,12 @@ func (c Config) normalized() Config {
 	if !slices.Contains([]TitlePlace{TitleLeft, TitleCenter, TitleRight}, c.HoverTitlePlace) {
 		c.HoverTitlePlace = d.HoverTitlePlace
 	}
-	if c.SlideshowSeconds < 0.5 {
+	// Timers use nanosecond durations; non-finite or overflowing values
+	// otherwise become immediate timers and can spin through the folder.
+	if math.IsNaN(c.SlideshowSeconds) || c.SlideshowSeconds < 0.5 || c.SlideshowSeconds >= float64(math.MaxInt64)/1e9 {
 		c.SlideshowSeconds = d.SlideshowSeconds
 	}
-	if c.ZoomStep <= 1 || c.ZoomStep > 4 {
+	if math.IsNaN(c.ZoomStep) || c.ZoomStep <= 1 || c.ZoomStep > 4 {
 		c.ZoomStep = d.ZoomStep
 	}
 	if !slices.Contains(AnimationSpeeds, c.AnimationSpeed) {
@@ -291,9 +295,13 @@ func (c Config) normalized() Config {
 // Save writes c to path.
 func Save(path string, c Config) error { return writeYAML(path, c) }
 
+var writeMu sync.Mutex // Windows rejects simultaneous replacements of one destination
+
 // writeYAML writes v to path, through a temporary file so a crash never
 // leaves a half-written file.
 func writeYAML(path string, v any) error {
+	writeMu.Lock()
+	defer writeMu.Unlock()
 	data, err := yaml.Marshal(v)
 	if err != nil {
 		return err
@@ -301,11 +309,21 @@ func writeYAML(path string, v any) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	// Multiple windows/processes may save together. Each write owns its
+	// temporary file, so another writer cannot truncate or rename it.
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".freeview-settings-*.tmp")
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	defer os.Remove(tmp.Name())
+	_, err = tmp.Write(data)
+	if closeErr := tmp.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
 
 // Clone returns a copy of c whose maps can be changed without touching c.

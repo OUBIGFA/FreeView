@@ -21,7 +21,16 @@ func (v *viewer) setConfig(next settings.Config) {
 	v.cfg.Set(next)
 	if path := v.cfgPath; path != "" {
 		snapshot := next.Clone()
+		// Chain writes in event order. A mutex inside the goroutine alone
+		// would serialize them in scheduler order and could save an old value last.
+		previous := v.configSaved
+		done := make(chan struct{})
+		v.configSaved = done
 		go func() {
+			defer close(done)
+			if previous != nil {
+				<-previous
+			}
 			if err := settings.Save(path, snapshot); err != nil {
 				v.cx.Post(func() { v.flash(locales.PrefsSaveFailed(v.cx, err.Error())) })
 			}
@@ -32,6 +41,20 @@ func (v *viewer) setConfig(next settings.Config) {
 	}
 	if next.Fit != prev.Fit && v.fit.Get() != "" {
 		v.fit.Set(next.Fit)
+	}
+	if next.SmoothZoom != prev.SmoothZoom {
+		v.extras.smoothScale = 0
+		v.extras.smooth.Set(core.ImageSource{})
+	}
+	if next.ColorManagement != prev.ColorManagement && !v.extras.animated {
+		// Discard pixels converted under the previous color policy.
+		s := v.img.Get()
+		v.slots[v.front.Get()].Set(s.src)
+		v.commitExtras(s)
+		v.scheduleSmooth()
+	}
+	if next.AnimationSpeed != prev.AnimationSpeed && v.extras.animated {
+		v.withAnimation(v.tick)
 	}
 	if (next.Sort != prev.Sort || next.SortDescending != prev.SortDescending) && v.cat != nil && v.index.Get() >= 0 {
 		target := v.cat.Archive

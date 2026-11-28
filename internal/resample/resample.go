@@ -15,8 +15,6 @@ package resample
 import (
 	"image"
 	"math"
-	"runtime"
-	"sync"
 )
 
 // Region resamples the part src of img (in img pixel coords, clipped to
@@ -41,25 +39,23 @@ func Region(img *image.RGBA, src image.Rectangle, w, h int) *image.RGBA {
 	// the result is rounded to 8 bits only once.
 	mid := make([]uint16, w*sh*4)
 	base := img.PixOffset(src.Min.X, src.Min.Y)
-	parallel(sh, sh*max(sw, w), func(lo, hi int) {
-		for y := lo; y < hi; y++ {
-			row, out := base+y*img.Stride, mid[y*w*4:(y+1)*w*4]
-			for x := range xs {
-				store(out[x*4:x*4+4], gather(&xs[x], img.Pix, row, 4), 257, 65535)
-			}
+	// Stay on the caller's worker. Spawning nested goroutines here would
+	// bypass the viewer's worker limit and its OS-thread priority.
+	for y := 0; y < sh; y++ {
+		row, out := base+y*img.Stride, mid[y*w*4:(y+1)*w*4]
+		for x := range xs {
+			store(out[x*4:x*4+4], gather(&xs[x], img.Pix, row, 4), 257, 65535)
 		}
-	})
+	}
 
 	// Vertical pass: each output row from the intermediate's columns.
 	dst := image.NewRGBA(image.Rect(0, 0, w, h))
-	parallel(h, w*max(sh, h), func(lo, hi int) {
-		for y := lo; y < hi; y++ {
-			out := dst.Pix[y*dst.Stride : y*dst.Stride+w*4]
-			for x := range w {
-				store(out[x*4:x*4+4], gather(&ys[y], mid, x*4, w*4), 1.0/257, 255)
-			}
+	for y := 0; y < h; y++ {
+		out := dst.Pix[y*dst.Stride : y*dst.Stride+w*4]
+		for x := range w {
+			store(out[x*4:x*4+4], gather(&ys[y], mid, x*4, w*4), 1.0/257, 255)
 		}
-	})
+	}
 	return dst
 }
 
@@ -181,21 +177,4 @@ func store[T uint8 | uint16](q []T, acc [4]float32, scale, top float32) {
 		q[c] = T(min(max(acc[c]*scale, 0), a) + 0.5)
 	}
 	q[3] = T(a + 0.5)
-}
-
-// parallel runs fn over the rows 0..n split across GOMAXPROCS goroutines,
-// or on the calling goroutine when cost (about the pixels touched) is too
-// small to repay starting them.
-func parallel(n, cost int, fn func(lo, hi int)) {
-	procs := min(runtime.GOMAXPROCS(0), n)
-	if procs < 2 || cost < 1<<17 {
-		fn(0, n)
-		return
-	}
-	var wg sync.WaitGroup
-	for i := range procs {
-		lo, hi := n*i/procs, n*(i+1)/procs
-		wg.Go(func() { fn(lo, hi) })
-	}
-	wg.Wait()
 }

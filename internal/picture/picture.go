@@ -102,7 +102,7 @@ func Load(data []byte, name string) (Picture, error) {
 	}
 	// An iOS live photo is a ZIP of its still and its clip: show the still.
 	if livephoto.IsLIVP(name) {
-		still, stillName, _, err := livephoto.OpenLIVP(data)
+		still, stillName, err := livephoto.OpenStill(data)
 		if err != nil {
 			return Picture{}, err
 		}
